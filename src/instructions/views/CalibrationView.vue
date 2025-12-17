@@ -26,7 +26,7 @@ defineProps<{
       <div v-if="!instruction.isSuccess.value" class="absolute inset-0 bg-white opacity-20 rounded-full animate-ping"></div>
       
       <span class="text-4xl font-mono font-bold text-white drop-shadow-lg z-10">
-        {{ instruction.isSuccess.value ? '✓' : instruction.currentCount.value }}
+        {{ instruction.isSuccess.value ? '✓' : instruction.currentDisplayNumber.value }}
       </span>
     </div>
 

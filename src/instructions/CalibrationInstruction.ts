@@ -6,10 +6,16 @@ import { faceMeshService, type Point } from '../services/faceMeshService';
 interface CalibrationOptions extends InstructionOptions {}
 
 export class CalibrationInstruction extends Instruction<CalibrationOptions> {
-  public currentCount = ref(10);
+  // UI State
+  public currentDisplayNumber = ref(10);
   public currentGaze = ref<Point | null>(null);
   public targetPosition = ref({ x: 50, y: 50 }); // Percentage
   public isSuccess = ref(false);
+  
+  // Internal State
+  private stepIndex = 0;
+  private shuffledNumbers: number[] = [];
+  private shuffledPositions: Array<{x: number, y: number}> = [];
   
   private processing = false;
   private recognition: SpeechRecognition | null = null;
@@ -17,22 +23,55 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
   private animationFrameId: number | null = null;
   
   private numbersMap: Record<string, number> = {
-      'TEN': 10, 'NINE': 9, 'EIGHT': 8, 'SEVEN': 7, 'SIX': 6, 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1,
-      '10': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2, '1': 1,
-      'TO': 2, 'TOO': 2, 'FOR': 4, 'FORE': 4
+      'TEN': 10, 'NINE': 9, 'EIGHT': 8, 'SEVEN': 7, 'SIX': 6, 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1, 'ZERO': 0,
+      '10': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2, '1': 1, '0': 0,
+      'TO': 2, 'TOO': 2, 'FOR': 4, 'FORE': 4, 'OH': 0
   };
 
   async start(context: InstructionContext) {
     this.context = context;
-    this.currentCount.value = 10;
     this.isSuccess.value = false;
+    this.stepIndex = 0;
+
+    // 1. Generate Random Sequence
+    // Numbers 0-10 (11 items) or 1-10? User said 0-10. Let's do 0-10.
+    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    this.shuffledNumbers = this.shuffle(numbers);
+
+    // 2. Generate Random Positions (ensure coverage)
+    // We need 11 positions for 0-10.
+    // Corners (4), Edges (4), Center (1), + 2 Randoms?
+    // Or just random distribution. 
+    // Let's stick to the grid concept but shuffled order.
+    const padding = 10;
+    const grid = [
+        { x: padding, y: padding }, // TL
+        { x: 100 - padding, y: padding }, // TR
+        { x: 100 - padding, y: 100 - padding }, // BR
+        { x: padding, y: 100 - padding }, // BL
+        { x: 50, y: padding }, // TC
+        { x: 50, y: 100 - padding }, // BC
+        { x: padding, y: 50 }, // LC
+        { x: 100 - padding, y: 50 }, // RC
+        { x: 50, y: 50 }, // C
+        { x: 25, y: 25 }, // Inner TL
+        { x: 75, y: 75 }, // Inner BR
+    ];
+    // Ensure we have enough positions for the numbers
+    while (grid.length < numbers.length) {
+        grid.push({ 
+            x: 10 + Math.random() * 80, 
+            y: 10 + Math.random() * 80 
+        });
+    }
+    this.shuffledPositions = this.shuffle(grid);
 
     // Init FaceMesh
     await faceMeshService.init();
     faceMeshService.clearCalibration();
 
-    // Start with first position
-    this.generateNextPosition();
+    // Start
+    this.nextStep();
 
     // Start Loops
     this.initSpeech();
@@ -50,39 +89,24 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     faceMeshService.stop();
   }
 
-  private generateNextPosition() {
-      // Pick a position based on remaining count to ensure coverage
-      // 10 points: 4 corners, 4 edges, 2 random/center
-      const count = this.currentCount.value;
+  private nextStep() {
+      if (this.stepIndex >= this.shuffledNumbers.length) {
+          this.complete(true);
+          return;
+      }
       
-      // Map count to specific regions to ensure good calibration spread
-      // 10: Center (Start)
-      // 9: Top Left
-      // 8: Top Right
-      // 7: Bottom Right
-      // 6: Bottom Left
-      // 5: Top Center
-      // 4: Bottom Center
-      // 3: Left Center
-      // 2: Right Center
-      // 1: Center (Verify)
-      
-      const padding = 10; // % from edge
-      
-      const positions: Record<number, {x: number, y: number}> = {
-          10: { x: 50, y: 50 },
-          9:  { x: padding, y: padding }, // TL
-          8:  { x: 100 - padding, y: padding }, // TR
-          7:  { x: 100 - padding, y: 100 - padding }, // BR
-          6:  { x: padding, y: 100 - padding }, // BL
-          5:  { x: 50, y: padding }, // TC
-          4:  { x: 50, y: 100 - padding }, // BC
-          3:  { x: padding, y: 50 }, // LC
-          2:  { x: 100 - padding, y: 50 }, // RC
-          1:  { x: 50, y: 50 } // C
-      };
-      
-      this.targetPosition.value = positions[count] || { x: 50, y: 50 };
+      this.currentDisplayNumber.value = this.shuffledNumbers[this.stepIndex];
+      this.targetPosition.value = this.shuffledPositions[this.stepIndex];
+      this.isSuccess.value = false;
+  }
+  
+  private shuffle<T>(array: T[]): T[] {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
   }
 
   private startGazeLoop() {
@@ -109,7 +133,6 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
     this.recognition.onresult = (e) => this.handleSpeechResult(e);
     this.recognition.onend = () => {
-        // Restart if not done
         if (this.context && this.recognition) {
             try { this.recognition.start(); } catch(e){}
         }
@@ -129,9 +152,9 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
         const result = event.results[i];
         const transcript = result[0].transcript.trim().toUpperCase();
         
-        console.log("Heard:", transcript, "Expected:", this.currentCount.value);
+        const expected = this.currentDisplayNumber.value;
+        console.log("Heard:", transcript, "Expected:", expected);
 
-        const expected = this.currentCount.value;
         const expectedWords = [
             expected.toString(), 
             ...Object.keys(this.numbersMap).filter(key => this.numbersMap[key] === expected)
@@ -155,7 +178,6 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
       const w = window.innerWidth;
       const h = window.innerHeight;
       
-      // Convert % to px
       const targetX = (this.targetPosition.value.x / 100) * w;
       const targetY = (this.targetPosition.value.y / 100) * h;
 
@@ -169,14 +191,8 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Move to next
-      this.isSuccess.value = false;
-      this.currentCount.value--;
-      
-      if (this.currentCount.value <= 0) {
-          this.complete(true);
-      } else {
-          this.generateNextPosition();
-      }
+      this.stepIndex++;
+      this.nextStep();
   }
 
   private complete(success: boolean) {
