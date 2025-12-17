@@ -42,6 +42,8 @@ class FaceMeshService {
     blinkDetected: false,
     eyeOpenness: 1.0, // 0 = closed, 1 = open
   });
+  
+  private blinkThreshold = 0.25;
 
   async init(videoElement?: HTMLVideoElement) {
     if (this.isReady) {
@@ -281,17 +283,31 @@ class FaceMeshService {
     const rightH = this.getDistance(keypoints[263], keypoints[362]);
     const rightEAR = rightV / rightH;
 
-    const avgEAR = (leftEAR + rightEAR) / 2;
+        const avgEAR = (leftEAR + rightEAR) / 2;
 
-    this.debugData.eyeOpenness = avgEAR;
-    // Threshold usually around 0.2 - 0.3 for a blink
-    this.debugData.blinkDetected = avgEAR < 0.24;
-  }
+        
 
-  private getDistance(
-    p1: faceLandmarksDetection.Keypoint,
-    p2: faceLandmarksDetection.Keypoint
-  ) {
+        this.debugData.eyeOpenness = avgEAR;
+
+        // Threshold usually around 0.2 - 0.3 for a blink
+
+        this.debugData.blinkDetected = avgEAR < this.blinkThreshold; 
+
+      }
+
+    
+
+      public setBlinkThreshold(value: number) {
+
+          console.log(`Updating Blink Threshold: ${this.blinkThreshold} -> ${value}`);
+
+          this.blinkThreshold = value;
+
+      }
+
+    
+
+      private getDistance(p1: faceLandmarksDetection.Keypoint, p2: faceLandmarksDetection.Keypoint) {
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
   }
 

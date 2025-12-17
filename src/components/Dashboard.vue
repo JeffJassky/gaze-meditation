@@ -9,6 +9,7 @@ import { StillnessInstruction } from '../instructions/StillnessInstruction';
 import { BlinkInstruction } from '../instructions/BlinkInstruction';
 import { TypeInstruction } from '../instructions/TypeInstruction';
 import { NodInstruction } from '../instructions/NodInstruction';
+import { FractionationInstruction } from '../instructions/FractionationInstruction';
 
 // Mock Programs
 const PROGRAMS: Program[] = [
@@ -60,10 +61,10 @@ const PROGRAMS: Program[] = [
   {
     id: 'prog_deepening',
     title: 'Deepening Protocol',
-    description: 'Advanced conditioning using stillness, gaze, and affirmation.',
+    description: 'Advanced conditioning using fractionation, stillness, gaze, and affirmation.',
     audioTrack: 'drone_dark.mp3',
     instructions: [
-        new StillnessInstruction({ id: 's1', prompt: 'Freeze. Do not move.', duration: 5000 }),
+        new FractionationInstruction({ id: 'f1', prompt: 'Relax and follow the voice', cycles: 3 }),
         new TypeInstruction({ id: 't1', prompt: 'Type "I obey"', targetPhrase: 'I obey' }),
         new NodInstruction({ id: 'n1', prompt: 'Nod if you are ready', nodsRequired: 3, type: 'YES' }),
         new BlinkInstruction({ id: 'b1', prompt: 'Do not blink', duration: 10000 }),

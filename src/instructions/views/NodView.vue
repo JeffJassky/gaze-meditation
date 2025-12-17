@@ -14,9 +14,14 @@
       <h1>NOD "YES"</h1>
       <div class="arrow-container">
         <!-- Visual guide based on relative pitch -->
-        <div class="arrow up" :class="{ active: instruction.relativePitch.value < -0.08 }">▲</div>
-        <div class="head-dot" :style="{ transform: `translateY(${instruction.relativePitch.value * 300}px)` }"></div>
-        <div class="arrow down" :class="{ active: instruction.relativePitch.value > 0.08 }">▼</div>
+        <div class="arrow up" :class="{ active: instruction.relativePitch.value < instruction.UP_THRESH }">▲</div>
+        
+        <!-- Normalize position: Pitch / Threshold * Range (e.g. 130px) -->
+        <!-- UP (negative pitch) -> moves Up (negative Y) -->
+        <!-- DOWN (positive pitch) -> moves Down (positive Y) -->
+        <div class="head-dot" :style="{ transform: `translateY(${ (instruction.relativePitch.value / instruction.DOWN_THRESH) * 130 }px)` }"></div>
+        
+        <div class="arrow down" :class="{ active: instruction.relativePitch.value > instruction.DOWN_THRESH }">▼</div>
       </div>
     </div>
   </div>
