@@ -1,4 +1,4 @@
-import { ref, markRaw, computed } from 'vue';
+import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import DirectionalGazeView from './views/DirectionalGazeView.vue';
 import { faceMeshService, type Point } from '../services/faceMeshService';
@@ -6,6 +6,8 @@ import { faceMeshService, type Point } from '../services/faceMeshService';
 interface DirectionalOptions extends InstructionOptions {
   direction: 'LEFT' | 'RIGHT';
   duration: number;
+  leftSrc?: string;
+  rightSrc?: string;
 }
 
 export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> {
