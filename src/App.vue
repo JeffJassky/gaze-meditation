@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, markRaw } from 'vue';
 import Dashboard from './components/Dashboard.vue';
 import Theater from './components/Theater.vue';
 import type { Program } from './types';
@@ -15,7 +15,7 @@ const view = ref<View>('dashboard');
 const activeSession = ref<ActiveSession | null>(null);
 
 const startSession = (program: Program, subjectId: string) => {
-  activeSession.value = { program, subjectId };
+  activeSession.value = { program: markRaw(program), subjectId };
   view.value = 'theater';
 };
 

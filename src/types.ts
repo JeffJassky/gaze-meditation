@@ -1,3 +1,5 @@
+import type { Instruction } from './core/Instruction';
+
 // Enums
 export enum SessionState {
   IDLE = 'IDLE',
@@ -8,21 +10,7 @@ export enum SessionState {
   FINISHED = 'FINISHED'
 }
 
-export enum InstructionType {
-  GAZE = 'GAZE',
-  SPEECH = 'SPEECH'
-}
-
 // Data Models
-export interface Instruction {
-  id: string;
-  type: InstructionType;
-  prompt: string;
-  targetValue?: string; // For speech: the word to say. For gaze: unused (uses coordinates)
-  duration: number; // How long they have to do it
-  holdTime?: number; // For gaze: how long to hold focus
-}
-
 export interface Program {
   id: string;
   title: string;

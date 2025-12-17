@@ -1,19 +1,34 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { InstructionType, type User, type Program, type SessionLog } from '../types';
+import { ref, onMounted } from 'vue';
+import type { User, Program, SessionLog } from '../types';
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService';
+import { GazeInstruction } from '../instructions/GazeInstruction';
+import { SpeechInstruction } from '../instructions/SpeechInstruction';
+import { CalibrationInstruction } from '../instructions/CalibrationInstruction';
+import { DirectionalGazeInstruction } from '../instructions/DirectionalGazeInstruction';
 
 // Mock Programs
 const PROGRAMS: Program[] = [
+  {
+    id: 'prog_calibration',
+    title: 'Eye Tracker Calibration',
+    description: 'Calibrate the WebGazer eye tracking system.',
+    audioTrack: 'silence.mp3',
+    instructions: [
+        new CalibrationInstruction({ id: 'cal1', prompt: 'Eye Calibration' }),
+        new DirectionalGazeInstruction({ id: 'test_left', prompt: 'Look Left', direction: 'LEFT', duration: 4000 }),
+        new DirectionalGazeInstruction({ id: 'test_right', prompt: 'Look Right', direction: 'RIGHT', duration: 4000 })
+    ]
+  },
   {
     id: 'prog_focus_alpha',
     title: 'Alpha Focus Protocol',
     description: 'Basic gaze fixation training to improve attention span.',
     audioTrack: 'theta_binaural_40hz.mp3',
     instructions: [
-      { id: 'i1', type: InstructionType.GAZE, prompt: 'Fixate on the Blue Orb', duration: 5000, holdTime: 2000 },
-      { id: 'i2', type: InstructionType.GAZE, prompt: 'Follow the light', duration: 4000, holdTime: 1500 },
-      { id: 'i3', type: InstructionType.GAZE, prompt: 'Hold Steady', duration: 5000, holdTime: 3000 },
+      new GazeInstruction({ id: 'i1', prompt: 'Fixate on the Blue Orb', duration: 5000, holdTime: 2000 }),
+      new GazeInstruction({ id: 'i2', prompt: 'Follow the light', duration: 4000, holdTime: 1500 }),
+      new GazeInstruction({ id: 'i3', prompt: 'Hold Steady', duration: 5000, holdTime: 3000 }),
     ]
   },
   {
@@ -22,10 +37,10 @@ const PROGRAMS: Program[] = [
     description: 'Rapid fire word association and repetition.',
     audioTrack: 'white_noise_low.mp3',
     instructions: [
-      { id: 'v1', type: InstructionType.SPEECH, prompt: 'Say "START"', targetValue: 'START', duration: 4000 },
-      { id: 'v2', type: InstructionType.SPEECH, prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000 },
-      { id: 'v3', type: InstructionType.GAZE, prompt: 'Look at the center', duration: 3000, holdTime: 1000 },
-      { id: 'v4', type: InstructionType.SPEECH, prompt: 'Say "DONE"', targetValue: 'DONE', duration: 3000 },
+      new SpeechInstruction({ id: 'v1', prompt: 'Say "START"', targetValue: 'START', duration: 4000 }),
+      new SpeechInstruction({ id: 'v2', prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000 }),
+      new GazeInstruction({ id: 'v3', prompt: 'Look at the center', duration: 3000, holdTime: 1000 }),
+      new SpeechInstruction({ id: 'v4', prompt: 'Say "DONE"', targetValue: 'DONE', duration: 3000 }),
     ]
   }
 ];

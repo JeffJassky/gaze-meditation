@@ -6,7 +6,6 @@ interface HUDProps {
   state: SessionState;
   currentInstruction?: Instruction;
   score: number;
-  message?: string; // Not used in original, but keeping for interface consistency
 }
 
 const props = defineProps<HUDProps>();
@@ -23,6 +22,8 @@ const getBorderColor = computed(() => {
 });
 
 const formattedScore = computed(() => props.score.toString().padStart(6, '0'));
+const instructionMode = computed(() => props.currentInstruction?.constructor.name || '--');
+const instructionId = computed(() => props.currentInstruction?.options.id || '--');
 
 const handleExit = () => {
   emit('exit');
@@ -53,16 +54,9 @@ const handleExit = () => {
       </div>
     </div>
 
-    <!-- Center: Dynamic Instructions -->
+    <!-- Center: Reinforcement Feedback ONLY (Instructions are in Views now) -->
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full max-w-4xl">
-       <div v-if="props.state === SessionState.INSTRUCTING || props.state === SessionState.VALIDATING" class="animate-in fade-in zoom-in duration-300">
-           <h1 class="text-5xl font-bold text-white mb-4 drop-shadow-xl">{{ props.currentInstruction?.prompt }}</h1>
-           <div v-if="props.state === SessionState.VALIDATING" class="inline-block mt-4 px-4 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm border border-blue-500/50 animate-pulse">
-              Awaiting Input...
-           </div>
-       </div>
-
-       <h1 v-else-if="props.state === SessionState.REINFORCING_POS" class="text-6xl font-black text-yellow-400 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)] animate-bounce">
+       <h1 v-if="props.state === SessionState.REINFORCING_POS" class="text-6xl font-black text-yellow-400 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)] animate-bounce">
            REINFORCED
        </h1>
 
@@ -76,8 +70,8 @@ const handleExit = () => {
     <!-- Bottom Bar: Debug/Technical Info -->
     <div class="flex justify-between items-end text-zinc-600 font-mono text-xs">
        <div>
-          ID: {{ props.currentInstruction?.id || '--' }} <br/>
-          MODE: {{ props.currentInstruction?.type || '--' }}
+          ID: {{ instructionId }} <br/>
+          MODE: {{ instructionMode }}
        </div>
        <div class="text-right">
           NCRS v2.1.0 <br/>
@@ -88,6 +82,4 @@ const handleExit = () => {
 </template>
 
 <style scoped>
-/* Glitch text effect from original CSS if needed - assuming it's global or included */
-/* For now, relying on Tailwind's utility classes and external CDN for basic functionality */
 </style>
