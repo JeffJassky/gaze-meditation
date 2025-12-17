@@ -41,7 +41,10 @@ class FaceMeshService {
   });
 
   async init(videoElement?: HTMLVideoElement) {
-    if (this.isReady) return;
+    if (this.isReady) {
+        if (!this.rafId) this.startLoop();
+        return;
+    }
 
     if (videoElement) {
       this.video = videoElement;
@@ -412,9 +415,11 @@ class FaceMeshService {
     return { x: this.debugData.gazeX, y: this.debugData.gazeY };
   }
 
-  public stop() {
-    if (this.rafId) cancelAnimationFrame(this.rafId);
-  }
-}
+    public stop() {
+        if (this.rafId) {
+            cancelAnimationFrame(this.rafId);
+            this.rafId = null;
+        }
+    }}
 
 export const faceMeshService = new FaceMeshService();
