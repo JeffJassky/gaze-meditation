@@ -1,0 +1,8 @@
+{
+  "name": "NCRS - Neuro-Conditioning Research Suite",
+  "description": "A high-immersion research tool for neurological pathway building using Operant Conditioning. Features real-time biometric simulation and sensory reinforcement.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
