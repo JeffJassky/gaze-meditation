@@ -48,12 +48,9 @@ defineProps<{
     ></div>
     
     <!-- Raw Data Debug -->
-    <div class="fixed top-4 left-4 z-[9999] font-mono font-bold bg-black/50 p-2 rounded text-white">
-        <div v-if="instruction.currentGaze.value">
+    <div class="fixed top-4 left-4 z-[9999] font-mono font-bold bg-black/50 p-2 rounded text-white" v-if="instruction.currentGaze.value">
+        <div>
             GAZE: {{ Math.round(instruction.currentGaze.value.x) }}, {{ Math.round(instruction.currentGaze.value.y) }}
-        </div>
-        <div v-else class="text-red-500">
-            NO GAZE DETECTED (Calib)
         </div>
     </div>
   </div>

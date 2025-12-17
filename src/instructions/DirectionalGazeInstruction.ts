@@ -1,7 +1,7 @@
 import { ref, markRaw, computed } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import DirectionalGazeView from './views/DirectionalGazeView.vue';
-import { webGazerService, type Point } from '../services/webGazerService';
+import { faceMeshService, type Point } from '../services/faceMeshService';
 
 interface DirectionalOptions extends InstructionOptions {
   direction: 'LEFT' | 'RIGHT';
@@ -11,7 +11,7 @@ interface DirectionalOptions extends InstructionOptions {
 export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> {
   public currentGaze = ref<Point | null>(null);
   public isCorrect = ref(false);
-  public score = ref(100); // Start high, drop if wrong? or Start 0, gain if right.
+  public score = ref(100); 
   
   private context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
@@ -29,7 +29,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
     this.score.value = 0;
 
     // Ensure service running
-    await webGazerService.init();
+    await faceMeshService.init();
     
     this.loop();
   }
@@ -42,7 +42,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
   private async loop() {
     if (!this.isActive) return;
 
-    const pred = await webGazerService.getCurrentPrediction();
+    const pred = faceMeshService.getCurrentGaze();
     this.currentGaze.value = pred;
 
     if (pred) {
@@ -59,7 +59,6 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
     // Check duration
     if (Date.now() - this.startTime > (this.options.duration || 5000)) {
-        // Success if > 50% ?
         this.complete(this.score.value > 50);
         return;
     }
@@ -68,24 +67,11 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
   }
 
   private checkDirection(p: Point): boolean {
-      const leftC = webGazerService.calibrationData.leftCentroid;
-      const rightC = webGazerService.calibrationData.rightCentroid;
-
-      if (!leftC || !rightC) {
-          // Fallback to simple screen split if no calibration
-          const midX = window.innerWidth / 2;
-          if (this.options.direction === 'LEFT') return p.x < midX;
-          else return p.x >= midX;
-      }
-
-      // Check distance to centroids
-      const distLeft = Math.hypot(p.x - leftC.x, p.y - leftC.y);
-      const distRight = Math.hypot(p.x - rightC.x, p.y - rightC.y);
-
+      const midX = window.innerWidth / 2;
       if (this.options.direction === 'LEFT') {
-          return distLeft < distRight;
+          return p.x < midX;
       } else {
-          return distRight < distLeft;
+          return p.x >= midX;
       }
   }
 
@@ -96,12 +82,5 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
   get component() {
     return markRaw(DirectionalGazeView);
-  }
-
-  get centroids() {
-      return {
-          left: webGazerService.calibrationData.leftCentroid,
-          right: webGazerService.calibrationData.rightCentroid
-      };
   }
 }

@@ -1,7 +1,7 @@
 import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import CalibrationView from './views/CalibrationView.vue';
-import { webGazerService, type Point } from '../services/webGazerService';
+import { faceMeshService, type Point } from '../services/faceMeshService';
 
 interface CalibrationOptions extends InstructionOptions {}
 
@@ -26,9 +26,9 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     this.currentStep.value = 'left';
     this.currentCount.value = 5;
 
-    // Init WebGazer
-    await webGazerService.init();
-    webGazerService.clearCalibration();
+    // Init FaceMesh
+    await faceMeshService.init();
+    faceMeshService.clearCalibration();
 
     // Start Loops
     this.initSpeech();
@@ -43,17 +43,12 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     if (this.animationFrameId) {
         cancelAnimationFrame(this.animationFrameId);
     }
+    faceMeshService.stop();
   }
 
   private startGazeLoop() {
-      let frameCount = 0;
       const loop = async () => {
-          const pred = await webGazerService.getCurrentPrediction();
-          frameCount++;
-          if (frameCount % 60 === 0) {
-              console.log("Gaze Loop Alive. Pred:", pred);
-          }
-          
+          const pred = faceMeshService.getCurrentGaze(); // synchronous now
           this.currentGaze.value = pred;
           this.animationFrameId = requestAnimationFrame(loop);
       };
@@ -133,29 +128,13 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
       const targetX = this.currentStep.value === 'left' ? w * 0.1 : w * 0.9;
       const targetY = h * 0.5;
 
-      // Train WebGazer
-      webGazerService.train(targetX, targetY);
-
-      // Retry loop for prediction (Reduced to 100ms max)
-      let pred = await webGazerService.getCurrentPrediction();
-      if (!pred) {
-          for (let i = 0; i < 2; i++) {
-              await new Promise(r => setTimeout(r, 50));
-              pred = await webGazerService.getCurrentPrediction();
-              if (pred) break;
-          }
+      // Train FaceMesh
+      // We perform multiple trains to simulate "recording" a burst
+      for(let i=0; i<5; i++) {
+          faceMeshService.train(targetX, targetY);
+          await new Promise(r => setTimeout(r, 20)); // tiny delay
       }
 
-      // Fallback
-      if (!pred) {
-          // console.warn("WebGazer prediction null, using target fallback", targetX, targetY);
-          pred = { x: targetX, y: targetY };
-      }
-
-      if (pred) {
-          webGazerService.addCalibrationPoint(this.currentStep.value, pred);
-      }
-      
       // Always decrement
       this.currentCount.value--;
       if (this.currentCount.value <= 0) {

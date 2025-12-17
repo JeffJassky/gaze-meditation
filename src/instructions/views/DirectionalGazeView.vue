@@ -31,9 +31,6 @@ defineProps<{
           transform: 'translate(-50%, -50%)' 
       }"
     ></div>
-    <div v-else class="fixed top-4 left-4 text-red-500 font-bold z-[9999]">
-        NO GAZE DETECTED
-    </div>
 
     <!-- Centroids Debug (Optional) -->
     <!--

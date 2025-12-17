@@ -1,7 +1,7 @@
 import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import GazeView from './views/GazeView.vue';
-import { webGazerService } from '../services/webGazerService';
+import { faceMeshService } from '../services/faceMeshService';
 
 interface GazeOptions extends InstructionOptions {
   holdTime?: number; // ms
@@ -29,8 +29,8 @@ export class GazeInstruction extends Instruction<GazeOptions> {
         left: `${20 + Math.random() * 60}%`
     };
 
-    // Init WebGazer
-    await webGazerService.init();
+    // Init FaceMesh
+    await faceMeshService.init();
 
     // Start Gaze Loop
     this.checkGaze();
@@ -49,10 +49,10 @@ export class GazeInstruction extends Instruction<GazeOptions> {
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
   }
 
-  private async checkGaze() {
+  private checkGaze() {
     if (!this.isActive) return;
 
-    const prediction = await webGazerService.getCurrentPrediction();
+    const prediction = faceMeshService.getCurrentGaze();
     
     if (prediction) {
         // Calculate Target Box
@@ -64,6 +64,10 @@ export class GazeInstruction extends Instruction<GazeOptions> {
         const y = window.innerHeight * (topPct / 100);
         const size = 96;
 
+        // Assuming visual is centered, adjust check?
+        // If CSS is "left: 50%" it usually means the element starts at 50%.
+        // If it has transform: translate(-50%, -50%), then 50% is the center.
+        // Let's assume standard positioning for now (Top-Left corner at %).
         const hit = prediction.x >= x && prediction.x <= x + size &&
                     prediction.y >= y && prediction.y <= y + size;
 
