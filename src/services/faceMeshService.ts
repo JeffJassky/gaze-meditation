@@ -369,40 +369,47 @@ class FaceMeshService {
 
       this.calibration.minX = avgLeftX;
 
-      this.calibration.maxX = avgRightX;
-    }
-
-    // Pitch Calibration?
-
-    // If we have distinct Top/Bottom samples (not implemented in UI yet), we'd use them.
-
-    // For now, if variance is high, assume intentional movement.
-
-    const rawYs = this.trainingPoints.map((p) => p.rawY);
-
-    const minRawY = Math.min(...rawYs);
-
-    const maxRawY = Math.max(...rawYs);
-
-    // Update Y range if we see significant spread
-
-    if (maxRawY - minRawY > 0.1) {
-      this.calibration.minY = minRawY;
-
-      this.calibration.maxY = maxRawY;
-    } else {
-      // Center around average
-
-      const avgY = rawYs.reduce((a, b) => a + b, 0) / rawYs.length;
-
-      this.calibration.minY = avgY - 0.2;
-
-      this.calibration.maxY = avgY + 0.2;
-    }
-
-    console.log("Recalibrated Head Pose:", this.calibration);
-  }
-
+                this.calibration.maxX = avgRightX;
+            }
+            
+            // Pitch Calibration: Explicit Top/Bottom Logic
+            const topSamples = this.trainingPoints.filter(p => p.screenY < window.innerHeight / 3);
+            const bottomSamples = this.trainingPoints.filter(p => p.screenY > window.innerHeight * 2 / 3);
+            
+            if (topSamples.length > 0 && bottomSamples.length > 0) {
+                let avgTopY = topSamples.reduce((sum, p) => sum + p.rawY, 0) / topSamples.length;
+                let avgBottomY = bottomSamples.reduce((sum, p) => sum + p.rawY, 0) / bottomSamples.length;
+                
+                const minDeltaY = 0.05; // Pitch range is smaller than Yaw usually
+                if ((avgBottomY - avgTopY) < minDeltaY) {
+                     console.warn("Pitch calibration range too small, widening...");
+                     const center = (avgBottomY + avgTopY) / 2;
+                     avgTopY = center - (minDeltaY / 2);
+                     avgBottomY = center + (minDeltaY / 2);
+                }
+                
+                this.calibration.minY = avgTopY;
+                this.calibration.maxY = avgBottomY;
+            } else {
+                // Fallback: Use variance or default centering if strict top/bottom samples missing
+                const rawYs = this.trainingPoints.map(p => p.rawY);
+                if (rawYs.length > 0) {
+                    const minRawY = Math.min(...rawYs);
+                    const maxRawY = Math.max(...rawYs);
+                    
+                    if ((maxRawY - minRawY) > 0.05) {
+                        this.calibration.minY = minRawY;
+                        this.calibration.maxY = maxRawY;
+                    } else {
+                        const avgY = rawYs.reduce((a, b) => a + b, 0) / rawYs.length;
+                        this.calibration.minY = avgY - 0.15;
+                        this.calibration.maxY = avgY + 0.15;
+                    }
+                }
+            }
+            
+            console.log("Recalibrated Head Pose:", this.calibration);
+        }
   public getCurrentGaze(): Point | null {
     // Return null if not ready or no face
 

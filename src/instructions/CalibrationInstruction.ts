@@ -6,9 +6,10 @@ import { faceMeshService, type Point } from '../services/faceMeshService';
 interface CalibrationOptions extends InstructionOptions {}
 
 export class CalibrationInstruction extends Instruction<CalibrationOptions> {
-  public currentStep = ref<'left' | 'right'>('left');
-  public currentCount = ref(5);
+  public currentCount = ref(10);
   public currentGaze = ref<Point | null>(null);
+  public targetPosition = ref({ x: 50, y: 50 }); // Percentage
+  public isSuccess = ref(false);
   
   private processing = false;
   private recognition: SpeechRecognition | null = null;
@@ -16,19 +17,22 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
   private animationFrameId: number | null = null;
   
   private numbersMap: Record<string, number> = {
-      'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1,
-      '5': 5, '4': 4, '3': 3, '2': 2, '1': 1,
+      'TEN': 10, 'NINE': 9, 'EIGHT': 8, 'SEVEN': 7, 'SIX': 6, 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1,
+      '10': 10, '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2, '1': 1,
       'TO': 2, 'TOO': 2, 'FOR': 4, 'FORE': 4
   };
 
   async start(context: InstructionContext) {
     this.context = context;
-    this.currentStep.value = 'left';
-    this.currentCount.value = 5;
+    this.currentCount.value = 10;
+    this.isSuccess.value = false;
 
     // Init FaceMesh
     await faceMeshService.init();
     faceMeshService.clearCalibration();
+
+    // Start with first position
+    this.generateNextPosition();
 
     // Start Loops
     this.initSpeech();
@@ -46,9 +50,44 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     faceMeshService.stop();
   }
 
+  private generateNextPosition() {
+      // Pick a position based on remaining count to ensure coverage
+      // 10 points: 4 corners, 4 edges, 2 random/center
+      const count = this.currentCount.value;
+      
+      // Map count to specific regions to ensure good calibration spread
+      // 10: Center (Start)
+      // 9: Top Left
+      // 8: Top Right
+      // 7: Bottom Right
+      // 6: Bottom Left
+      // 5: Top Center
+      // 4: Bottom Center
+      // 3: Left Center
+      // 2: Right Center
+      // 1: Center (Verify)
+      
+      const padding = 10; // % from edge
+      
+      const positions: Record<number, {x: number, y: number}> = {
+          10: { x: 50, y: 50 },
+          9:  { x: padding, y: padding }, // TL
+          8:  { x: 100 - padding, y: padding }, // TR
+          7:  { x: 100 - padding, y: 100 - padding }, // BR
+          6:  { x: padding, y: 100 - padding }, // BL
+          5:  { x: 50, y: padding }, // TC
+          4:  { x: 50, y: 100 - padding }, // BC
+          3:  { x: padding, y: 50 }, // LC
+          2:  { x: 100 - padding, y: 50 }, // RC
+          1:  { x: 50, y: 50 } // C
+      };
+      
+      this.targetPosition.value = positions[count] || { x: 50, y: 50 };
+  }
+
   private startGazeLoop() {
       const loop = async () => {
-          const pred = faceMeshService.getCurrentGaze(); // synchronous now
+          const pred = faceMeshService.getCurrentGaze();
           this.currentGaze.value = pred;
           this.animationFrameId = requestAnimationFrame(loop);
       };
@@ -70,19 +109,13 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
     this.recognition.onresult = (e) => this.handleSpeechResult(e);
     this.recognition.onend = () => {
-        console.log("Speech recognition ended, restarting...");
         // Restart if not done
-        if (this.context) {
-            try { this.recognition?.start(); } catch(e){}
+        if (this.context && this.recognition) {
+            try { this.recognition.start(); } catch(e){}
         }
     };
     
-    this.recognition.onerror = (e) => {
-        console.error("Speech recognition error:", e);
-    };
-    
     try {
-        console.log("Starting speech recognition...");
         this.recognition.start();
     } catch(e) {
         console.warn("Speech start error", e);
@@ -94,11 +127,9 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         const result = event.results[i];
-        // Check both interim and final results
         const transcript = result[0].transcript.trim().toUpperCase();
         
-        // Debugging
-        console.log("Heard:", transcript, "IsFinal:", result.isFinal, "Expected:", this.currentCount.value);
+        console.log("Heard:", transcript, "Expected:", this.currentCount.value);
 
         const expected = this.currentCount.value;
         const expectedWords = [
@@ -106,51 +137,45 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
             ...Object.keys(this.numbersMap).filter(key => this.numbersMap[key] === expected)
         ];
         
-        // Check if ANY of the expected words are in the transcript
-        // using .includes() for faster/permissive matching on interim results
         const match = expectedWords.some(w => w && transcript.includes(w));
         
         if (match) {
             this.processing = true;
             await this.snapshot();
             this.processing = false;
-            return; // Stop processing this event once we found a match
+            return;
         }
     }
   }
 
   private async snapshot() {
-      // Calculate target position
-      // Left: 10% w, 50% h. Right: 90% w, 50% h.
+      // Show Success Visual
+      this.isSuccess.value = true;
+      
       const w = window.innerWidth;
       const h = window.innerHeight;
       
-      const targetX = this.currentStep.value === 'left' ? w * 0.1 : w * 0.9;
-      const targetY = h * 0.5;
+      // Convert % to px
+      const targetX = (this.targetPosition.value.x / 100) * w;
+      const targetY = (this.targetPosition.value.y / 100) * h;
 
-      // Train FaceMesh
-      // We perform multiple trains to simulate "recording" a burst
+      // Train
       for(let i=0; i<5; i++) {
           faceMeshService.train(targetX, targetY);
-          await new Promise(r => setTimeout(r, 20)); // tiny delay
+          await new Promise(r => setTimeout(r, 20));
       }
 
-      // Always decrement
-      this.currentCount.value--;
-      if (this.currentCount.value <= 0) {
-          this.advanceStep();
-      }
+      // Wait 1s for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Reduced delay for snappier feel
-      await new Promise(resolve => setTimeout(resolve, 250));
-  }
-
-  private advanceStep() {
-      if (this.currentStep.value === 'left') {
-          this.currentStep.value = 'right';
-          this.currentCount.value = 5;
-      } else {
+      // Move to next
+      this.isSuccess.value = false;
+      this.currentCount.value--;
+      
+      if (this.currentCount.value <= 0) {
           this.complete(true);
+      } else {
+          this.generateNextPosition();
       }
   }
 
