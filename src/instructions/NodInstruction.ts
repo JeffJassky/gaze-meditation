@@ -27,8 +27,8 @@ export class NodInstruction extends Instruction<NodOptions> {
 
   // Thresholds (Relative to baseline)
   // Pitch: -Up, +Down
-  public readonly UP_THRESH = -0.05;
-  public readonly DOWN_THRESH = 0.05;
+  public readonly UP_THRESH = -0.02;
+  public readonly DOWN_THRESH = 0.02;
 
   async start(context: InstructionContext) {
     this.context = context;

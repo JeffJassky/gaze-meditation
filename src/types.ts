@@ -36,9 +36,18 @@ export interface SessionLog {
   metrics: SessionMetric[];
 }
 
+export interface UserCalibration {
+  blinkThreshold?: number;
+  gazeMinX?: number;
+  gazeMaxX?: number;
+  gazeMinY?: number;
+  gazeMaxY?: number;
+}
+
 export interface User {
   id: string;
   name: string;
   totalScore: number;
   history: string[]; // Array of SessionLog IDs
+  calibration?: UserCalibration;
 }

@@ -297,17 +297,111 @@ class FaceMeshService {
 
     
 
-      public setBlinkThreshold(value: number) {
-
-          console.log(`Updating Blink Threshold: ${this.blinkThreshold} -> ${value}`);
-
-          this.blinkThreshold = value;
-
-      }
+        public setBlinkThreshold(value: number) {
 
     
 
-      private getDistance(p1: faceLandmarksDetection.Keypoint, p2: faceLandmarksDetection.Keypoint) {
+            console.log(`Updating Blink Threshold: ${this.blinkThreshold} -> ${value}`);
+
+    
+
+            this.blinkThreshold = value;
+
+    
+
+        }
+
+    
+
+      
+
+    
+
+        public getCalibration() {
+
+    
+
+            return {
+
+    
+
+                blinkThreshold: this.blinkThreshold,
+
+    
+
+                gazeMinX: this.calibration.minX,
+
+    
+
+                gazeMaxX: this.calibration.maxX,
+
+    
+
+                gazeMinY: this.calibration.minY,
+
+    
+
+                gazeMaxY: this.calibration.maxY
+
+    
+
+            };
+
+    
+
+        }
+
+    
+
+      
+
+    
+
+        public loadCalibration(data: any) {
+
+    
+
+            if (data.blinkThreshold) this.blinkThreshold = data.blinkThreshold;
+
+    
+
+            if (data.gazeMinX) this.calibration.minX = data.gazeMinX;
+
+    
+
+            if (data.gazeMaxX) this.calibration.maxX = data.gazeMaxX;
+
+    
+
+            if (data.gazeMinY) this.calibration.minY = data.gazeMinY;
+
+    
+
+            if (data.gazeMaxY) this.calibration.maxY = data.gazeMaxY;
+
+    
+
+            
+
+    
+
+            console.log("Loaded Calibration:", data);
+
+    
+
+        }
+
+    
+
+      
+
+    
+
+        private getDistance(p1: faceLandmarksDetection.Keypoint, p2: faceLandmarksDetection.Keypoint) {
+
+    
+
+      
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
   }
 
