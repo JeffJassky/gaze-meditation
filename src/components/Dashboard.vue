@@ -5,6 +5,10 @@ import { getUsers, getSessions, seedDatabase, saveUser } from '../services/stora
 import { SpeechInstruction } from '../instructions/SpeechInstruction';
 import { CalibrationInstruction } from '../instructions/CalibrationInstruction';
 import { DirectionalGazeInstruction } from '../instructions/DirectionalGazeInstruction';
+import { StillnessInstruction } from '../instructions/StillnessInstruction';
+import { BlinkInstruction } from '../instructions/BlinkInstruction';
+import { TypeInstruction } from '../instructions/TypeInstruction';
+import { NodInstruction } from '../instructions/NodInstruction';
 
 // Mock Programs
 const PROGRAMS: Program[] = [
@@ -42,6 +46,29 @@ const PROGRAMS: Program[] = [
       new SpeechInstruction({ id: 'v1', prompt: 'Say "START"', targetValue: 'START', duration: 4000 }),
       new SpeechInstruction({ id: 'v2', prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000 }),
       new SpeechInstruction({ id: 'v4', prompt: 'Say "DONE"', targetValue: 'DONE', duration: 3000 }),
+    ]
+  },
+  {
+      id: 'prog_blink_debug',
+      title: 'Blink Calibration',
+      description: 'Debug tool for testing blink sensitivity.',
+      audioTrack: 'silence.mp3',
+      instructions: [
+          new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
+      ]
+  },
+  {
+    id: 'prog_deepening',
+    title: 'Deepening Protocol',
+    description: 'Advanced conditioning using stillness, gaze, and affirmation.',
+    audioTrack: 'drone_dark.mp3',
+    instructions: [
+        new StillnessInstruction({ id: 's1', prompt: 'Freeze. Do not move.', duration: 5000 }),
+        new TypeInstruction({ id: 't1', prompt: 'Type "I obey"', targetPhrase: 'I obey' }),
+        new NodInstruction({ id: 'n1', prompt: 'Nod if you are ready', nodsRequired: 3, type: 'YES' }),
+        new BlinkInstruction({ id: 'b1', prompt: 'Do not blink', duration: 10000 }),
+        new TypeInstruction({ id: 't2', prompt: 'Type "My mind is open"', targetPhrase: 'My mind is open' }),
+        new StillnessInstruction({ id: 's2', prompt: 'Perfect stillness', duration: 10000 }),
     ]
   }
 ];
