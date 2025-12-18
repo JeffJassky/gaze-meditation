@@ -423,13 +423,11 @@ const TEST_PROGRAMS: Program[] = [
 			new NodInstruction({
 				id: 'nod_test',
 				prompt: 'Nod your head twice',
-				nodsRequired: 2,
 				type: 'YES'
 			}),
 			new NodInstruction({
 				id: 'nod_test',
 				prompt: 'Shake your head twice',
-				nodsRequired: 2,
 				type: 'NO'
 			})
 		]
