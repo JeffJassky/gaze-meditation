@@ -142,7 +142,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 		score.value += points
 		state.value = SessionState.REINFORCING_POS
 	} else {
-		score.value = Math.max(0, score.value - 50)
+		score.value -= 50
 		state.value = SessionState.REINFORCING_NEG
 	}
 

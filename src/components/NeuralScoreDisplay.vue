@@ -7,16 +7,12 @@ const props = defineProps<{
   theme: ThemeConfig; // Accept theme prop
 }>();
 
-const animatedScore = ref(0);
-const displayScore = ref('000000');
+const displayDelta = ref('');
 const positionStyle = ref({});
 const animationState = ref('hidden'); // 'hidden', 'animating', 'showing'
+const isPositive = ref(true);
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-const formatScore = (num: number) => {
-  return Math.floor(num).toString().padStart(6, '0');
-};
 
 const getRandomPosition = () => {
   const maxX = window.innerWidth * 0.7; // 70% of screen width
@@ -30,7 +26,12 @@ const getRandomPosition = () => {
 };
 
 watch(() => props.score, (newScore, oldScore) => {
-  if (newScore === oldScore) return;
+  // Don't show immediately when it initializes (oldScore is undefined)
+  // or if the score hasn't actually changed
+  if (oldScore === undefined || newScore === oldScore) return;
+
+  const delta = newScore - oldScore;
+  if (delta === 0) return;
 
   // Clear any existing timeouts
   if (timeoutId) {
@@ -38,32 +39,32 @@ watch(() => props.score, (newScore, oldScore) => {
     timeoutId = null;
   }
 
-  // Reset state
+  isPositive.value = delta > 0;
+  
+  // Reset state and move to a new random position
   animationState.value = 'animating';
   positionStyle.value = getRandomPosition();
 
-  // Manual number animation
-  const duration = 500; // milliseconds
-  const start = animatedScore.value; // current value
-  const end = newScore;
+  // Manual number animation from 0 to delta
+  const duration = 400; // milliseconds
   let startTime: number | null = null;
 
   const animate = (currentTime: number) => {
     if (!startTime) startTime = currentTime;
-    const progress = (currentTime - startTime) / duration;
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    
+    const currentVal = Math.floor(delta * progress);
+    displayDelta.value = (delta > 0 ? '+' : '') + currentVal;
 
     if (progress < 1) {
-      animatedScore.value = start + (end - start) * progress;
-      displayScore.value = formatScore(animatedScore.value);
       requestAnimationFrame(animate);
     } else {
-      animatedScore.value = end;
-      displayScore.value = formatScore(animatedScore.value);
+      displayDelta.value = (delta > 0 ? '+' : '') + delta;
       animationState.value = 'showing';
-      // After 1 second, start fade out
+      // After 1.5 seconds, start fade out
       timeoutId = setTimeout(() => {
         animationState.value = 'hidden';
-      }, 1000);
+      }, 1500);
     }
   };
 
@@ -71,21 +72,24 @@ watch(() => props.score, (newScore, oldScore) => {
 }, { immediate: true });
 
 onMounted(() => {
-  // Initialize position and score
+  // Initialize position
   positionStyle.value = getRandomPosition();
-  displayScore.value = formatScore(props.score);
 });
 
 const transitionClass = computed(() => {
-  if (animationState.value === 'animating') {
-    return 'transition-all ease-out duration-300 opacity-100 scale-100 rotate-0'; // Faster fade-in, no rotation
-  } else if (animationState.value === 'showing') {
-    return 'opacity-100 scale-100 rotate-0';
+  if (animationState.value === 'animating' || animationState.value === 'showing') {
+    return 'transition-all ease-out duration-300 opacity-100 scale-100 rotate-0';
   } else {
     // Zoom inwards and fade out with a slight rotation
     return 'transition-all ease-in duration-500 opacity-0 scale-50 -rotate-12';
   }
 });
+
+const deltaStyle = computed(() => ({
+  color: isPositive.value
+    ? (props.theme.positiveColor || '#10B981')
+    : (props.theme.negativeColor || '#EF4444')
+}));
 </script>
 
 <template>
@@ -97,16 +101,10 @@ const transitionClass = computed(() => {
       class="text-center"
       :class="transitionClass"
     >
-      <h2
-        class="text-xs uppercase tracking-widest font-bold mb-1"
-        :style="{ color: props.theme.secondaryTextColor }"
-      >
-        Neural Score
-      </h2>
       <span
         class="text-4xl font-mono tracking-tighter"
-        :style="{ color: props.theme.textColor }"
-        >{{ displayScore }}</span
+        :style="deltaStyle"
+        >{{ displayDelta }}</span
       >
     </div>
   </div>
