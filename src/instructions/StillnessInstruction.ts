@@ -6,7 +6,6 @@ import { faceMeshService } from '../services/faceMeshService';
 interface StillnessOptions extends InstructionOptions {
   duration: number; // ms to hold still
   tolerance?: number; // Sensitivity (0.01 - 0.1)
-  getReadyMessage?: string;
   mistakeMessage?: string;
 }
 
@@ -14,39 +13,34 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   public status = ref<'WAITING' | 'HOLDING' | 'FAILED' | 'SUCCESS'>('WAITING');
   public progress = ref(0);
   public drift = ref(0);
-  public driftX = ref(0);
-  public driftY = ref(0);
+  public driftX = ref(0); // Yaw diff
+  public driftY = ref(0); // Pitch diff
   // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
   
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private startHoldTime = 0;
-  private initialYaw = 0;
-  private initialPitch = 0;
   
+  // Dynamic Centering
+  private centerPitch = 0;
+  private centerYaw = 0;
+  private isInitialized = false;
+
   // Tolerance for movement
   public get tolerance() { return this.options.tolerance || 0.05; }
 
   async start(context: InstructionContext) {
     this.context = context;
-    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
-    this.status.value = 'WAITING';
+    this.resolvedTheme = context.resolvedTheme;
+    this.isInitialized = false;
+    this.progress.value = 0;
+    this.drift.value = 0;
     
     await faceMeshService.init();
     
-    // Give them a moment to settle before locking the pose
-    setTimeout(() => this.lockPose(), 2000);
-    
-    this.loop();
-  }
-
-  private lockPose() {
-    if (this.status.value === 'FAILED') return;
-    
-    this.initialYaw = faceMeshService.debugData.headYaw;
-    this.initialPitch = faceMeshService.debugData.headPitch;
-    this.startHoldTime = Date.now();
     this.status.value = 'HOLDING';
+    this.startHoldTime = Date.now();
+    this.loop();
   }
 
   stop() {
@@ -60,19 +54,38 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
         const currentYaw = faceMeshService.debugData.headYaw;
         const currentPitch = faceMeshService.debugData.headPitch;
 
-        // Calculate distance from initial pose
-        const diffYaw = currentYaw - this.initialYaw;
-        const diffPitch = currentPitch - this.initialPitch;
+        // Initialization
+        if (!this.isInitialized) {
+            if (currentYaw !== 0 || currentPitch !== 0) {
+                this.centerYaw = currentYaw;
+                this.centerPitch = currentPitch;
+                this.isInitialized = true;
+            }
+        } else {
+            // Adaptive Center (Slow Moving Average)
+            // Filters out static posture, keeps focus on "stillness" (low AC signal)
+            // Use a slightly faster alpha than Nod to adapt to posture shifts, 
+            // but slow enough that "movement" registers as drift.
+            const alpha = 0.05; 
+            this.centerYaw = this.lerp(this.centerYaw, currentYaw, alpha);
+            this.centerPitch = this.lerp(this.centerPitch, currentPitch, alpha);
+        }
+
+        // Calculate drift from the *Average* Center
+        // If holding perfectly still, current ~= center, drift ~= 0.
+        // If moving, current diverges from lagging center.
+        const diffYaw = currentYaw - this.centerYaw;
+        const diffPitch = currentPitch - this.centerPitch;
         
         this.driftX.value = diffYaw;
         this.driftY.value = diffPitch;
 
         const totalDrift = Math.hypot(diffYaw, diffPitch);
-        
         this.drift.value = totalDrift;
 
         if (totalDrift > this.tolerance) {
             this.fail("Moved too much");
+            return;
         }
 
         const elapsed = Date.now() - this.startHoldTime;
@@ -80,16 +93,20 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 
         if (elapsed >= this.options.duration!) {
             this.succeed();
+            return;
         }
     }
 
     this.animationFrameId = requestAnimationFrame(() => this.loop());
   }
 
+  private lerp(start: number, end: number, amt: number) {
+      return (1 - amt) * start + amt * end;
+  }
+
   private fail(reason: string) {
       this.status.value = 'FAILED';
       this.stop();
-      // Fail immediately or retry? Let's fail for now.
       setTimeout(() => {
         this.context?.complete(false, { reason });
       }, 1000);

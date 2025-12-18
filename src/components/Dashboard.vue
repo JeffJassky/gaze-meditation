@@ -484,7 +484,6 @@ const TEST_PROGRAMS: Program[] = [
 				prompt: 'Remain perfectly still',
 				duration: 5000,
 				tolerance: 0.05,
-				getReadyMessage: 'Get ready to remain still',
 				mistakeMessage: 'DO NOT MOVE'
 			})
 		]

@@ -8,16 +8,13 @@
 			:class="{ error: instruction.status.value === 'FAILED' }"
 			:style="{ '--negative-color': instruction.resolvedTheme.negativeColor }"
 		>
-			<h2 v-if="instruction.status.value === 'WAITING'">
-				{{ instruction.options.getReadyMessage || 'Get Ready to Freeze...' }}
-			</h2>
-			<h2 v-else-if="instruction.status.value === 'HOLDING'">
+			<h2 v-if="instruction.status.value === 'HOLDING'">
 				{{ instruction.options.prompt }}
 			</h2>
 			<h2 v-else-if="instruction.status.value === 'FAILED'">
 				{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
 			</h2>
-			<h2 v-else>PERFECT</h2>
+			<h2 v-else-if="instruction.status.value === 'SUCCESS'">PERFECT</h2>
 		</div>
 
 		<div
