@@ -1,9 +1,9 @@
-import type { Component } from 'vue';
+import type { Component } from "vue";
 
 export interface InstructionContext {
   // Callbacks to report status to the engine
-  complete(success: boolean, metrics?: any): void;
-  
+  complete(success: boolean, metrics?: any, result?: any): void;
+
   // Access to shared resources if needed (e.g. DOM container)
   container?: HTMLElement;
 }
@@ -12,15 +12,19 @@ export interface InstructionOptions {
   id: string;
   prompt: string;
   duration?: number; // ms
+  onCompleteCallback?: (success: boolean, result?: any) => string | undefined; // NEW
 }
 
-export abstract class Instruction<TOptions extends InstructionOptions = InstructionOptions> {
+export abstract class Instruction<
+  TOptions extends InstructionOptions = InstructionOptions
+> {
   public options: TOptions;
+  protected context: InstructionContext | null = null;
 
   constructor(options: TOptions) {
-    this.options = { 
+    this.options = {
       duration: 5000, // Default duration
-      ...options 
+      ...options,
     };
   }
 
@@ -33,9 +37,12 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
   // Lifecycle: Called every frame (optional)
   // update(time: number, delta: number): void {}
 
-  // The Vue Component to render for this instruction
-  abstract get component(): Component;
-  
-  // Helper to get ID
-  get id() { return this.options.id; }
+  // Called by the engine after the instruction has completed
+  // Can return an instruction ID to jump to, otherwise continues sequentially
+  public onComplete(success: boolean, result?: any): string | undefined {
+    if (this.options.onCompleteCallback) {
+      return this.options.onCompleteCallback(success, result);
+    }
+    return undefined; // Continue sequentially
+  }
 }

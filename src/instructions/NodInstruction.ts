@@ -20,7 +20,7 @@ export class NodInstruction extends Instruction<NodOptions> {
   public currentPitch = ref(0);
   public relativePitch = ref(0);
 
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private baselinePitch = 0;
   private calibrationSamples: number[] = [];

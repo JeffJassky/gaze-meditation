@@ -1,9 +1,18 @@
 <template>
   <div class="stillness-view">
-    <div class="status-indicator" :class="{ error: instruction.status.value === 'FAILED' }">
-      <h2 v-if="instruction.status.value === 'WAITING'">Get Ready to Freeze...</h2>
-      <h2 v-else-if="instruction.status.value === 'HOLDING'">FREEZE</h2>
-      <h2 v-else-if="instruction.status.value === 'FAILED'">MOVEMENT DETECTED</h2>
+    <div
+      class="status-indicator"
+      :class="{ error: instruction.status.value === 'FAILED' }"
+    >
+      <h2 v-if="instruction.status.value === 'WAITING'">
+        Get Ready to Freeze...
+      </h2>
+      <h2 v-else-if="instruction.status.value === 'HOLDING'">
+        {{ instruction.options.prompt }}
+      </h2>
+      <h2 v-else-if="instruction.status.value === 'FAILED'">
+        MOVEMENT DETECTED
+      </h2>
       <h2 v-else>PERFECT</h2>
     </div>
 
@@ -15,7 +24,10 @@
     </div>
 
     <div class="progress-bar">
-      <div class="fill" :style="{ width: instruction.progress.value + '%' }"></div>
+      <div
+        class="fill"
+        :style="{ width: instruction.progress.value + '%' }"
+      ></div>
     </div>
   </div>
 </template>
@@ -33,9 +45,9 @@ const cursorStyle = computed(() => {
     // FaceMesh Yaw: -Left, +Right
     // FaceMesh Pitch: -Up, +Down (Assuming standard image coords)
     // We multiply by a large factor (e.g. 1000px) because the units are small (normalized relative to face width)
-    
-    const scale = 1500; 
-    const x = props.instruction.driftX.value * scale; 
+
+    const scale = 1500;
+    const x = props.instruction.driftX.value * scale;
     const y = props.instruction.driftY.value * scale;
 
     return {

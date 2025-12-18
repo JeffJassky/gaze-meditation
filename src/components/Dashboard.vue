@@ -102,7 +102,8 @@ const PROGRAMS: Program[] = [
 		duration: 0,
 		question: 'What are your preferences?',
 		prompt: 'What are your preferences?', // Add this line
-		fields: [
+			fields: [
+
 			{
 			label: 'Favorite Color',
 			name: 'favColor',
@@ -118,6 +119,30 @@ const PROGRAMS: Program[] = [
 			},
 		],
 		autoContinue: true, // Will auto-continue when all required fields are filled
+		onCompleteCallback: (success, result) => {
+			if (success && result) {
+				const formData = result as Record<string, any>;
+				if (formData.favColor === 'Red') {
+					console.log('User prefers Red, jumping to red-path');
+					return 'red-path'; // Jump to an instruction with this ID
+				} else if (formData.favColor === 'Blue') {
+					console.log('User prefers Blue, jumping to blue-path');
+					return 'blue-path'; // Jump to an instruction with this ID
+				}
+			}
+			return undefined; // Continue sequentially
+		}
+		}),
+		new StillnessInstruction({
+			id: 'red-path',
+			duration: 3000,
+			prompt: 'You chose Red! Enjoy this red stillness.',
+		}),
+
+		new StillnessInstruction({
+			id: 'blue-path',
+			duration: 3000,
+			prompt: 'You chose Blue! Enjoy this blue stillness.',
 		}),
 		new StillnessInstruction({
 		id: 'final-stillness',

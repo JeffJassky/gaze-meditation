@@ -53,13 +53,16 @@ const nextInstruction = (index: number) => {
       state.value = SessionState.VALIDATING;
       if (currentInstr.value) {
         currentInstr.value.start({
-          complete: (success, metrics) => triggerReinforcement(success, metrics)
+          complete: (success, metrics, result) => triggerReinforcement(success, metrics, result)
         });
       }
   }, 500); // 500ms delay to read prompt before active
 };
 
-const triggerReinforcement = (success: boolean, metrics: any) => {
+const findInstructionIndexById = (id: string): number => {
+    return props.program.instructions.findIndex(instr => instr.id === id);
+};
+const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
     if (timerRef.value) clearTimeout(timerRef.value);
     
     // Stop instruction logic (stop listening/tracking)
@@ -73,6 +76,24 @@ const triggerReinforcement = (success: boolean, metrics: any) => {
           timestamp: Date.now(),
           reactionTime: metrics?.reactionTime || 0
       });
+
+      // --- New Logic for onComplete Callback ---
+      if (currentInstr.value.onComplete) {
+          const nextInstructionId = currentInstr.value.onComplete(success, result);
+          if (nextInstructionId) {
+              const jumpToIndex = findInstructionIndexById(nextInstructionId);
+              if (jumpToIndex !== -1) {
+                  // Wait for reinforcement period then jump
+                  setTimeout(() => {
+                      nextInstruction(jumpToIndex);
+                  }, 2000);
+                  return; // Exit here as we are jumping
+              } else {
+                  console.warn(`Instruction with ID '${nextInstructionId}' not found. Continuing sequentially.`);
+              }
+          }
+      }
+      // --- End New Logic ---
     }
 
     if (success) {

@@ -15,7 +15,7 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   public driftX = ref(0);
   public driftY = ref(0);
   
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private startHoldTime = 0;
   private initialYaw = 0;

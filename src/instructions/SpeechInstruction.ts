@@ -1,6 +1,10 @@
-import { ref, markRaw } from 'vue';
-import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
-import SpeechView from './views/SpeechView.vue';
+import { ref, markRaw } from "vue";
+import {
+  Instruction,
+  type InstructionContext,
+  type InstructionOptions,
+} from "../core/Instruction";
+import SpeechView from "./views/SpeechView.vue";
 
 interface SpeechOptions extends InstructionOptions {
   targetValue: string;
@@ -9,14 +13,14 @@ interface SpeechOptions extends InstructionOptions {
 export class SpeechInstruction extends Instruction<SpeechOptions> {
   private recognition: SpeechRecognition | null = null;
   public isListening = ref(false);
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private timeoutId: number | null = null;
   private startTime: number = 0;
 
   start(context: InstructionContext) {
     this.context = context;
     this.startTime = Date.now();
-    
+
     // Start Timeout Logic
     if (this.options.duration) {
       this.timeoutId = window.setTimeout(() => {
@@ -25,17 +29,18 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     }
 
     // Initialize Speech
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
-      this.recognition.lang = 'en-US';
-      
+      this.recognition.lang = "en-US";
+
       this.recognition.onresult = (e) => this.handleResult(e);
       this.recognition.onend = () => this.handleEnd();
       this.recognition.onerror = (e) => console.error("Speech Error", e);
-      
+
       try {
         this.recognition.start();
         this.isListening.value = true;
@@ -61,13 +66,13 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       const result = event.results[i];
       for (let j = 0; j < result.length; ++j) {
-         const transcript = result[j].transcript.trim().toUpperCase();
-         const target = this.options.targetValue.toUpperCase();
-         
-         if (transcript.includes(target)) {
-           this.complete(true);
-           return; 
-         }
+        const transcript = result[j].transcript.trim().toUpperCase();
+        const target = this.options.targetValue.toUpperCase();
+
+        if (transcript.includes(target)) {
+          this.complete(true);
+          return;
+        }
       }
     }
   }
@@ -76,9 +81,11 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     // Auto-restart if still active (handled by engine not calling stop yet)
     // Actually, checking isListening or context might be better
     if (this.isListening.value && this.recognition) {
-        try {
-            this.recognition.start();
-        } catch(e) { /* ignore */ }
+      try {
+        this.recognition.start();
+      } catch (e) {
+        /* ignore */
+      }
     }
   }
 
@@ -87,9 +94,9 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
   }
 
   private complete(success: boolean) {
-     if (this.timeoutId) clearTimeout(this.timeoutId);
-     const reactionTime = Date.now() - this.startTime;
-     this.context?.complete(success, { reactionTime });
+    if (this.timeoutId) clearTimeout(this.timeoutId);
+    const reactionTime = Date.now() - this.startTime;
+    this.context?.complete(success, { reactionTime });
   }
 
   get component() {

@@ -15,7 +15,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
   public isCorrect = ref(false);
   public score = ref(100); 
   
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private isActive = false;
   private startTime = 0;

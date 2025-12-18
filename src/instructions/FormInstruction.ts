@@ -1,6 +1,6 @@
 import { ref, markRaw, reactive } from "vue";
-import { Instruction, type InstructionContext } from "../core/Instruction";
 import FormView from "./views/FormView.vue";
+import { Instruction, type InstructionContext } from "../core/Instruction";
 import { type FormInstructionOptions, FormFieldType } from "../types";
 
 export class FormInstruction extends Instruction<FormInstructionOptions> {
@@ -39,7 +39,7 @@ export class FormInstruction extends Instruction<FormInstructionOptions> {
   // Method to be called by the FormView when the form is submitted/completed
   public submitForm(data: Record<string, any>) {
     Object.assign(this.formData, data); // Update internal formData
-    this.context?.complete(true); // Always complete successfully on submission
+    this.context?.complete(true, undefined, this.formData); // Pass formData as result
   }
 
   get component() {

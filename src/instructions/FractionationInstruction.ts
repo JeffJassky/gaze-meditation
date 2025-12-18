@@ -25,7 +25,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
   public ear = ref(0);
   public eyeOpennessNormalized = ref(1.0);
 
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
 
   private openSamples: number[] = [];

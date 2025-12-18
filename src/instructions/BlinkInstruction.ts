@@ -14,7 +14,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   public eyeOpennessNormalized = ref(1.0); // Normalized 0-1 eye openness
   public status = ref<'RUNNING' | 'FAILED' | 'SUCCESS'>('RUNNING');
   
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private endTime = 0;
 

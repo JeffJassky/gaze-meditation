@@ -23,7 +23,7 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
   private processing = false;
   private recognition: SpeechRecognition | null = null;
-  private context: InstructionContext | null = null;
+  protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
 
   private numbersMap: Record<string, number> = {
@@ -111,7 +111,7 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
   private nextStep() {
     if (this.stepIndex >= this.shuffledNumbers.length) {
-      this.complete(true);
+      this.context?.complete(true);
       return;
     }
 
@@ -143,7 +143,7 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       console.error("Speech Recognition not supported");
-      this.complete(false);
+      this.context?.complete(false);
       return;
     }
 

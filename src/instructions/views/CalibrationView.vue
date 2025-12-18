@@ -14,7 +14,8 @@ defineProps<{
     <h1
       class="text-4xl font-bold text-red mb-8 drop-shadow-md text-center fixed top-50 w-full"
     >
-      Look at the DOT and say the number
+      Turn your head toward the DOT.<br />
+      Speak the number.
     </h1>
 
     <!-- Single Moving Target -->
@@ -47,16 +48,5 @@ defineProps<{
           transform: 'translate(-50%, -50%)' 
       }"
     ></div>
-
-    <!-- Raw Data Debug -->
-    <div
-      class="fixed top-4 left-4 z-[9999] font-mono font-bold bg-black/50 p-2 rounded text-white"
-      v-if="instruction.currentGaze.value"
-    >
-      <div>
-        GAZE: {{ Math.round(instruction.currentGaze.value.x) }},
-        {{ Math.round(instruction.currentGaze.value.y) }}
-      </div>
-    </div>
   </div>
 </template>
