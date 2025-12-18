@@ -6,6 +6,8 @@ import {
 } from "../core/Instruction";
 import CalibrationView from "./views/CalibrationView.vue";
 import { faceMeshService, type Point } from "../services/faceMeshService";
+import type { ThemeConfig } from '../types';
+
 
 interface CalibrationOptions extends InstructionOptions {}
 
@@ -15,6 +17,8 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
   public currentGaze = ref<Point | null>(null);
   public targetPosition = ref({ x: 50, y: 50 }); // Percentage
   public isSuccess = ref(false);
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   // Internal State
   private stepIndex = 0;
@@ -60,6 +64,7 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.isSuccess.value = false;
     this.stepIndex = 0;
 

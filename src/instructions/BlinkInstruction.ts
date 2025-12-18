@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import BlinkView from './views/BlinkView.vue';
 import { faceMeshService } from '../services/faceMeshService';
+import type { ThemeConfig } from '../types';
 
 interface BlinkOptions extends InstructionOptions {
   duration: number;
@@ -13,6 +14,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   public ear = ref(0); // Eye Aspect Ratio
   public eyeOpennessNormalized = ref(1.0); // Normalized 0-1 eye openness
   public status = ref<'RUNNING' | 'FAILED' | 'SUCCESS'>('RUNNING');
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
   
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
@@ -20,6 +22,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.status.value = 'RUNNING';
     
     await faceMeshService.init();

@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import DirectionalGazeView from './views/DirectionalGazeView.vue';
 import { faceMeshService, type Point } from '../services/faceMeshService';
+import type { ThemeConfig } from '../types';
 
 interface DirectionalOptions extends InstructionOptions {
   direction: 'LEFT' | 'RIGHT';
@@ -14,6 +15,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
   public currentGaze = ref<Point | null>(null);
   public isCorrect = ref(false);
   public score = ref(100); 
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
   
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
@@ -24,6 +26,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.isActive = true;
     this.startTime = Date.now();
     this.correctFrames = 0;

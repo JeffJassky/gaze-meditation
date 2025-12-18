@@ -16,10 +16,10 @@ onMounted(() => {
 
 <template>
   <div class="instruction-view read-view">
-    <div class="prompt-text text-white text-4xl font-bold mb-8 fade-in">
-      {{ instruction.prompt }}
+    <div class="prompt-text fade-in" :style="{ color: instruction.resolvedTheme.textColor }">
+      {{ instruction.options.prompt }}
     </div>
-    <div class="read-content text-zinc-300 text-2xl leading-relaxed fade-in-delay">
+    <div class="read-content leading-relaxed fade-in-delay" :style="{ color: instruction.resolvedTheme.secondaryTextColor }">
       {{ instruction.text }}
     </div>
   </div>
@@ -34,6 +34,16 @@ onMounted(() => {
   height: 100%;
   text-align: center;
   padding: 2rem;
+}
+
+.prompt-text {
+  font-size: clamp(1.5rem, 5vw, 4rem); /* Responsive font size */
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.read-content {
+  font-size: clamp(1rem, 3vw, 2.5rem); /* Responsive font size */
 }
 
 .fade-in {

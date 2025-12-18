@@ -6,6 +6,7 @@ import {
 } from "../core/Instruction";
 import NodView from "./views/NodView.vue";
 import { faceMeshService } from "../services/faceMeshService";
+import type { ThemeConfig } from '../types';
 
 interface NodOptions extends InstructionOptions {
   nodsRequired: number;
@@ -19,6 +20,8 @@ export class NodInstruction extends Instruction<NodOptions> {
   );
   public currentPitch = ref(0);
   public relativePitch = ref(0);
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
@@ -32,6 +35,7 @@ export class NodInstruction extends Instruction<NodOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.nodsCompleted.value = 0;
     this.currentStage.value = "CALIBRATING";
     this.calibrationSamples = [];

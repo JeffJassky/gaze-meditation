@@ -2,6 +2,7 @@ import { ref, markRaw, reactive } from "vue";
 import FormView from "./views/FormView.vue";
 import { Instruction, type InstructionContext } from "../core/Instruction";
 import { type FormInstructionOptions, FormFieldType } from "../types";
+import type { ThemeConfig } from "../types";
 
 export class FormInstruction extends Instruction<FormInstructionOptions> {
   // UI State
@@ -9,6 +10,7 @@ export class FormInstruction extends Instruction<FormInstructionOptions> {
   public fields = reactive<FormInstructionOptions["fields"]>([]);
   public formData = reactive<Record<string, any>>({});
   public autoContinue = false;
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
 
   constructor(options: FormInstructionOptions) {
     super(options);
@@ -28,6 +30,7 @@ export class FormInstruction extends Instruction<FormInstructionOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     // No specific start logic other than presenting the form
     // The view will handle user input and completion.
   }

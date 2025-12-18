@@ -2,6 +2,7 @@
   <div
     class="fractionation-view"
     :class="{ 'eyes-closed-bg': instruction.status.value === 'CLOSED' }"
+    :style="{ color: instruction.resolvedTheme.textColor }"
   >
     <div class="content">
       <h1 v-if="instruction.status.value === 'READY'">GET READY</h1>
@@ -19,12 +20,13 @@
       <p
         class="cycle-info"
         v-if="instruction.status.value !== 'READY' && instruction.status.value !== 'FINISHED' && instruction.status.value !== 'OBSERVING'"
+        :style="{ color: instruction.resolvedTheme.secondaryTextColor }"
       >
         Cycle {{ instruction.currentCycle.value + 1 }} /
         {{ instruction.options.cycles }}
       </p>
 
-      <p v-if="instruction.status.value === 'OBSERVING'">
+      <p v-if="instruction.status.value === 'OBSERVING'" :style="{ color: instruction.resolvedTheme.secondaryTextColor }">
         Please look at the screen naturally.
       </p>
 
@@ -49,12 +51,12 @@ const props = defineProps<{
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: white;
+  /* color: white; is now set via inline style */
   transition: background 1s;
 }
 
 .fractionation-view.eyes-closed-bg {
-    background: #000;
+    background: v-bind('props.instruction.resolvedTheme.backgroundColor');
 }
 
 .content {
@@ -71,7 +73,7 @@ h1 {
 }
 
 .cycle-info {
-    color: #555;
+    /* color: #555; is now set via inline style */
     font-family: monospace;
 }
 

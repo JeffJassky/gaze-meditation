@@ -1,6 +1,7 @@
 import { Instruction, type InstructionContext } from '../core/Instruction';
 import { markRaw } from 'vue';
 import ReadView from './views/ReadView.vue';
+import type { ThemeConfig } from '../types';
 
 interface ReadInstructionConfig {
   id: string;
@@ -13,6 +14,8 @@ export class ReadInstruction extends Instruction {
   readonly text: string;
   readonly component = markRaw(ReadView);
   private timer: number | null = null;
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   constructor(config: ReadInstructionConfig) {
     super(config);
@@ -21,6 +24,7 @@ export class ReadInstruction extends Instruction {
 
   start(context: InstructionContext): void {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     if (this.options.duration) {
       this.timer = window.setTimeout(() => {
         this.context?.complete(true);

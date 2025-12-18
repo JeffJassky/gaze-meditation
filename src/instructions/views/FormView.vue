@@ -23,6 +23,14 @@ const isFormValid = computed(() => {
   return props.instruction.fields.every(isFieldValid);
 });
 
+const accentHoverColor = computed(() => props.instruction.resolvedTheme.accentHoverColor || props.instruction.resolvedTheme.accentColor);
+const accentColor = computed(() => props.instruction.resolvedTheme.accentColor);
+const negativeColor = computed(() => props.instruction.resolvedTheme.negativeColor);
+const secondaryTextColor = computed(() => props.instruction.resolvedTheme.secondaryTextColor);
+const textColor = computed(() => props.instruction.resolvedTheme.textColor);
+const backgroundColor = computed(() => props.instruction.resolvedTheme.backgroundColor);
+
+
 // Watch for changes in localFormData to potentially auto-submit
 watch(localFormData.value, () => {
   if (props.instruction.autoContinue && isFormValid.value) {
@@ -38,7 +46,7 @@ const submitForm = () => {
 </script>
 
 <template>
-  <div class="form-instruction-view p-8 mx-auto text-white">
+  <div class="form-instruction-view p-8 mx-auto" :style="{ color: textColor }">
     <h2 class="text-3xl font-bold mb-6 text-center">
       {{ instruction.question }}
     </h2>
@@ -47,10 +55,11 @@ const submitForm = () => {
       <div v-for="field in instruction.fields" :key="field.name">
         <label
           :for="field.name"
-          class="block text-sm font-medium text-zinc-300 mb-1"
+          class="block text-sm font-medium mb-1"
+          :style="{ color: secondaryTextColor }"
         >
           {{ field.label }}
-          <span v-if="field.required" class="text-red-500">*</span>
+          <span v-if="field.required" :style="{ color: negativeColor }">*</span>
         </label>
 
         <!-- Text, Number, Email -->
@@ -61,7 +70,7 @@ const submitForm = () => {
           :type="field.type === FormFieldType.TEXT ? 'text' : field.type"
           v-model="localFormData[field.name]"
           :required="field.required"
-          class="block w-full px-3 py-2 rounded-md bg-zinc-700 border border-zinc-600 text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="form-input"
         />
 
         <!-- Long Text -->
@@ -72,7 +81,7 @@ const submitForm = () => {
           v-model="localFormData[field.name]"
           :required="field.required"
           rows="4"
-          class="block w-full px-3 py-2 rounded-md bg-zinc-700 border border-zinc-600 text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="form-input"
         ></textarea>
 
         <!-- Radio -->
@@ -92,11 +101,12 @@ const submitForm = () => {
               :value="option"
               v-model="localFormData[field.name]"
               :required="field.required"
-              class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-zinc-500 bg-zinc-600"
+              class="form-radio"
             />
             <label
               :for="`${field.name}-${option}`"
-              class="ml-2 block text-sm text-zinc-300"
+              class="ml-2 block text-sm"
+              :style="{ color: secondaryTextColor }"
             >
               {{ option }}
             </label>
@@ -119,11 +129,12 @@ const submitForm = () => {
               type="checkbox"
               :value="option"
               v-model="localFormData[field.name]"
-              class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-zinc-500 bg-zinc-600"
+              class="form-checkbox"
             />
             <label
               :for="`${field.name}-${option}`"
-              class="ml-2 block text-sm text-zinc-300"
+              class="ml-2 block text-sm"
+              :style="{ color: secondaryTextColor }"
             >
               {{ option }}
             </label>
@@ -135,7 +146,7 @@ const submitForm = () => {
         <button
           type="submit"
           :disabled="!isFormValid"
-          class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="form-submit-button"
         >
           Next
         </button>
@@ -145,15 +156,43 @@ const submitForm = () => {
 </template>
 
 <style scoped>
-/* Add any specific styles here if needed, or rely on Tailwind CSS */
 .form-instruction-view{
 	height: 100vh;
 	width: 100vw;
 	position: absolute;
-	background: gray;
+	background: v-bind(backgroundColor); /* Bind background color */
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
+}
+
+.form-input, .form-radio, .form-checkbox {
+  @apply block w-full px-3 py-2 rounded-md bg-zinc-700 border border-zinc-600 text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-800;
+  --tw-ring-color: v-bind(accentColor);
+}
+
+.form-radio, .form-checkbox {
+  @apply h-4 w-4;
+  color: v-bind(accentColor); /* For custom checkbox/radio styling */
+}
+
+/* Override default browser styles for checked state */
+.form-radio:checked, .form-checkbox:checked {
+  background-color: v-bind(accentColor);
+  border-color: v-bind(accentColor);
+}
+
+.form-submit-button {
+  @apply px-6 py-3 text-white font-semibold rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: v-bind(accentColor);
+  --tw-ring-color: v-bind(accentColor);
+
+  /* Applying hover styles using v-bind and a pseudo-class is tricky with Tailwind's JIT.
+     For this, a direct CSS hover rule or a separate Tailwind utility is usually needed if the hover color is dynamic.
+     For simplicity and consistency with v-bind, we'll use a direct CSS hover rule here. */
+  &:hover:enabled {
+    background-color: v-bind(accentHoverColor);
+  }
 }
 </style>

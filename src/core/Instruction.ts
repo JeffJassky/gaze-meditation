@@ -1,4 +1,6 @@
 import type { Component } from "vue";
+import type { ThemeConfig } from '../types';
+import { DEFAULT_THEME } from '../theme'; // Import DEFAULT_THEME
 
 export interface InstructionContext {
   // Callbacks to report status to the engine
@@ -6,6 +8,9 @@ export interface InstructionContext {
 
   // Access to shared resources if needed (e.g. DOM container)
   container?: HTMLElement;
+
+  // Resolved theme for the current instruction
+  resolvedTheme: ThemeConfig;
 }
 
 export interface InstructionOptions {
@@ -21,6 +26,7 @@ export interface InstructionOptions {
     enabled?: boolean;
     message?: string;
   };
+  theme?: ThemeConfig; // Optional theme configuration for the instruction
 }
 
 export abstract class Instruction<
@@ -28,6 +34,7 @@ export abstract class Instruction<
 > {
   public options: TOptions;
   protected context: InstructionContext | null = null;
+  public resolvedTheme: ThemeConfig; // Public property to hold the resolved theme
 
   constructor(options: TOptions) {
     this.options = {
@@ -42,10 +49,12 @@ export abstract class Instruction<
         ...(options.negativeReinforcement || {}),
       },
     };
+    this.resolvedTheme = DEFAULT_THEME; // Initialize with default theme
   }
 
   // Lifecycle: Called when instruction becomes active
   abstract start(context: InstructionContext): void;
+
 
   // Lifecycle: Called when instruction is stopped/swapped out
   abstract stop(): void;

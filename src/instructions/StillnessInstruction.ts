@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import StillnessView from './views/StillnessView.vue';
 import { faceMeshService } from '../services/faceMeshService';
+import type { ThemeConfig } from '../types';
 
 interface StillnessOptions extends InstructionOptions {
   duration: number; // ms to hold still
@@ -14,6 +15,7 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   public drift = ref(0);
   public driftX = ref(0);
   public driftY = ref(0);
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
   
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
@@ -26,6 +28,7 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.status.value = 'WAITING';
     
     await faceMeshService.init();

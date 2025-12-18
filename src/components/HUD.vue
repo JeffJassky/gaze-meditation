@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { SessionState, type Instruction } from '../types';
+import { computed, inject } from 'vue'; // ref, Ref are no longer needed
+import { SessionState, type Instruction, type ThemeConfig } from '../types'; // Import ThemeConfig
+import { DEFAULT_THEME } from '../theme'; // Import DEFAULT_THEME
 import NeuralScoreDisplay from './NeuralScoreDisplay.vue';
 
 interface HUDProps {
@@ -12,16 +13,33 @@ interface HUDProps {
 const props = defineProps<HUDProps>();
 const emit = defineEmits(['exit']);
 
-// State-based color logic
-const getBorderColor = computed(() => {
-  switch (props.state) {
-    case SessionState.REINFORCING_POS: return 'border-green-400 shadow-[0_0_50px_rgba(74,222,128,0.5)]';
-    case SessionState.REINFORCING_NEG: return 'border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)]';
-    case SessionState.VALIDATING: return 'border-blue-400';
-    default: return 'border-zinc-800';
-  }
-});
+const resolvedTheme = inject<ThemeConfig>('resolvedTheme', DEFAULT_THEME); // Inject ThemeConfig directly
 
+// State-based style logic for the main border and shadow
+const hudStyles = computed(() => {
+  const styles: Record<string, string> = {
+    'border-width': '12px',
+    'transition': 'all 0.3s'
+  };
+
+  switch (props.state) {
+    case SessionState.REINFORCING_POS:
+      styles['border-color'] = resolvedTheme.positiveColor || DEFAULT_THEME.positiveColor;
+      styles['box-shadow'] = `0 0 50px ${resolvedTheme.positiveColor}80`; // Add 80% opacity
+      break;
+    case SessionState.REINFORCING_NEG:
+      styles['border-color'] = resolvedTheme.negativeColor || DEFAULT_THEME.negativeColor;
+      styles['box-shadow'] = `0 0 50px ${resolvedTheme.negativeColor}80`; // Add 80% opacity
+      break;
+    case SessionState.VALIDATING:
+      styles['border-color'] = resolvedTheme.accentColor || DEFAULT_THEME.accentColor; // Assuming accentColor for validating state
+      break;
+    default:
+      styles['border-color'] = '#1F2937'; // Default zinc-800
+      break;
+  }
+  return styles;
+});
 
 
 const handleExit = () => {
@@ -31,10 +49,11 @@ const handleExit = () => {
 
 <template>
   <div
-    :class="`absolute inset-0 pointer-events-none p-8 flex flex-col justify-between transition-all duration-300 border-[12px] ${getBorderColor}`"
+    :class="`absolute inset-0 pointer-events-none p-8 flex flex-col justify-between`"
+    :style="hudStyles"
   >
     <!-- Top Bar: Metrics & System Status -->
-    <NeuralScoreDisplay :score="props.score" />
+    <NeuralScoreDisplay :score="props.score" :theme="resolvedTheme" />
     <div class="flex justify-between items-start">
 
     </div>
@@ -45,21 +64,24 @@ const handleExit = () => {
     >
       <h1
         v-if="props.state === SessionState.REINFORCING_POS && props.currentInstruction?.options.positiveReinforcement?.enabled"
-        class="text-6xl font-black text-green-400 drop-shadow-[0_0_25px_rgba(74,222,128,0.8)] animate-bounce"
+        class="text-6xl font-black drop-shadow-[0_0_25px_rgba(74,222,128,0.8)] animate-bounce"
+        :style="{ color: resolvedTheme.positiveColor }"
       >
         {{ props.currentInstruction.options.positiveReinforcement.message }}
       </h1>
 
       <h1
         v-else-if="props.state === SessionState.REINFORCING_NEG && props.currentInstruction?.options.negativeReinforcement?.enabled"
-        class="text-6xl font-black text-red-500 drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] glitch-text"
+        class="text-6xl font-black drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] glitch-text"
+        :style="{ color: resolvedTheme.negativeColor }"
       >
         {{ props.currentInstruction.options.negativeReinforcement.message }}
       </h1>
 
       <h1
         v-else-if="props.state === SessionState.FINISHED"
-        class="text-5xl font-bold text-white"
+        class="text-5xl font-bold"
+        :style="{ color: resolvedTheme.textColor }"
       >
         Session Complete
       </h1>

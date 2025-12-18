@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, computed, onMounted } from 'vue';
-
+import type { ThemeConfig } from '../types'; // Import ThemeConfig
 
 const props = defineProps<{
   score: number;
+  theme: ThemeConfig; // Accept theme prop
 }>();
 
 const animatedScore = ref(0);
@@ -97,12 +98,14 @@ const transitionClass = computed(() => {
       :class="transitionClass"
     >
       <h2
-        class="text-zinc-400 text-xs uppercase tracking-widest font-bold mb-1"
+        class="text-xs uppercase tracking-widest font-bold mb-1"
+        :style="{ color: props.theme.secondaryTextColor }"
       >
         Neural Score
       </h2>
       <span
-        class="text-4xl font-mono text-white tracking-tighter"
+        class="text-4xl font-mono tracking-tighter"
+        :style="{ color: props.theme.textColor }"
         >{{ displayScore }}</span
       >
     </div>

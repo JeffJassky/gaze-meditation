@@ -5,6 +5,7 @@ import {
   type InstructionOptions,
 } from "../core/Instruction";
 import TypeView from "./views/TypeView.vue";
+import type { ThemeConfig } from '../types';
 
 interface TypeOptions extends InstructionOptions {
   targetPhrase: string;
@@ -15,6 +16,8 @@ export class TypeInstruction extends Instruction<TypeOptions> {
   public target = ref("");
   public isComplete = ref(false);
   public progress = ref(0); // 0-100%
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   protected context: InstructionContext | null = null;
   private handler: ((e: KeyboardEvent) => void) | null = null;
@@ -29,6 +32,7 @@ export class TypeInstruction extends Instruction<TypeOptions> {
 
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.target.value = this.options.targetPhrase;
     this.input.value = "";
     this.normalizedTargetPhrase = this.normalizeString(

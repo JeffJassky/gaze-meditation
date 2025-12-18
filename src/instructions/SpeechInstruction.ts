@@ -5,6 +5,7 @@ import {
   type InstructionOptions,
 } from "../core/Instruction";
 import SpeechView from "./views/SpeechView.vue";
+import type { ThemeConfig } from '../types';
 
 interface SpeechOptions extends InstructionOptions {
   targetValue: string;
@@ -17,9 +18,12 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
   protected context: InstructionContext | null = null;
   private timeoutId: number | null = null;
   private startTime: number = 0;
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.startTime = Date.now();
 
     // Start Timeout Logic

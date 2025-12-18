@@ -6,6 +6,7 @@ import {
 } from "../core/Instruction";
 import FractionationView from "./views/FractionationView.vue";
 import { faceMeshService } from "../services/faceMeshService";
+import type { ThemeConfig } from '../types';
 
 interface FractionationOptions extends InstructionOptions {
   cycles: number;
@@ -26,6 +27,8 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
   public currentCycle = ref(0);
   public ear = ref(0);
   public eyeOpennessNormalized = ref(1.0);
+  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+
 
   // --- Internal Logic State ---
   private observationSamples: number[] = [];
@@ -52,6 +55,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
    */
   async start(context: InstructionContext) {
     this.context = context;
+    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.status.value = "READY";
     this.currentCycle.value = 0;
     this.observationSamples = [];

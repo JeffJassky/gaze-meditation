@@ -1,8 +1,9 @@
 <template>
-  <div class="stillness-view">
+  <div class="stillness-view" :style="{ color: instruction.resolvedTheme.textColor }">
     <div
       class="status-indicator"
       :class="{ error: instruction.status.value === 'FAILED' }"
+      :style="{ '--negative-color': instruction.resolvedTheme.negativeColor }"
     >
       <h2 v-if="instruction.status.value === 'WAITING'">
         Get Ready to Freeze...
@@ -26,7 +27,7 @@
     <div class="progress-bar">
       <div
         class="fill"
-        :style="{ width: instruction.progress.value + '%' }"
+        :style="{ width: instruction.progress.value + '%', backgroundColor: instruction.resolvedTheme.positiveColor }"
       ></div>
     </div>
   </div>
@@ -52,7 +53,8 @@ const cursorStyle = computed(() => {
 
     return {
         transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-        opacity: Math.max(0.4, 1 - props.instruction.drift.value * 5)
+        opacity: Math.max(0.4, 1 - props.instruction.drift.value * 5),
+        backgroundColor: props.instruction.resolvedTheme.positiveColor // Use theme color
     }
 });
 </script>
@@ -64,7 +66,7 @@ const cursorStyle = computed(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: white;
+  /* color property is now set via inline style from resolvedTheme */
 }
 
 .status-indicator h2 {
@@ -74,7 +76,7 @@ const cursorStyle = computed(() => {
 }
 
 .status-indicator.error {
-  color: #ff4444;
+  color: var(--negative-color); /* Use CSS variable for theming */
   animation: shake 0.5s;
 }
 
@@ -100,9 +102,7 @@ const cursorStyle = computed(() => {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 20px;
-  height: 20px;
-  background: cyan;
+  /* background-color is now set via inline style from resolvedTheme */
   border-radius: 50%;
   transform: translate(-50%, -50%); /* Base transform, overridden by style */
   transition: transform 0.1s;
@@ -118,7 +118,7 @@ const cursorStyle = computed(() => {
 
 .fill {
   height: 100%;
-  background: cyan;
+  /* background-color is now set via inline style from resolvedTheme */
   transition: width 0.1s linear;
 }
 

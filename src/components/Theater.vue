@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
-import { SessionState, type Program, type SessionLog, type SessionMetric } from '../types';
+import { ref, onMounted, onUnmounted, watch, nextTick, computed, provide } from 'vue'; // Add provide
+import { SessionState, type Program, type SessionLog, type SessionMetric, type ThemeConfig } from '../types'; // Import ThemeConfig
+import { DEFAULT_THEME } from '../theme'; // Import DEFAULT_THEME
 import type { Instruction } from '../core/Instruction';
 import Visuals from './Visuals.vue';
 import HUD from './HUD.vue';
 import { saveSession } from '../services/storageService';
+import { getInstructionEffectiveTheme } from '../utils/themeResolver'; // Import theme resolver
 
 interface TheaterProps {
   program: Program;
@@ -24,6 +26,8 @@ const timerRef = ref<number | null>(null);
 const startTimeRef = ref<number>(Date.now());
 const metricsRef = ref<SessionMetric[]>([]);
 
+const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME); // Reactive theme for providing
+
 // Computed for current instruction object
 const currentInstr = computed(() => {
   if (instrIndex.value < props.program.instructions.length) {
@@ -31,6 +35,19 @@ const currentInstr = computed(() => {
   }
   return undefined;
 });
+
+// Watch for changes in currentInstr and program to update the theme
+watch([currentInstr, () => props.program], ([newInstr, newProgram]) => {
+  if (newInstr) {
+    currentResolvedTheme.value = getInstructionEffectiveTheme(newProgram as Program, newInstr as Instruction<any>);
+  } else {
+    // If no instruction, use program's theme or default
+    currentResolvedTheme.value = newProgram?.theme || DEFAULT_THEME;
+  }
+}, { immediate: true, deep: true }); // Immediate ensures theme is set on initial load
+
+// Provide the current resolved theme
+provide('resolvedTheme', currentResolvedTheme.value);
 
 const nextInstruction = (index: number) => {
   if (index >= props.program.instructions.length) {
@@ -52,8 +69,11 @@ const nextInstruction = (index: number) => {
   timerRef.value = window.setTimeout(() => {
       state.value = SessionState.VALIDATING;
       if (currentInstr.value) {
+        // We already have currentResolvedTheme reactive var that updates on changes
+        // Use the current value of currentResolvedTheme.value
         currentInstr.value.start({
-          complete: (success, metrics, result) => triggerReinforcement(success, metrics, result)
+          complete: (success, metrics, result) => triggerReinforcement(success, metrics, result),
+          resolvedTheme: currentResolvedTheme.value // Pass the provided theme
         });
       }
   }, 500); // 500ms delay to read prompt before active
