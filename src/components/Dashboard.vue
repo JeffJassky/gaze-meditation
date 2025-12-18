@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import type { User, Program, SessionLog } from '../types';
+import { FormFieldType } from '../types';
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService';
 import { SpeechInstruction } from '../instructions/SpeechInstruction';
 import { CalibrationInstruction } from '../instructions/CalibrationInstruction';
 import { DirectionalGazeInstruction } from '../instructions/DirectionalGazeInstruction';
 import { StillnessInstruction } from '../instructions/StillnessInstruction';
+import { FormInstruction } from '../instructions/FormInstruction';
 import { BlinkInstruction } from '../instructions/BlinkInstruction';
 import { TypeInstruction } from '../instructions/TypeInstruction';
 import { NodInstruction } from '../instructions/NodInstruction';
@@ -18,20 +20,21 @@ const PROGRAMS: Program[] = [
     title: 'Eye Tracker Calibration',
     description: 'Calibrate the WebGazer eye tracking system.',
     audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
     instructions: [
         new CalibrationInstruction({ id: 'cal1', prompt: 'Eye Calibration' }),
-        new DirectionalGazeInstruction({ 
-            id: 'test_left', 
-            prompt: 'Look Left', 
-            direction: 'LEFT', 
+        new DirectionalGazeInstruction({
+            id: 'test_left',
+            prompt: 'Look Left',
+            direction: 'LEFT',
             duration: 4000,
             leftSrc: 'https://placehold.co/400x400/red/white?text=LEFT',
             rightSrc: 'https://placehold.co/400x400/blue/white?text=IGNORE'
         }),
-        new DirectionalGazeInstruction({ 
-            id: 'test_right', 
-            prompt: 'Look Right', 
-            direction: 'RIGHT', 
+        new DirectionalGazeInstruction({
+            id: 'test_right',
+            prompt: 'Look Right',
+            direction: 'RIGHT',
             duration: 4000,
             leftSrc: 'https://placehold.co/400x400/red/white?text=IGNORE',
             rightSrc: 'https://placehold.co/400x400/blue/white?text=RIGHT'
@@ -43,6 +46,7 @@ const PROGRAMS: Program[] = [
     title: 'Verbal Recall Beta',
     description: 'Rapid fire word association and repetition.',
     audioTrack: 'white_noise_low.mp3',
+    videoBackground: '/spiral.mp4',
     instructions: [
       new SpeechInstruction({ id: 'v1', prompt: 'Say "START"', targetValue: 'START', duration: 4000 }),
       new SpeechInstruction({ id: 'v2', prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000 }),
@@ -53,9 +57,9 @@ const PROGRAMS: Program[] = [
       id: 'prog_blink_debug',
       title: 'Blink Calibration',
       description: 'Debug tool for testing blink sensitivity.',
-      audioTrack: 'silence.mp3',
-      instructions: [
-          new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
+          audioTrack: 'silence.mp3',
+          videoBackground: '/spiral.mp4',
+          instructions: [          new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
       ]
   },
   {
@@ -63,6 +67,7 @@ const PROGRAMS: Program[] = [
     title: 'Deepening Protocol',
     description: 'Advanced conditioning using fractionation, stillness, gaze, and affirmation.',
     audioTrack: 'drone_dark.mp3',
+    videoBackground: '/spiral.mp4',
     instructions: [
         new FractionationInstruction({ id: 'f1', prompt: 'Relax and follow the voice', cycles: 3 }),
         new TypeInstruction({ id: 't1', prompt: 'Type "I obey"', targetPhrase: 'I obey' }),
@@ -71,7 +76,62 @@ const PROGRAMS: Program[] = [
         new TypeInstruction({ id: 't2', prompt: 'Type "My mind is open"', targetPhrase: 'My mind is open' }),
         new StillnessInstruction({ id: 's2', prompt: 'Perfect stillness', duration: 10000 }),
     ]
-  }
+	},
+	{
+	id: 'demo-form-program',
+	title: 'Demo Form Program',
+	description: 'A program to demonstrate the new FormInstruction.',
+	audioTrack: 'none', // Placeholder
+	videoBackground: '/public/spiral.mp4', // Example background
+	instructions: [
+		new FormInstruction({
+		id: 'welcome-form',
+		duration: 0, // Forms don't have a fixed duration, completion is event-driven
+		question: 'Welcome! Please tell us a bit about yourself.',
+		prompt: 'Welcome! Please tell us a bit about yourself.', // Add this line
+		fields: [
+			{ label: 'Your Name', name: 'userName', type: FormFieldType.TEXT, required: true },
+			{ label: 'Your Age', name: 'userAge', type: FormFieldType.NUMBER, required: true },
+			{ label: 'Your Email', name: 'userEmail', type: FormFieldType.EMAIL },
+			{ label: 'About You', name: 'aboutYou', type: FormFieldType.LONG_TEXT },
+		],
+		autoContinue: false, // Requires a "Next" button click
+		}),
+		new FormInstruction({
+		id: 'preferences-form',
+		duration: 0,
+		question: 'What are your preferences?',
+		prompt: 'What are your preferences?', // Add this line
+		fields: [
+			{
+			label: 'Favorite Color',
+			name: 'favColor',
+			type: FormFieldType.RADIO,
+			options: ['Red', 'Green', 'Blue', 'Yellow'],
+			required: true,
+			},
+			{
+			label: 'Interests',
+			name: 'interests',
+			type: FormFieldType.MULTISELECT,
+			options: ['Reading', 'Coding', 'Gaming', 'Hiking', 'Cooking', 'Gardening'],
+			},
+		],
+		autoContinue: true, // Will auto-continue when all required fields are filled
+		}),
+		new StillnessInstruction({
+		id: 'final-stillness',
+		duration: 5000,
+		prompt: 'Please remain still for a moment to complete the session.',
+		}),
+		new FractionationInstruction({
+		id: 'final-fractionation',
+			duration: 10000,
+		prompt: 'Please relax for a moment to complete the session.',
+		cycles: 3,
+		})
+	]
+	}
 ];
 
 interface DashboardProps {
@@ -129,7 +189,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="min-h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex"
+    class="h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex"
   >
     <!-- Sidebar -->
     <aside

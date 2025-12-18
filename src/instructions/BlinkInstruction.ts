@@ -11,6 +11,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   public timeLeft = ref(0);
   public isBlinking = ref(false);
   public ear = ref(0); // Eye Aspect Ratio
+  public eyeOpennessNormalized = ref(1.0); // Normalized 0-1 eye openness
   public status = ref<'RUNNING' | 'FAILED' | 'SUCCESS'>('RUNNING');
   
   private context: InstructionContext | null = null;
@@ -37,6 +38,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
     this.timeLeft.value = Math.max(0, this.endTime - Date.now());
     this.isBlinking.value = faceMeshService.debugData.blinkDetected;
     this.ear.value = faceMeshService.debugData.eyeOpenness;
+    this.eyeOpennessNormalized.value = faceMeshService.debugData.eyeOpennessNormalized;
 
     if (this.isBlinking.value) {
         this.fail();

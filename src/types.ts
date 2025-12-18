@@ -1,4 +1,4 @@
-import type { Instruction } from './core/Instruction';
+import type { Instruction, InstructionOptions } from './core/Instruction';
 
 // Enums
 export enum SessionState {
@@ -10,12 +10,37 @@ export enum SessionState {
   FINISHED = 'FINISHED'
 }
 
+export enum FormFieldType {
+  TEXT = 'text',
+  LONG_TEXT = 'longText',
+  NUMBER = 'number',
+  EMAIL = 'email',
+  RADIO = 'radio',
+  MULTISELECT = 'multiselect',
+}
+
+// Interfaces for Form Instruction
+export interface FormField {
+  label: string;
+  type: FormFieldType;
+  name: string; // The key for the field's value
+  options?: string[]; // For radio and multiselect
+  required?: boolean; // Optional: for validation
+}
+
+export interface FormInstructionOptions extends InstructionOptions {
+  question: string;
+  fields: FormField[];
+  autoContinue?: boolean;
+}
+
 // Data Models
 export interface Program {
   id: string;
   title: string;
   description: string;
   audioTrack: string; // Simulated audio track name
+  videoBackground: string;
   instructions: Instruction[];
 }
 

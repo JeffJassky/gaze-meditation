@@ -1,5 +1,5 @@
 <template>
-  <div class="type-view">
+  <div class="type-view" :style="{ opacity: 1 - (instruction.progress.value / 100) }">
     <div class="prompt">
       <p>TYPE THE FOLLOWING:</p>
       <h1>{{ instruction.target.value }}</h1>
@@ -36,6 +36,7 @@ const hasError = computed(() => {
   height: 100%;
   color: white;
   font-family: 'Courier New', Courier, monospace;
+  transition: opacity 0.5s;
 }
 
 .prompt p {

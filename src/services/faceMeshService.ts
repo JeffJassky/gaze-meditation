@@ -41,9 +41,14 @@ class FaceMeshService {
 
     blinkDetected: false,
     eyeOpenness: 1.0, // 0 = closed, 1 = open
+    eyeOpennessNormalized: 1.0, // 0 = closed (0.15 EAR), 1 = open (0.35 EAR)
   });
-  
-  private blinkThreshold = 0.25;
+
+  private eyeOpennessMax = 0.35; // Represents fully open for normalization
+  private eyeOpennessMin = 0.15; // Represents fully closed for normalization
+  private normalizedBlinkThreshold = 0.2; // Normalized threshold for blink detection (0-1 scale)
+  private blinkDetectionStartTime: number | null = null;
+  private blinkSmoothingDuration = 100; // ms, eye must be below threshold for this duration to count as a blink
 
   async init(videoElement?: HTMLVideoElement) {
     if (this.isReady) {
@@ -283,125 +288,91 @@ class FaceMeshService {
     const rightH = this.getDistance(keypoints[263], keypoints[362]);
     const rightEAR = rightV / rightH;
 
-        const avgEAR = (leftEAR + rightEAR) / 2;
+    const avgEAR = (leftEAR + rightEAR) / 2;
 
-        
+    this.debugData.eyeOpenness = avgEAR;
 
-        this.debugData.eyeOpenness = avgEAR;
+    // Normalize eye openness to a 0-1 scale
+    this.debugData.eyeOpennessNormalized = Math.max(
+      0,
+      Math.min(
+        1,
+        (avgEAR - this.eyeOpennessMin) / (this.eyeOpennessMax - this.eyeOpennessMin)
+      )
+    );
 
-        // Threshold usually around 0.2 - 0.3 for a blink
+    // DEBUGGING LOGS
+    if (Date.now() % 500 < 50) { // Log every ~0.5 seconds
+        console.log(
+            `EAR: ${avgEAR.toFixed(3)}, ` +
+            `NormEAR: ${this.debugData.eyeOpennessNormalized.toFixed(3)}, ` +
+            `BlinkDetected: ${this.debugData.blinkDetected}`
+        );
+    }
+    // END DEBUGGING LOGS
 
-        this.debugData.blinkDetected = avgEAR < this.blinkThreshold; 
-
+    // Use normalized eye openness for blink detection
+    if (this.debugData.eyeOpennessNormalized < this.normalizedBlinkThreshold) {
+      if (this.blinkDetectionStartTime === null) {
+        this.blinkDetectionStartTime = Date.now();
+      } else if (Date.now() - this.blinkDetectionStartTime >= this.blinkSmoothingDuration) {
+        this.debugData.blinkDetected = true;
+      } else {
+        this.debugData.blinkDetected = false; // Not yet smoothed
       }
+    } else {
+      this.blinkDetectionStartTime = null;
+      this.debugData.blinkDetected = false;
+    }
+  }
 
-    
+  public setNormalizedBlinkThreshold(value: number) {
+    console.log(`Updating Normalized Blink Threshold: ${this.normalizedBlinkThreshold} -> ${value}`);
+    this.normalizedBlinkThreshold = value;
+  }
 
-        public setBlinkThreshold(value: number) {
+  public setEyeOpennessMin(value: number) {
+    console.log(`Updating Eye Openness Min: ${this.eyeOpennessMin} -> ${value}`);
+    this.eyeOpennessMin = value;
+  }
 
-    
+  public setEyeOpennessMax(value: number) {
+    console.log(`Updating Eye Openness Max: ${this.eyeOpennessMax} -> ${value}`);
+    this.eyeOpennessMax = value;
+  }
 
-            console.log(`Updating Blink Threshold: ${this.blinkThreshold} -> ${value}`);
+  public getCalibration() {
+    return {
+      normalizedBlinkThreshold: this.normalizedBlinkThreshold,
+      eyeOpennessMin: this.eyeOpennessMin,
+      eyeOpennessMax: this.eyeOpennessMax,
 
-    
+      gazeMinX: this.calibration.minX,
 
-            this.blinkThreshold = value;
+      gazeMaxX: this.calibration.maxX,
 
-    
+      gazeMinY: this.calibration.minY,
 
-        }
+      gazeMaxY: this.calibration.maxY,
+    };
+  }
 
-    
+  public loadCalibration(data: any) {
+    if (data.normalizedBlinkThreshold) this.normalizedBlinkThreshold = data.normalizedBlinkThreshold;
+    if (data.eyeOpennessMin) this.eyeOpennessMin = data.eyeOpennessMin;
+    if (data.eyeOpennessMax) this.eyeOpennessMax = data.eyeOpennessMax;
+    if (data.gazeMinX) this.calibration.minX = data.gazeMinX;
+    if (data.gazeMaxX) this.calibration.maxX = data.gazeMaxX;
+    if (data.gazeMinY) this.calibration.minY = data.gazeMinY;
+    if (data.gazeMaxY) this.calibration.maxY = data.gazeMaxY;
 
-      
+    console.log("Loaded Calibration:", data);
+  }
 
-    
-
-        public getCalibration() {
-
-    
-
-            return {
-
-    
-
-                blinkThreshold: this.blinkThreshold,
-
-    
-
-                gazeMinX: this.calibration.minX,
-
-    
-
-                gazeMaxX: this.calibration.maxX,
-
-    
-
-                gazeMinY: this.calibration.minY,
-
-    
-
-                gazeMaxY: this.calibration.maxY
-
-    
-
-            };
-
-    
-
-        }
-
-    
-
-      
-
-    
-
-        public loadCalibration(data: any) {
-
-    
-
-            if (data.blinkThreshold) this.blinkThreshold = data.blinkThreshold;
-
-    
-
-            if (data.gazeMinX) this.calibration.minX = data.gazeMinX;
-
-    
-
-            if (data.gazeMaxX) this.calibration.maxX = data.gazeMaxX;
-
-    
-
-            if (data.gazeMinY) this.calibration.minY = data.gazeMinY;
-
-    
-
-            if (data.gazeMaxY) this.calibration.maxY = data.gazeMaxY;
-
-    
-
-            
-
-    
-
-            console.log("Loaded Calibration:", data);
-
-    
-
-        }
-
-    
-
-      
-
-    
-
-        private getDistance(p1: faceLandmarksDetection.Keypoint, p2: faceLandmarksDetection.Keypoint) {
-
-    
-
-      
+  private getDistance(
+    p1: faceLandmarksDetection.Keypoint,
+    p2: faceLandmarksDetection.Keypoint
+  ) {
     return Math.hypot(p1.x - p2.x, p1.y - p2.y);
   }
 

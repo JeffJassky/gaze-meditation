@@ -9,6 +9,7 @@ import { saveSession } from '../services/storageService';
 interface TheaterProps {
   program: Program;
   subjectId: string;
+  videoBackground: string; // Add videoBackground prop
 }
 
 const props = defineProps<TheaterProps>();
@@ -140,6 +141,17 @@ onMounted(() => {
 
 <template>
   <div class="relative w-full h-full bg-black overflow-hidden cursor-crosshair">
+    <!-- Video Background -->
+    <video 
+      v-if="program.videoBackground"
+      :src="program.videoBackground" 
+      autoplay 
+      loop 
+      muted 
+      playsinline 
+      class="absolute top-0 left-0 w-full h-full object-cover z-0"
+    ></video>
+    
     <!-- 3D Background -->
     <Visuals :state="state" />
 
