@@ -50,6 +50,13 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
   private readonly HOLD_DURATION = 2000; // Time to collect data in a state
   private readonly OBSERVING_DURATION = 3000; // Initial "natural look" time
 
+  constructor(options: FractionationOptions) {
+    super({
+      ...options,
+      capabilities: { faceMesh: true, ...options.capabilities }
+    });
+  }
+
   /**
    * Entry point: Initializes service and starts the sequence.
    */

@@ -26,6 +26,13 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   private centerYaw = 0;
   private isInitialized = false;
 
+  constructor(options: StillnessOptions) {
+    super({
+      ...options,
+      capabilities: { faceMesh: true, ...options.capabilities }
+    });
+  }
+
   // Tolerance for movement
   public get tolerance() { return this.options.tolerance || 0.05; }
 

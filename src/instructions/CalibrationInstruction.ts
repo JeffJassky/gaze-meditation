@@ -1,4 +1,4 @@
-import { ref, markRaw } from "vue";
+import { ref, markRaw, watch } from "vue";
 import {
   Instruction,
   type InstructionContext,
@@ -6,6 +6,7 @@ import {
 } from "../core/Instruction";
 import CalibrationView from "./views/CalibrationView.vue";
 import { faceMeshService, type Point } from "../services/faceMeshService";
+import { speechService } from "../services/speechService";
 import type { ThemeConfig } from '../types';
 
 
@@ -26,9 +27,17 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
   private shuffledPositions: Array<{ x: number; y: number }> = [];
 
   private processing = false;
-  private recognition: SpeechRecognition | null = null;
+  // private recognition: SpeechRecognition | null = null; // Removed
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
+  private unwatchSpeech: (() => void) | null = null;
+
+  constructor(options: CalibrationOptions) {
+    super({
+      ...options,
+      capabilities: { faceMesh: true, speech: true, ...options.capabilities }
+    });
+  }
 
   private numbersMap: Record<string, number> = {
     TEN: 10,
@@ -95,23 +104,34 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     await faceMeshService.init();
     faceMeshService.clearCalibration();
 
+    // Init Speech
+    await speechService.init();
+    speechService.resetTranscript();
+    if (!speechService.isListening.value) speechService.start();
+    
+    // Watch Last Result for event-driven matching (more efficient than parsing whole transcript repeatedly)
+    this.unwatchSpeech = watch(speechService.lastResult, (newVal) => {
+        this.handleSpeechInput(newVal);
+    });
+
     // Start
     this.nextStep();
 
     // Start Loops
-    this.initSpeech();
+    // this.initSpeech(); // Removed
     this.startGazeLoop();
   }
 
   stop() {
-    if (this.recognition) {
-      this.recognition.stop();
-      this.recognition = null;
+    if (this.unwatchSpeech) {
+        this.unwatchSpeech();
+        this.unwatchSpeech = null;
     }
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
     faceMeshService.stop();
+    // Do not stop speechService, let theater handle it.
   }
 
   private nextStep() {
@@ -143,63 +163,31 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
     loop();
   }
 
-  private initSpeech() {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error("Speech Recognition not supported");
-      this.context?.complete(false);
-      return;
-    }
+  private async handleSpeechInput(transcript: string) {
+    if (this.processing || !transcript) return;
 
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.lang = "en-US";
+    transcript = transcript.trim().toUpperCase();
+    const expected = this.currentDisplayNumber.value;
+    console.log("Heard:", transcript, "Expected:", expected);
 
-    this.recognition.onresult = (e) => this.handleSpeechResult(e);
-    this.recognition.onend = () => {
-      if (this.context && this.recognition) {
-        try {
-          this.recognition.start();
-        } catch (e) {}
-      }
-    };
-
-    try {
-      this.recognition.start();
-    } catch (e) {
-      console.warn("Speech start error", e);
-    }
-  }
-
-  private async handleSpeechResult(event: SpeechRecognitionEvent) {
-    if (this.processing) return;
-
-    for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const result = event.results[i];
-      const transcript = result[0].transcript.trim().toUpperCase();
-
-      const expected = this.currentDisplayNumber.value;
-      console.log("Heard:", transcript, "Expected:", expected);
-
-      const expectedWords = [
+    const expectedWords = [
         expected.toString(),
         ...Object.keys(this.numbersMap).filter(
           (key) => this.numbersMap[key] === expected
         ),
-      ];
+    ];
 
-      const match = expectedWords.some((w) => w && transcript.includes(w));
+    const match = expectedWords.some((w) => w && transcript.includes(w));
 
-      if (match) {
+    if (match) {
         this.processing = true;
         await this.snapshot();
         this.processing = false;
-        return;
-      }
     }
   }
+  
+  // Removed old initSpeech and handleSpeechResult methods
+
 
   private async snapshot() {
     // Show Success Visual

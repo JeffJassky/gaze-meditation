@@ -20,7 +20,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_calibration',
 		title: 'Eye Tracker Calibration',
 		description: 'Calibrate the WebGazer eye tracking system.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({
@@ -50,7 +50,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_verbal_recall',
 		title: 'Verbal Recall Beta',
 		description: 'Rapid fire word association and repetition.',
-		audioTrack: 'white_noise_low.mp3',
+		musicTrack: 'white_noise_low.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
@@ -80,7 +80,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_blink_debug',
 		title: 'Blink Calibration',
 		description: 'Debug tool for testing blink sensitivity.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
@@ -91,7 +91,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_deepening',
 		title: 'Deepening Protocol',
 		description: 'Advanced conditioning using fractionation, stillness, gaze, and affirmation.',
-		audioTrack: 'drone_dark.mp3',
+		musicTrack: 'drone_dark.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
@@ -127,7 +127,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'demo-form-program',
 		title: 'Demo Form Program',
 		description: 'A program to demonstrate the new FormInstruction.',
-		audioTrack: 'none', // Placeholder
+		musicTrack: 'none', // Placeholder
 		videoBackground: '/public/spiral.mp4', // Example background
 		instructions: [
 			new FormInstruction({
@@ -216,7 +216,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_total_induction',
 		title: 'Total Induction',
 		description: 'A comprehensive program designed for deep hypnotic induction.',
-		audioTrack: 'drone_dark.mp3', // Example, can be replaced
+		musicTrack: 'drone_dark.mp3', // Example, can be replaced
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
@@ -342,7 +342,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_blink_instruction',
 		title: 'Test Blink Instruction',
 		description: 'Dedicated program for testing BlinkInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({
@@ -356,7 +356,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_calibration_instruction',
 		title: 'Test Calibration Instruction',
 		description: 'Dedicated program for testing CalibrationInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({ id: 'calibration_test', prompt: 'Calibrate your eyes' })
@@ -366,7 +366,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_directional_gaze_instruction',
 		title: 'Test Directional Gaze Instruction',
 		description: 'Dedicated program for testing DirectionalGazeInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new DirectionalGazeInstruction({
@@ -387,7 +387,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_form_instruction',
 		title: 'Test Form Instruction',
 		description: 'Dedicated program for testing FormInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
@@ -403,7 +403,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_fractionation_instruction',
 		title: 'Test Fractionation Instruction',
 		description: 'Dedicated program for testing FractionationInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
@@ -417,7 +417,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_nod_instruction',
 		title: 'Test Nod Instruction',
 		description: 'Dedicated program for testing NodInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new NodInstruction({
@@ -436,7 +436,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_read_instruction',
 		title: 'Test Read Instruction',
 		description: 'Dedicated program for testing ReadInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
@@ -461,7 +461,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_speech_instruction',
 		title: 'Test Speech Instruction',
 		description: 'Dedicated program for testing SpeechInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
@@ -476,7 +476,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_stillness_instruction',
 		title: 'Test Stillness Instruction',
 		description: 'Dedicated program for testing StillnessInstruction.',
-		audioTrack: 'silence.mp3',
+		musicTrack: 'silence.mp3',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new StillnessInstruction({
@@ -492,7 +492,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_type_instruction',
 		title: 'Test Type Instruction',
 		description: 'Dedicated program for testing TypeInstruction.',
-		audioTrack: 'silence.mp4',
+		musicTrack: 'silence.mp4',
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new TypeInstruction({ id: 'type_test', prompt: 'Type "test"', targetPhrase: 'test' })
@@ -671,7 +671,7 @@ onMounted(() => {
 									>
 									<span
 										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>Audio: {{ prog.audioTrack }}</span
+										>Audio: {{ prog.musicTrack }}</span
 									>
 								</div>
 								<div class="mt-auto pt-4">
@@ -715,7 +715,7 @@ onMounted(() => {
 									>
 									<span
 										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>Audio: {{ prog.audioTrack }}</span
+										>Audio: {{ prog.musicTrack }}</span
 									>
 								</div>
 								<div class="mt-auto pt-4">

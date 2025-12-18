@@ -49,8 +49,11 @@ class FaceMeshService {
   private normalizedBlinkThreshold = 0.2; // Normalized threshold for blink detection (0-1 scale)
   private blinkDetectionStartTime: number | null = null;
   private blinkSmoothingDuration = 100; // ms, eye must be below threshold for this duration to count as a blink
+  private _isStopping = false; // Flag to handle race conditions
 
   async init(videoElement?: HTMLVideoElement) {
+    this._isStopping = false; // Reset stopping flag
+
     if (this.isReady) {
       if (!this.rafId) this.startLoop();
       return;
@@ -60,8 +63,8 @@ class FaceMeshService {
       this.video = videoElement;
     } else {
       // Setup hidden video
-
-      this.video = document.createElement("video");
+      const v = document.createElement("video");
+      this.video = v; // Assign immediately
 
       // display: none causes issues with some detectors/browsers. Use opacity 0.
 
@@ -98,7 +101,22 @@ class FaceMeshService {
           video: { width: 640, height: 480, facingMode: "user" },
         });
 
-        this.video.srcObject = stream;
+        // Check if stopped while waiting
+        if (this._isStopping) {
+          console.warn("FaceMesh init aborted: Service was stopped during GUM.");
+          stream.getTracks().forEach(t => t.stop());
+          if (this.video && this.video.parentNode) this.video.parentNode.removeChild(this.video);
+          this.video = null;
+          return;
+        }
+
+        if (this.video) {
+            this.video.srcObject = stream;
+        } else {
+            // Should not happen if _isStopping check passed, but safety first
+            stream.getTracks().forEach(t => t.stop());
+            return;
+        }
 
         // Log real settings
 
@@ -119,10 +137,16 @@ class FaceMeshService {
         });
       } catch (e) {
         console.error("Camera Access Error:", e);
-
+        if (this.video && this.video.parentNode) {
+            this.video.parentNode.removeChild(this.video);
+        }
+        this.video = null;
         return;
       }
     }
+
+    // Check if stopped again
+    if (this._isStopping) return;
 
     // Load Model
 
@@ -142,13 +166,19 @@ class FaceMeshService {
       detectorConfig
     );
 
+    if (this._isStopping) {
+         // Clean up if stopped during model load
+         this.stop(); // Re-run stop to clean up
+         return;
+    }
+
     this.isReady = true;
 
     console.log("FaceMesh Model Loaded (Head Pose Mode)");
 
     // Ensure video is playing
 
-    if (this.video.paused) {
+    if (this.video && this.video.paused) {
       try {
         await this.video.play();
 
@@ -541,10 +571,27 @@ class FaceMeshService {
   }
 
   public stop() {
+    this._isStopping = true;
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+
+    if (this.video && this.video.srcObject) {
+      const stream = this.video.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      this.video.srcObject = null;
+    }
+
+    if (this.video && this.video.parentNode) {
+      this.video.parentNode.removeChild(this.video);
+    }
+
+    this.video = null;
+    this.detector = null; // Force reload of model next time to be safe/clean
+    this.isReady = false;
+    
+    console.log("FaceMesh Service stopped and resources released.");
   }
 }
 

@@ -13,6 +13,9 @@ import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
+import { faceMeshService } from '../services/faceMeshService'
+import { audioSession } from '../services/audio'
+import { speechService } from '../services/speechService'
 
 interface TheaterProps {
 	program: Program
@@ -33,6 +36,10 @@ const startTimeRef = ref<number>(Date.now())
 const metricsRef = ref<SessionMetric[]>([])
 
 const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME) // Reactive theme for providing
+
+// Loading State
+const loadingMessage = ref('Initializing...')
+const loadingProgress = ref(0)
 
 // Computed for current instruction object
 const currentInstr = computed(() => {
@@ -61,6 +68,98 @@ watch(
 
 // Provide the current resolved theme
 provide('resolvedTheme', currentResolvedTheme.value)
+
+const initSession = async () => {
+	state.value = SessionState.INITIALIZING
+	loadingProgress.value = 0
+	loadingMessage.value = 'Analyzing Program...'
+
+	// 1. Determine Capabilities Needed
+	let needsFaceMesh = false
+	let needsAudio = false
+	let needsSpeech = false
+
+	// Check if any instruction needs faceMesh
+	if (props.program.instructions.some(i => i.options.capabilities?.faceMesh)) {
+		needsFaceMesh = true
+	}
+
+	// Check if we need audio (program track or instructions)
+	if (
+		props.program.musicTrack ||
+		props.program.instructions.some(i => i.options.capabilities?.audioInput)
+	) {
+		needsAudio = true
+	}
+
+	// Check if we need speech
+	if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
+		needsSpeech = true
+	}
+
+	loadingProgress.value = 20
+
+	// 2. Initialize Audio if needed
+	if (needsAudio) {
+		loadingMessage.value = 'Initializing Audio Engine...'
+		try {
+			await audioSession.setup()
+			// Preload Program Audio Track if exists
+			if (props.program.musicTrack) {
+				loadingMessage.value = 'Loading Audio Track...'
+				await audioSession.loadBuffer(props.program.musicTrack)
+			}
+		} catch (e) {
+			console.warn('Audio Initialization Failed', e)
+			// Decide if critical or not. For now, log and continue.
+		}
+	}
+	loadingProgress.value = 50
+
+	// 3. Initialize Speech if needed
+	if (needsSpeech) {
+		loadingMessage.value = 'Initializing Speech Recognition...'
+		try {
+			await speechService.init()
+			speechService.start()
+		} catch (e) {
+			console.warn('Speech Initialization Failed', e)
+		}
+	}
+
+	loadingProgress.value = 75
+
+	// 4. Initialize FaceMesh if needed
+	if (needsFaceMesh) {
+		loadingMessage.value = 'Starting Face Tracking...'
+		try {
+			// Wait for video element or let service create one
+			await faceMeshService.init()
+		} catch (e) {
+			console.error('FaceMesh Initialization Failed', e)
+			alert('Camera access required for this session.')
+			emit('exit')
+			return
+		}
+	}
+	loadingProgress.value = 90
+
+	// 4. Preload Video Background if needed (basic check)
+	if (props.program.videoBackground) {
+		loadingMessage.value = 'Preloading Background...'
+		// Basic preload via fetch to ensure cached?
+		// Or rely on browser buffering.
+		// For now, simple delay or skip.
+	}
+
+	loadingProgress.value = 100
+	loadingMessage.value = 'Ready'
+
+	// Start Session
+	setTimeout(() => {
+		nextInstruction(0)
+	}, 500)
+}
 
 const nextInstruction = (index: number) => {
 	if (index >= props.program.instructions.length) {
@@ -145,7 +244,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 
 			score.value += points
 			state.value = SessionState.REINFORCING_POS
-			
+
 			// Time in reinforcement state
 			setTimeout(() => {
 				nextInstruction(instrIndex.value + 1)
@@ -158,7 +257,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 		if (isNegEnabled) {
 			score.value -= 50
 			state.value = SessionState.REINFORCING_NEG
-			
+
 			// Time in reinforcement state
 			setTimeout(() => {
 				// Retry
@@ -169,7 +268,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			// Retry immediately (or after very short delay to avoid tight loop potential if logic is broken)
 			setTimeout(() => {
 				nextInstruction(instrIndex.value)
-			}, 100) 
+			}, 100)
 		}
 	}
 }
@@ -197,9 +296,7 @@ onMounted(() => {
 			.catch(e => console.log('Fullscreen blocked', e))
 	} catch (e) {}
 
-	setTimeout(() => {
-		nextInstruction(0)
-	}, 2000)
+	initSession()
 
 	const handleKeyDown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') emit('exit')
@@ -209,6 +306,12 @@ onMounted(() => {
 	onUnmounted(() => {
 		if (timerRef.value) clearTimeout(timerRef.value)
 		currentInstr.value?.stop()
+
+		// Teardown Services
+		faceMeshService.stop()
+		audioSession.end()
+		speechService.stop()
+
 		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
 		window.removeEventListener('keydown', handleKeyDown)
 	})
@@ -230,6 +333,20 @@ onMounted(() => {
 
 		<!-- 3D Background -->
 		<Visuals :state="state" />
+
+		<!-- Loading Overlay -->
+		<div
+			v-if="state === SessionState.INITIALIZING"
+			class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-90 text-white"
+		>
+			<div class="text-2xl font-bold mb-4">{{ loadingMessage }}</div>
+			<div class="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
+				<div
+					class="h-full bg-green-500 transition-all duration-300 ease-out"
+					:style="{ width: `${loadingProgress}%` }"
+				></div>
+			</div>
+		</div>
 
 		<!-- Active Instruction View -->
 		<div

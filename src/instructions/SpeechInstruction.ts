@@ -1,10 +1,11 @@
-import { ref, markRaw } from "vue";
+import { ref, markRaw, watch } from "vue";
 import {
   Instruction,
   type InstructionContext,
   type InstructionOptions,
 } from "../core/Instruction";
 import SpeechView from "./views/SpeechView.vue";
+import { speechService } from "../services/speechService";
 import type { ThemeConfig } from '../types';
 
 interface SpeechOptions extends InstructionOptions {
@@ -13,16 +14,22 @@ interface SpeechOptions extends InstructionOptions {
 }
 
 export class SpeechInstruction extends Instruction<SpeechOptions> {
-  private recognition: SpeechRecognition | null = null;
   public isListening = ref(false);
   public currentTranscript = ref("");
   protected context: InstructionContext | null = null;
   private timeoutId: number | null = null;
   private startTime: number = 0;
   // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+  private unwatch: (() => void) | null = null;
 
+  constructor(options: SpeechOptions) {
+    super({
+      ...options,
+      capabilities: { speech: true, ...options.capabilities }
+    });
+  }
 
-  start(context: InstructionContext) {
+  async start(context: InstructionContext) {
     this.context = context;
     this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.startTime = Date.now();
@@ -35,49 +42,41 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
       }, this.options.timeout);
     }
 
-    // Initialize Speech
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = true;
-      this.recognition.interimResults = true;
-      this.recognition.lang = "en-US";
-
-      this.recognition.onresult = (e) => this.handleResult(e);
-      this.recognition.onend = () => this.handleEnd();
-      this.recognition.onerror = (e) => console.error("Speech Error", e);
-
-      try {
-        this.recognition.start();
-        this.isListening.value = true;
-      } catch (e) {
-        console.warn("Recognition already active", e);
-      }
-    } else {
-      console.warn("Speech API not supported");
-      // Could autocomplete or fail here
+    // Initialize/Ensure Speech Service
+    await speechService.init();
+    speechService.resetTranscript(); // Clear previous session text for clean slate? 
+    // Or maybe we don't want to kill the background session?
+    // resetTranscript() in my implementation restarts the service which clears memory.
+    // If we just want to track *new* words, we could just clear our local view of it.
+    // But since the service accumulates a huge string, resetting is probably good practice per-instruction.
+    
+    if (!speechService.isListening.value) {
+        speechService.start();
     }
+    
+    this.isListening.value = true; // Local UI state matches service? 
+    // actually, let's link it to service state for accurate UI
+    
+    // Watch service transcript
+    this.unwatch = watch(speechService.transcript, (newVal) => {
+        this.handleTranscriptUpdate(newVal);
+    });
   }
 
   stop() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
-    if (this.recognition) {
-      this.recognition.stop();
-      this.recognition = null;
+    if (this.unwatch) {
+        this.unwatch();
+        this.unwatch = null;
     }
     this.isListening.value = false;
+    // We do NOT stop the service here, as per "keep instance running in background" request.
+    // Theater handles the global stop.
   }
 
-  private handleResult(event: SpeechRecognitionEvent) {
-    let fullTranscript = "";
-    // Reconstruct full transcript from all results
-    for (let i = 0; i < event.results.length; ++i) {
-      if (event.results[i].length > 0) {
-        fullTranscript += event.results[i][0].transcript;
-      }
-    }
+  private handleTranscriptUpdate(fullTranscript: string) {
     this.currentTranscript.value = fullTranscript;
+    this.isListening.value = speechService.isListening.value;
 
     const normalizedTranscript = fullTranscript.toLowerCase();
     const targetWords = this.options.targetValue.split(' ');
@@ -99,18 +98,6 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
 
     if (allFound) {
       this.complete(true);
-    }
-  }
-
-  private handleEnd() {
-    // Auto-restart if still active (handled by engine not calling stop yet)
-    // Actually, checking isListening or context might be better
-    if (this.isListening.value && this.recognition) {
-      try {
-        this.recognition.start();
-      } catch (e) {
-        /* ignore */
-      }
     }
   }
 

@@ -20,6 +20,13 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   private animationFrameId: number | null = null;
   private endTime = 0;
 
+  constructor(options: BlinkOptions) {
+    super({
+      ...options,
+      capabilities: { faceMesh: true, ...options.capabilities }
+    });
+  }
+
   async start(context: InstructionContext) {
     this.context = context;
     this.resolvedTheme = context.resolvedTheme; // Store the resolved theme

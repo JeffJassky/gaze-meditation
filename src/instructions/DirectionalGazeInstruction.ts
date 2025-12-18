@@ -24,6 +24,13 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
   private correctFrames = 0;
   private totalFrames = 0;
 
+  constructor(options: DirectionalOptions) {
+    super({
+      ...options,
+      capabilities: { faceMesh: true, ...options.capabilities }
+    });
+  }
+
   async start(context: InstructionContext) {
     this.context = context;
     this.resolvedTheme = context.resolvedTheme; // Store the resolved theme

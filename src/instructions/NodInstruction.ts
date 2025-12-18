@@ -23,7 +23,8 @@ export class NodInstruction extends Instruction<NodOptions> {
 			showProgress: false,
 			showSwitch: false,
 			showDots: false,
-			...options
+			...options,
+			capabilities: { faceMesh: true, ...options.capabilities }
 		})
 	}
 

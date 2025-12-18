@@ -12,10 +12,17 @@ export interface InstructionContext {
 	resolvedTheme: ThemeConfig
 }
 
+export interface InstructionCapabilities {
+	faceMesh?: boolean
+	audioInput?: boolean
+	speech?: boolean // Uses shared SpeechService
+}
+
 export interface InstructionOptions {
 	id: string
 	prompt: string
 	duration?: number // ms
+	capabilities?: InstructionCapabilities
 	onCompleteCallback?: (success: boolean, result?: any) => string | undefined // NEW
 	positiveReinforcement?: {
 		enabled?: boolean

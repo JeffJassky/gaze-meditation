@@ -3,6 +3,7 @@ import { type InstructionOptions, type Instruction } from './core/Instruction'
 
 export enum SessionState {
 	IDLE = 'IDLE',
+	INITIALIZING = 'INITIALIZING',
 	INSTRUCTING = 'INSTRUCTING', // Prompt is visible, waiting for user to start
 	VALIDATING = 'VALIDATING', // User is performing task, system checking
 	REINFORCING_POS = 'REINFORCING_POS', // Success state
@@ -49,7 +50,7 @@ export interface Program {
 	id: string
 	title: string
 	description: string
-	audioTrack: string // Simulated audio track name
+	musicTrack: string // Simulated audio track name
 	videoBackground: string
 	instructions: Instruction[] // All instructions extend the base Instruction class
 	theme?: ThemeConfig // Optional theme configuration for the program
