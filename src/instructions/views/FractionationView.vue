@@ -6,7 +6,6 @@
   >
     <div class="content">
       <h1 v-if="instruction.status.value === 'READY'">GET READY</h1>
-      <h1 v-else-if="instruction.status.value === 'OBSERVING'">OBSERVING...</h1>
       <h1 v-else-if="instruction.status.value === 'WAITING_FOR_OPEN'">
         OPEN EYES
       </h1>
@@ -19,15 +18,11 @@
 
       <p
         class="cycle-info"
-        v-if="instruction.status.value !== 'READY' && instruction.status.value !== 'FINISHED' && instruction.status.value !== 'OBSERVING'"
+        v-if="instruction.status.value !== 'READY' && instruction.status.value !== 'FINISHED'"
         :style="{ color: instruction.resolvedTheme.secondaryTextColor }"
       >
         Cycle {{ instruction.currentCycle.value + 1 }} /
         {{ instruction.options.cycles }}
-      </p>
-
-      <p v-if="instruction.status.value === 'OBSERVING'" :style="{ color: instruction.resolvedTheme.secondaryTextColor }">
-        Please look at the screen naturally.
       </p>
 
       <EyeGraphic :openness="instruction.eyeOpennessNormalized.value * 100" />
@@ -37,7 +32,7 @@
 
 <script setup lang="ts">
 import type { FractionationInstruction } from '../FractionationInstruction';
-import EyeGraphic from '../../components/EyeGraphic.vue'; // Correct path
+import EyeGraphic from '../../components/EyeGraphic.vue';
 
 const props = defineProps<{
   instruction: FractionationInstruction;
@@ -51,7 +46,6 @@ const props = defineProps<{
   align-items: center;
   justify-content: center;
   height: 100%;
-  /* color: white; is now set via inline style */
   transition: background 1s;
 }
 
@@ -73,9 +67,6 @@ h1 {
 }
 
 .cycle-info {
-    /* color: #555; is now set via inline style */
     font-family: monospace;
 }
-
-
 </style>
