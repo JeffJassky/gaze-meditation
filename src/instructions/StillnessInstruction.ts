@@ -2,11 +2,12 @@ import { ref, markRaw } from 'vue';
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction';
 import StillnessView from './views/StillnessView.vue';
 import { faceMeshService } from '../services/faceMeshService';
-import type { ThemeConfig } from '../types';
 
 interface StillnessOptions extends InstructionOptions {
   duration: number; // ms to hold still
   tolerance?: number; // Sensitivity (0.01 - 0.1)
+  getReadyMessage?: string;
+  mistakeMessage?: string;
 }
 
 export class StillnessInstruction extends Instruction<StillnessOptions> {
@@ -24,7 +25,7 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   private initialPitch = 0;
   
   // Tolerance for movement
-  private get tolerance() { return this.options.tolerance || 0.05; }
+  public get tolerance() { return this.options.tolerance || 0.05; }
 
   async start(context: InstructionContext) {
     this.context = context;
