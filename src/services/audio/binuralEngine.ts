@@ -29,7 +29,9 @@ export class BinauralEngine {
 
 		this.gain = ctx.createGain()
 		this.gain.gain.setValueAtTime(0, now)
-		this.gain.gain.linearRampToValueAtTime(config.volume ?? 0.4, now + 10)
+		// Use setTargetAtTime for robust interruption. 
+		// TimeConstant 2.5s ~= reach 95% in ~7.5s
+		this.gain.gain.setTargetAtTime(config.volume ?? 0.4, now, 2.5)
 
 		const merger = ctx.createChannelMerger(2)
 
@@ -57,11 +59,27 @@ export class BinauralEngine {
 	setBeatFrequency(freq: number) {
 		if (!this.left || !this.right) return
 		console.log('[BinauralEngine] Setting beat freq:', freq)
-		const now = this.session.ctx.currentTime
+		// Add small buffer to prevent clicks
+		const now = this.session.ctx.currentTime + 0.1
 
+		this.right.frequency.cancelScheduledValues(now)
 		this.right.frequency.setTargetAtTime(this.left.frequency.value + freq, now, 0.5)
 		if (this.currentConfig) {
 			this.currentConfig.beatFreq = freq
+		}
+	}
+
+	setVolume(volume: number) {
+		if (!this.gain) return
+		console.log('[BinauralEngine] Setting volume:', volume)
+		// Add small buffer to prevent clicks
+		const now = this.session.ctx.currentTime + 0.1
+		
+		this.gain.gain.cancelScheduledValues(now)
+		this.gain.gain.setTargetAtTime(volume, now, 0.5)
+		
+		if (this.currentConfig) {
+			this.currentConfig.volume = volume
 		}
 	}
 

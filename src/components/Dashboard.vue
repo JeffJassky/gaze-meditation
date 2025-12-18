@@ -13,6 +13,7 @@ import { TypeInstruction } from '../instructions/TypeInstruction'
 import { NodInstruction } from '../instructions/NodInstruction'
 import { FractionationInstruction } from '../instructions/FractionationInstruction'
 import { ReadInstruction } from '../instructions/ReadInstruction' // Import new ReadInstruction
+import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
 import { audioSession } from '../services/audio'
 
 // Full Programs
@@ -340,6 +341,20 @@ const FULL_PROGRAMS: Program[] = [
 // Test Programs
 const TEST_PROGRAMS: Program[] = [
 	{
+		id: 'test_relax_jaw',
+		title: 'Test Relax Jaw',
+		description: 'Dedicated program for testing RelaxJawInstruction.',
+		audio: { musicTrack: 'silence.mp3' },
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new RelaxJawInstruction({
+				id: 'jaw_test_hold',
+				prompt: 'Open your mouth and relax your jaw',
+				duration: 1000
+			})
+		]
+	},
+	{
 		id: 'test_blink_instruction',
 		title: 'Test Blink Instruction',
 		description: 'Dedicated program for testing BlinkInstruction.',
@@ -509,10 +524,19 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'binaural_read_test',
-				prompt: 'Audio Test',
+				id: 'binaural_read_8hz',
+				prompt: 'Audio Test (8Hz)',
 				text: '8hz binural beats are playing at 50% volume',
-				duration: 10000
+				duration: 5000
+			}),
+			new ReadInstruction({
+				id: 'binaural_read_4hz',
+				prompt: 'Audio Test (4Hz)',
+				text: 'Slowing down to 4Hz... Deep relaxation.',
+				duration: 5000,
+				audio: {
+					binaural: { hertz: 3, volume: 0.5 }
+				}
 			})
 		]
 	}
@@ -558,7 +582,7 @@ const handleCreateUser = () => {
 
 const handleStartSession = async (program: Program) => {
 	if (!selectedUser.value) return
-	
+
 	// Initialize audio on user gesture to unlock AudioContext (especially for Safari/Chrome autoplay policies)
 	try {
 		await audioSession.setup()

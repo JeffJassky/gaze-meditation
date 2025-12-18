@@ -195,6 +195,17 @@ const nextInstruction = (index: number) => {
 	instrIndex.value = index
 	state.value = SessionState.INSTRUCTING
 
+	// Apply Instruction Audio Settings if present
+	if (currentInstr.value?.options.audio?.binaural) {
+		const b = currentInstr.value.options.audio.binaural
+		// Ensure engine is active or start it? For now assuming adjust if active.
+		if (audioSession.binaural.isActive) {
+			console.log('[Theater] Adjusting Binaural:', b)
+			if (b.hertz !== undefined) audioSession.binaural.setBeatFrequency(b.hertz)
+			if (b.volume !== undefined) audioSession.binaural.setVolume(b.volume)
+		}
+	}
+
 	// Short delay for "Get Ready" (or 0 for optimization)
 	// Logic: View is rendered. Instruction logic NOT started.
 	if (timerRef.value) clearTimeout(timerRef.value)
@@ -331,7 +342,6 @@ onMounted(() => {
 		// Teardown Services
 		faceMeshService.stop()
 		audioSession.binaural.stop() // Ensure binaural stops
-		audioSession.end()
 		speechService.stop()
 
 		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})

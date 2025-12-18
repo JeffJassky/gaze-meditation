@@ -1,4 +1,4 @@
-import type { ThemeConfig } from '../types'
+import type { ThemeConfig, ProgramBinauralConfig } from '../types'
 import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
 
 export interface InstructionContext {
@@ -31,6 +31,9 @@ export interface InstructionOptions {
 	negativeReinforcement?: {
 		enabled?: boolean
 		message?: string
+	}
+	audio?: {
+		binaural?: ProgramBinauralConfig
 	}
 	theme?: ThemeConfig // Optional theme configuration for the instruction
 }

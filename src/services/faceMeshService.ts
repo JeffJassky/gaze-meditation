@@ -42,6 +42,7 @@ class FaceMeshService {
     blinkDetected: false,
     eyeOpenness: 1.0, // 0 = closed, 1 = open
     eyeOpennessNormalized: 1.0, // 0 = closed (0.15 EAR), 1 = open (0.35 EAR)
+    mouthOpenness: 0,
   });
 
   private eyeOpennessMax = 0.35; // Represents fully open for normalization
@@ -303,6 +304,21 @@ class FaceMeshService {
     this.debugData.gazeX = screenX;
 
     this.debugData.gazeY = screenY;
+
+    // Calculate Mouth Openness
+    const upperLip = keypoints[13];
+    const lowerLip = keypoints[14];
+    const mouthLeft = keypoints[61];
+    const mouthRight = keypoints[291];
+
+    if (upperLip && lowerLip && mouthLeft && mouthRight) {
+      const mouthV = this.getDistance(upperLip, lowerLip);
+      const mouthH = this.getDistance(mouthLeft, mouthRight);
+      // Avoid division by zero
+      if (mouthH > 0) {
+        this.debugData.mouthOpenness = mouthV / mouthH;
+      }
+    }
 
     this.updateBlinkStatus(keypoints);
   }
