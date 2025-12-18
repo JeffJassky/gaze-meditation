@@ -9,9 +9,9 @@ defineProps<{
 <template>
   <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
     <!-- Timer Wipe Background -->
-    <div v-if="instruction.options.duration" class="absolute inset-0 -z-5">
+    <div v-if="instruction.options.timeout" class="absolute inset-0 -z-5">
         <div class="h-full bg-cyan-600/50 mix-blend-screen shadow-[0_0_50px_rgba(8,145,178,0.5)] w-0" 
-             :style="{ animation: `wipe ${instruction.options.duration}ms linear forwards` }"
+             :style="{ animation: `wipe ${instruction.options.timeout}ms linear forwards` }"
         ></div>
     </div>
 

@@ -44,17 +44,17 @@ const handleExit = () => {
       class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full max-w-4xl"
     >
       <h1
-        v-if="props.state === SessionState.REINFORCING_POS"
+        v-if="props.state === SessionState.REINFORCING_POS && props.currentInstruction?.options.positiveReinforcement?.enabled"
         class="text-6xl font-black text-green-400 drop-shadow-[0_0_25px_rgba(74,222,128,0.8)] animate-bounce"
       >
-        REINFORCED
+        {{ props.currentInstruction.options.positiveReinforcement.message }}
       </h1>
 
       <h1
-        v-else-if="props.state === SessionState.REINFORCING_NEG"
+        v-else-if="props.state === SessionState.REINFORCING_NEG && props.currentInstruction?.options.negativeReinforcement?.enabled"
         class="text-6xl font-black text-red-500 drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] glitch-text"
       >
-        CORRECTION REQUIRED
+        {{ props.currentInstruction.options.negativeReinforcement.message }}
       </h1>
 
       <h1

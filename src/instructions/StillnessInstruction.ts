@@ -46,7 +46,6 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
   }
 
   stop() {
-    this.status.value = 'SUCCESS'; // Or whatever state it ended in
     if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
   }
 

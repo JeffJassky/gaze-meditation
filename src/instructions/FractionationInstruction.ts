@@ -12,6 +12,7 @@ interface FractionationOptions extends InstructionOptions {
 }
 
 export class FractionationInstruction extends Instruction<FractionationOptions> {
+  // --- Reactive UI State ---
   public status = ref<
     | "READY"
     | "OBSERVING"
@@ -21,133 +22,141 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
     | "CLOSED"
     | "FINISHED"
   >("READY");
+
   public currentCycle = ref(0);
   public ear = ref(0);
   public eyeOpennessNormalized = ref(1.0);
 
-  protected context: InstructionContext | null = null;
-  private animationFrameId: number | null = null;
-
+  // --- Internal Logic State ---
+  private observationSamples: number[] = [];
   private openSamples: number[] = [];
   private closedSamples: number[] = [];
 
   private stateStartTime = 0;
-  private readonly HOLD_DURATION = 3000; // Time to hold open/closed to collect samples
-  private readonly DETECTION_DELAY_MS = 1500; // Delay before detection starts after speech
-  private readonly STABILITY_DURATION = 1500; // Time (ms) eye must be stable in compliant state
-  private readonly OBSERVING_DURATION = 3000; // Time (ms) to passively observe EAR range
-
+  private stableSince = 0;
   private isDetecting = false;
-  private stableSince = 0; // Timestamp when eye entered compliant state
+  private isSpeaking = false;
+  private animationFrameId: number | null = null;
 
-  private initialOpenEAR = 0;
-  private initialClosedEAR = 1; // Start high, so min works
+  // --- Calibration Baselines ---
+  private naturalOpenBaseline = 0;
+  private estimatedClosedThreshold = 0;
 
+  // --- Constants ---
+  private readonly STABILITY_DURATION = 800; // Time eye must be stable to trigger state
+  private readonly HOLD_DURATION = 2000; // Time to collect data in a state
+  private readonly OBSERVING_DURATION = 3000; // Initial "natural look" time
+
+  /**
+   * Entry point: Initializes service and starts the sequence.
+   */
   async start(context: InstructionContext) {
     this.context = context;
     this.status.value = "READY";
     this.currentCycle.value = 0;
+    this.observationSamples = [];
     this.openSamples = [];
     this.closedSamples = [];
     this.isDetecting = false;
-    this.stableSince = 0;
-    this.initialOpenEAR = 0;
-    this.initialClosedEAR = 1; // Reset for each start
 
     await faceMeshService.init();
 
-    this.speak("Please look at the screen while I estimate your eye range.");
+    // PHASE 1: Await the introductory speech before starting the observation timer
+    await this.speak(
+      "Please look naturally at the screen while I measure your eyes."
+    );
+
     this.status.value = "OBSERVING";
     this.stateStartTime = Date.now();
-    setTimeout(() => {
-      // Start passive observation loop
-      this.loop();
-    }, this.DETECTION_DELAY_MS); // Give time for speech
+    this.loop();
   }
 
-  stop() {
-    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-    window.speechSynthesis.cancel();
-    this.isDetecting = false; // Ensure detection stops
-  }
-
+  /**
+   * Main animation loop: Runs ~60fps.
+   */
   private loop() {
     const ear = faceMeshService.debugData.eyeOpenness;
     this.ear.value = ear;
-    this.eyeOpennessNormalized.value = faceMeshService.debugData.eyeOpennessNormalized;
-
     const now = Date.now();
 
+    // GUARD: If the computer is talking, pause all detection logic.
+    if (this.isSpeaking) {
+      this.animationFrameId = requestAnimationFrame(() => this.loop());
+      return;
+    }
+
+    // --- State: OBSERVING (Establishing Baseline) ---
     if (this.status.value === "OBSERVING") {
-      this.initialOpenEAR = Math.max(this.initialOpenEAR, ear);
-      this.initialClosedEAR = Math.min(this.initialClosedEAR, ear);
+      this.observationSamples.push(ear);
 
       if (now - this.stateStartTime > this.OBSERVING_DURATION) {
-        console.log(
-          `Initial EAR range - Open: ${this.initialOpenEAR.toFixed(
-            3
-          )}, Closed: ${this.initialClosedEAR.toFixed(3)}`
-        );
-        this.speak("Thank you. To begin, please open your eyes.");
-        this.status.value = "WAITING_FOR_OPEN";
-        setTimeout(() => {
-          this.isDetecting = true;
-        }, this.DETECTION_DELAY_MS);
-      }
-    } else {
-      // Normal instruction flow
-      if (!this.isDetecting && this.status.value !== "READY") {
-        this.animationFrameId = requestAnimationFrame(() => this.loop());
+        const sum = this.observationSamples.reduce((a, b) => a + b, 0);
+        this.naturalOpenBaseline = sum / this.observationSamples.length;
+
+        /**
+         * CALIBRATION MATH:
+         * We use your .25 / .20 feedback.
+         * Offset of -0.04 from natural baseline marks "Closed".
+         * Offset of -0.02 from natural baseline marks "Open".
+         */
+        this.estimatedClosedThreshold = this.naturalOpenBaseline - 0.04;
+
+        this.moveToWaitingForOpen();
         return;
       }
+    }
 
-      // Dynamic transition thresholds based on initial observation
-      // When detecting open, look for EAR well above the estimated closed
-      const openTransitionThreshold =
-        this.initialClosedEAR +
-        (this.initialOpenEAR - this.initialClosedEAR) * 0.15; // 15% up from closed
-      // When detecting closed, look for EAR well below the estimated open
-      const closedTransitionThreshold =
-        this.initialOpenEAR -
-        (this.initialOpenEAR - this.initialClosedEAR) * 0.15; // 15% down from open
+    // --- Phase 2: Active Detection ---
+    else if (this.isDetecting) {
+      const isOpen = ear >= this.naturalOpenBaseline - 0.02;
+      const isClosed = ear <= this.estimatedClosedThreshold;
 
+      // Logic: WAITING FOR OPEN
       if (this.status.value === "WAITING_FOR_OPEN") {
-        if (ear > openTransitionThreshold) {
-          if (this.stableSince === 0) {
-            this.stableSince = now;
-          } else if (now - this.stableSince >= this.STABILITY_DURATION) {
-            this.speak("Thank you. Please keep them open.");
-            this.stateStartTime = now;
+        if (isOpen) {
+          if (this.stableSince === 0) this.stableSince = now;
+          else if (now - this.stableSince >= this.STABILITY_DURATION) {
             this.status.value = "OPEN";
+            this.stateStartTime = now;
             this.stableSince = 0;
+            this.speak("Perfect."); // Encouragement (non-blocking)
           }
         } else {
           this.stableSince = 0;
         }
-      } else if (this.status.value === "OPEN") {
+      }
+
+      // Logic: COLLECTING OPEN DATA
+      else if (this.status.value === "OPEN") {
         this.openSamples.push(ear);
         if (now - this.stateStartTime > this.HOLD_DURATION) {
           this.isDetecting = false;
           this.switchState("CLOSED");
         }
-      } else if (this.status.value === "WAITING_FOR_CLOSED") {
-        if (ear < closedTransitionThreshold) {
-          if (this.stableSince === 0) {
-            this.stableSince = now;
-          } else if (now - this.stableSince >= this.STABILITY_DURATION) {
-            this.speak("Thank you. Please keep them closed.");
-            this.stateStartTime = now;
+      }
+
+      // Logic: WAITING FOR CLOSED
+      else if (this.status.value === "WAITING_FOR_CLOSED") {
+        if (isClosed) {
+          if (this.stableSince === 0) this.stableSince = now;
+          else if (now - this.stableSince >= this.STABILITY_DURATION) {
             this.status.value = "CLOSED";
+            this.stateStartTime = now;
             this.stableSince = 0;
+            this.speak("Good."); // Encouragement (non-blocking)
           }
         } else {
           this.stableSince = 0;
         }
-      } else if (this.status.value === "CLOSED") {
+      }
+
+      // Logic: COLLECTING CLOSED DATA
+      else if (this.status.value === "CLOSED") {
         this.closedSamples.push(ear);
         if (now - this.stateStartTime > this.HOLD_DURATION) {
           this.isDetecting = false;
           this.currentCycle.value++;
+
           if (this.currentCycle.value >= this.options.cycles) {
             this.finish();
             return;
@@ -161,23 +170,63 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
     this.animationFrameId = requestAnimationFrame(() => this.loop());
   }
 
-  private switchState(newState: "OPEN" | "CLOSED") {
-    if (newState === "OPEN") {
-      this.speak("Now, please open your eyes.");
-      this.status.value = "WAITING_FOR_OPEN";
-      setTimeout(() => {
-        this.isDetecting = true;
-      }, this.DETECTION_DELAY_MS);
-    } else {
-      this.speak("Now, please close your eyes.");
-      this.status.value = "WAITING_FOR_CLOSED";
-      setTimeout(() => {
-        this.isDetecting = true;
-      }, this.DETECTION_DELAY_MS);
-    }
+  /**
+   * Helper to transition from Observation to the first cycle.
+   */
+  private async moveToWaitingForOpen() {
+    this.status.value = "WAITING_FOR_OPEN";
+    await this.speak("Thank you. Now, please open your eyes.");
+    this.isDetecting = true;
+    this.animationFrameId = requestAnimationFrame(() => this.loop());
   }
 
-  private finish() {
+  /**
+   * Handles switching between OPEN and CLOSED prompts.
+   */
+  private async switchState(newState: "OPEN" | "CLOSED") {
+    if (newState === "OPEN") {
+      this.status.value = "WAITING_FOR_OPEN";
+      await this.speak("Now, open your eyes.");
+      this.isDetecting = true;
+    } else {
+      this.status.value = "WAITING_FOR_CLOSED";
+      await this.speak("Now, close your eyes.");
+      this.isDetecting = true;
+    }
+    // Ensure loop continues after the await
+    if (!this.animationFrameId) this.loop();
+  }
+
+  /**
+   * Wraps Web Speech API in a Promise to block logic until speech ends.
+   */
+  private speak(text: string): Promise<void> {
+    return new Promise((resolve) => {
+      window.speechSynthesis.cancel();
+      this.isSpeaking = true;
+
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      u.pitch = 1.0;
+
+      u.onend = () => {
+        this.isSpeaking = false;
+        resolve();
+      };
+
+      u.onerror = () => {
+        this.isSpeaking = false;
+        resolve();
+      };
+
+      window.speechSynthesis.speak(u);
+    });
+  }
+
+  /**
+   * Finalizes calibration and saves data to the service.
+   */
+  private async finish() {
     this.status.value = "FINISHED";
     this.stop();
 
@@ -186,36 +235,31 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
     const avgClosed =
       this.closedSamples.reduce((a, b) => a + b, 0) / this.closedSamples.length;
 
-    // Use a small buffer around the min/max to ensure animation range
-    const eyeOpennessMinCalibrated = avgClosed * 0.95; // Slightly below observed closed
-    const eyeOpennessMaxCalibrated = avgOpen * 1.05; // Slightly above observed open
+    // Apply 5% padding to ensure the UI animation range feels natural
+    faceMeshService.setEyeOpennessMin(avgClosed * 0.95);
+    faceMeshService.setEyeOpennessMax(avgOpen * 1.05);
 
-    faceMeshService.setEyeOpennessMin(eyeOpennessMinCalibrated);
-    faceMeshService.setEyeOpennessMax(eyeOpennessMaxCalibrated);
-    
-    // Set normalized blink threshold based on the calibrated range
-    // A value of 0.2 means eyes need to be 20% "closed" on the normalized scale to trigger a blink
-    faceMeshService.setNormalizedBlinkThreshold(0.2); 
+    // Set a relative threshold for what counts as a blink in the future
+    faceMeshService.setNormalizedBlinkThreshold(0.25);
 
-    const fullCalibration = faceMeshService.getCalibration();
+    await this.speak("Calibration complete. Thank you.");
 
-    console.log(`Calibration Complete. Open: ${avgOpen.toFixed(3)}, Closed: ${avgClosed.toFixed(3)}`);
-
-    this.speak("Calibration complete.");
     setTimeout(() => {
       this.context?.complete(true, {
-        ...fullCalibration,
         metrics: { open: avgOpen, closed: avgClosed },
+        ...faceMeshService.getCalibration(),
       });
-    }, 2000);
+    }, 1000);
   }
 
-  private speak(text: string) {
+  stop() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    this.isDetecting = false;
+    this.isSpeaking = false;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.8;
-    u.pitch = 0.9;
-    window.speechSynthesis.speak(u);
   }
 
   get component() {

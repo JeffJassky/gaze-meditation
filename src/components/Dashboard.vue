@@ -12,9 +12,10 @@ import { BlinkInstruction } from '../instructions/BlinkInstruction';
 import { TypeInstruction } from '../instructions/TypeInstruction';
 import { NodInstruction } from '../instructions/NodInstruction';
 import { FractionationInstruction } from '../instructions/FractionationInstruction';
+import { ReadInstruction } from '../instructions/ReadInstruction'; // Import new ReadInstruction
 
-// Mock Programs
-const PROGRAMS: Program[] = [
+// Full Programs
+const FULL_PROGRAMS: Program[] = [
   {
     id: 'prog_calibration',
     title: 'Eye Tracker Calibration',
@@ -22,7 +23,7 @@ const PROGRAMS: Program[] = [
     audioTrack: 'silence.mp3',
     videoBackground: '/spiral.mp4',
     instructions: [
-        new CalibrationInstruction({ id: 'cal1', prompt: 'Eye Calibration' }),
+        new CalibrationInstruction({ id: 'cal1', prompt: 'Eye Calibration', positiveReinforcement: { message: 'CALIBRATION COMPLETE' } }),
         new DirectionalGazeInstruction({
             id: 'test_left',
             prompt: 'Look Left',
@@ -48,9 +49,9 @@ const PROGRAMS: Program[] = [
     audioTrack: 'white_noise_low.mp3',
     videoBackground: '/spiral.mp4',
     instructions: [
-      new SpeechInstruction({ id: 'v1', prompt: 'Say "START"', targetValue: 'START', duration: 4000 }),
-      new SpeechInstruction({ id: 'v2', prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000 }),
-      new SpeechInstruction({ id: 'v4', prompt: 'Say "DONE"', targetValue: 'DONE', duration: 3000 }),
+      new SpeechInstruction({ id: 'v1', prompt: 'Say "START"', targetValue: 'START', duration: 4000, negativeReinforcement: { enabled: false } }),
+      new SpeechInstruction({ id: 'v2', prompt: 'Say "FOCUS"', targetValue: 'FOCUS', duration: 3000, negativeReinforcement: { enabled: false } }),
+      new SpeechInstruction({ id: 'v4', prompt: 'Say "DONE"', targetValue: 'DONE', duration: 3000, negativeReinforcement: { enabled: false } }),
     ]
   },
   {
@@ -70,10 +71,10 @@ const PROGRAMS: Program[] = [
     videoBackground: '/spiral.mp4',
     instructions: [
         new FractionationInstruction({ id: 'f1', prompt: 'Relax and follow the voice', cycles: 3 }),
-        new TypeInstruction({ id: 't1', prompt: 'Type "I obey"', targetPhrase: 'I obey' }),
+        new TypeInstruction({ id: 't1', prompt: 'Type "I obey"', targetPhrase: 'I obey', positiveReinforcement: { message: 'ACCEPTED' }, negativeReinforcement: { message: 'TRY AGAIN' } }),
         new NodInstruction({ id: 'n1', prompt: 'Nod if you are ready', nodsRequired: 3, type: 'YES' }),
         new BlinkInstruction({ id: 'b1', prompt: 'Do not blink', duration: 10000 }),
-        new TypeInstruction({ id: 't2', prompt: 'Type "My mind is open"', targetPhrase: 'My mind is open' }),
+        new TypeInstruction({ id: 't2', prompt: 'Type "My mind is open"', targetPhrase: 'My mind is open', positiveReinforcement: { message: 'ACCEPTED' }, negativeReinforcement: { message: 'TRY AGAIN' } }),
         new StillnessInstruction({ id: 's2', prompt: 'Perfect stillness', duration: 10000 }),
     ]
 	},
@@ -156,11 +157,226 @@ const PROGRAMS: Program[] = [
 		cycles: 3,
 		})
 	]
-	}
+	},
+  {
+    id: 'prog_total_induction',
+    title: 'Total Induction',
+    description: 'A comprehensive program designed for deep hypnotic induction.',
+    audioTrack: 'drone_dark.mp3', // Example, can be replaced
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new FormInstruction({
+        id: 'form_hypnotize_consent',
+        prompt: 'Consent for Induction',
+        question: 'Do you consent to hypnotic induction?',
+        fields: [
+          { label: 'Yes, hypnotize me', name: 'consent', type: FormFieldType.RADIO, options: ['yes'], required: true },
+          { label: 'No, cancel session', name: 'consent', type: FormFieldType.RADIO, options: ['no'], required: true },
+		  ],
+		positiveReinforcement: {
+			message: 'Perfect!'
+		  },
+		  negativeReinforcement: {
+			  enabled: false
+		  },
+
+        autoContinue: false,
+        onCompleteCallback: (success, result) => {
+          console.log('FormInstruction onCompleteCallback result:', result);
+          if (success && result && (result as Record<string, any>).consent === 'no') {
+            console.log('Consent is "no", jumping to session_cancelled');
+            return 'session_cancelled'; // Jump to cancellation instruction
+          }
+          return undefined; // Continue sequentially
+        }
+      }),
+	new NodInstruction({ id: 'n1', prompt: 'Nod if you are ready', nodsRequired: 2, type: 'YES' }),
+      new SpeechInstruction({
+        id: 'speech_hypnotize_me',
+        prompt: 'Say "HYPNOTIZE ME"',
+        targetValue: 'HYPNOTIZE ME',
+        duration: 5000
+      }),
+      new ReadInstruction({
+        id: 'read_sounds_good',
+        prompt: 'Confirmation',
+        text: 'Sounds good. Let\'s begin your journey.',
+        duration: 3000
+      }),
+      new ReadInstruction({
+        id: 'read_breath_in',
+        prompt: 'Guidance',
+        text: 'Take a breath in...',
+        duration: 3000
+      }),
+      new ReadInstruction({
+        id: 'read_breath_out',
+        prompt: 'Guidance',
+        text: 'and a breath out...',
+        duration: 3000
+      }),
+      new ReadInstruction({
+        id: 'read_now',
+        prompt: 'Transition',
+        text: 'Now...',
+        duration: 2000
+      }),
+	new StillnessInstruction({
+		id: 'red-path',
+		duration: 3000,
+		prompt: 'Stay very still for a moment.',
+	}),
+      new ReadInstruction({
+        id: 'read_turn_head',
+        prompt: 'Instruction',
+        text: 'Turn your head toward the numbers, and speak them out loud.',
+        duration: 4000
+      }),
+        new CalibrationInstruction({ id: 'cal1', prompt: 'Eye Calibration' }),
+      new ReadInstruction({
+        id: 'read_good',
+        prompt: 'Feedback',
+        text: 'Good!',
+        duration: 2000
+      }),
+      new BlinkInstruction({
+        id: 'blink_hold',
+        prompt: 'Hold your eyes open without blinking.',
+        duration: 10000
+      }),
+      new ReadInstruction({
+        id: 'read_perfect',
+        prompt: 'Feedback',
+        text: 'Perfect.',
+        duration: 2000
+      }),
+      new FractionationInstruction({
+        id: 'fractionation_deepen',
+        prompt: 'Allow yourself to drift deeper with each count.',
+        cycles: 2
+      }),
+      new ReadInstruction({
+        id: 'session_cancelled', // This ID is targeted by the FormInstruction's callback
+        prompt: 'Session Ended',
+        text: 'Session cancelled as per your request. You may close this window.',
+        duration: 5000
+      		})
+      	]
+      }
 ];
 
-interface DashboardProps {
-  // onStartSession: (program: Program, subjectId: string) => void; // Will be an emit
+// Test Programs
+const TEST_PROGRAMS: Program[] = [
+  {
+    id: 'test_blink_instruction',
+    title: 'Test Blink Instruction',
+    description: 'Dedicated program for testing BlinkInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new BlinkInstruction({ id: 'blink_test', prompt: 'Blink three times', duration: 5000, blinksRequired: 3 })
+    ]
+  },
+  {
+    id: 'test_calibration_instruction',
+    title: 'Test Calibration Instruction',
+    description: 'Dedicated program for testing CalibrationInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new CalibrationInstruction({ id: 'calibration_test', prompt: 'Calibrate your eyes' })
+    ]
+  },
+  {
+    id: 'test_directional_gaze_instruction',
+    title: 'Test Directional Gaze Instruction',
+    description: 'Dedicated program for testing DirectionalGazeInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new DirectionalGazeInstruction({ id: 'gaze_left_test', prompt: 'Look Left', direction: 'LEFT', duration: 3000 }),
+      new DirectionalGazeInstruction({ id: 'gaze_right_test', prompt: 'Look Right', direction: 'RIGHT', duration: 3000 })
+    ]
+  },
+  {
+    id: 'test_form_instruction',
+    title: 'Test Form Instruction',
+    description: 'Dedicated program for testing FormInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new FormInstruction({
+        id: 'form_test',
+        prompt: 'Please enter your name',
+        question: 'What is your name?',
+        fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
+        autoContinue: true
+      })
+    ]
+  },
+  {
+    id: 'test_fractionation_instruction',
+    title: 'Test Fractionation Instruction',
+    description: 'Dedicated program for testing FractionationInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new FractionationInstruction({ id: 'fractionation_test', prompt: 'Relax and count', cycles: 2 })
+    ]
+  },
+  {
+    id: 'test_nod_instruction',
+    title: 'Test Nod Instruction',
+    description: 'Dedicated program for testing NodInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new NodInstruction({ id: 'nod_test', prompt: 'Nod your head twice', nodsRequired: 2, type: 'YES' })
+    ]
+  },
+  {
+    id: 'test_read_instruction',
+    title: 'Test Read Instruction',
+    description: 'Dedicated program for testing ReadInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new ReadInstruction({ id: 'read_test', prompt: 'Read this text', text: 'This is a test message.', duration: 3000 })
+    ]
+  },
+  {
+    id: 'test_speech_instruction',
+    title: 'Test Speech Instruction',
+    description: 'Dedicated program for testing SpeechInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new SpeechInstruction({ id: 'speech_test', prompt: 'Say "hello"', targetValue: 'hello', duration: 3000 })
+    ]
+  },
+  {
+    id: 'test_stillness_instruction',
+    title: 'Test Stillness Instruction',
+    description: 'Dedicated program for testing StillnessInstruction.',
+    audioTrack: 'silence.mp3',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new StillnessInstruction({ id: 'stillness_test', prompt: 'Remain perfectly still', duration: 5000 })
+    ]
+  },
+  {
+    id: 'test_type_instruction',
+    title: 'Test Type Instruction',
+    description: 'Dedicated program for testing TypeInstruction.',
+    audioTrack: 'silence.mp4',
+    videoBackground: '/spiral.mp4',
+    instructions: [
+      new TypeInstruction({ id: 'type_test', prompt: 'Type "test"', targetPhrase: 'test' })
+    ]
+  }
+];
+      
+      interface DashboardProps {  // onStartSession: (program: Program, subjectId: string) => void; // Will be an emit
 }
 
 const props = defineProps<DashboardProps>();
@@ -177,6 +393,10 @@ const newUserName = ref('');
 const refreshData = () => {
   users.value = getUsers();
   sessions.value = getSessions().reverse(); // Newest first
+
+  if (users.value.length > 0) {
+    selectedUser.value = users.value[0].id;
+  }
 };
 
 const handleCreateUser = () => {
@@ -289,25 +509,26 @@ onMounted(() => {
         <div class="space-y-4">
           <label
             class="text-xs uppercase font-bold text-zinc-500 tracking-wider"
-            >Available Protocols</label
+            >Full Protocols</label
           >
-          <div class="grid grid-cols-1 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div
-              v-for="prog in PROGRAMS"
+              v-for="prog in FULL_PROGRAMS"
               :key="prog.id"
               class="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-xl hover:border-zinc-600 transition-all"
             >
-              <div class="flex justify-between items-start">
+              <div class="flex flex-col h-full">
                 <div>
                   <h3
-                    class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors"
+                    class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors text-left"
                   >
                     {{ prog.title }}
                   </h3>
-                  <p class="text-sm text-zinc-400 mt-2">
+                  <p class="text-sm text-zinc-400 mt-2 text-left">
                     {{ prog.description }}
                   </p>
-                  <div class="flex gap-2 mt-4">
+                </div>
+                <div class="flex gap-2 mt-4 flex-wrap">
                     <span
                       class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
                       >{{ prog.instructions.length }} steps</span
@@ -317,14 +538,59 @@ onMounted(() => {
                       >Audio: {{ prog.audioTrack }}</span
                     >
                   </div>
+                <div class="mt-auto pt-4">
+                  <button
+                    :disabled="!selectedUser"
+                    @click="handleStartSession(prog)"
+                    class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
+                  >
+                    INITIALIZE
+                  </button>
                 </div>
-                <button
-                  :disabled="!selectedUser"
-                  @click="handleStartSession(prog)"
-                  class="bg-cyan-900 hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
-                >
-                  INITIALIZE
-                </button>
+              </div>
+            </div>
+          </div>
+
+          <label
+            class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider"
+            >Test Protocols</label
+          >
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              v-for="prog in TEST_PROGRAMS"
+              :key="prog.id"
+              class="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-xl hover:border-zinc-600 transition-all"
+            >
+              <div class="flex flex-col h-full">
+                <div>
+                  <h3
+                    class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors text-left"
+                  >
+                    {{ prog.title }}
+                  </h3>
+                  <p class="text-sm text-zinc-400 mt-2 text-left">
+                    {{ prog.description }}
+                  </p>
+                </div>
+                <div class="flex gap-2 mt-4 flex-wrap">
+                    <span
+                      class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
+                      >{{ prog.instructions.length }} steps</span
+                    >
+                    <span
+                      class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
+                      >Audio: {{ prog.audioTrack }}</span
+                    >
+                  </div>
+                <div class="mt-auto pt-4">
+                  <button
+                    :disabled="!selectedUser"
+                    @click="handleStartSession(prog)"
+                    class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
+                  >
+                    INITIALIZE
+                  </button>
+                </div>
               </div>
             </div>
           </div>

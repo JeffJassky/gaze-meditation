@@ -13,6 +13,14 @@ export interface InstructionOptions {
   prompt: string;
   duration?: number; // ms
   onCompleteCallback?: (success: boolean, result?: any) => string | undefined; // NEW
+  positiveReinforcement?: {
+    enabled?: boolean;
+    message?: string;
+  };
+  negativeReinforcement?: {
+    enabled?: boolean;
+    message?: string;
+  };
 }
 
 export abstract class Instruction<
@@ -25,6 +33,14 @@ export abstract class Instruction<
     this.options = {
       duration: 5000, // Default duration
       ...options,
+      positiveReinforcement: {
+        ...{ enabled: true, message: "REINFORCED" },
+        ...(options.positiveReinforcement || {}),
+      },
+      negativeReinforcement: {
+        ...{ enabled: true, message: "CORRECTION REQUIRED" },
+        ...(options.negativeReinforcement || {}),
+      },
     };
   }
 

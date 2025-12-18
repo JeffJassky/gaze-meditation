@@ -8,6 +8,7 @@ import SpeechView from "./views/SpeechView.vue";
 
 interface SpeechOptions extends InstructionOptions {
   targetValue: string;
+  timeout?: number;
 }
 
 export class SpeechInstruction extends Instruction<SpeechOptions> {
@@ -22,10 +23,10 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     this.startTime = Date.now();
 
     // Start Timeout Logic
-    if (this.options.duration) {
+    if (this.options.timeout) {
       this.timeoutId = window.setTimeout(() => {
         this.handleTimeout();
-      }, this.options.duration);
+      }, this.options.timeout);
     }
 
     // Initialize Speech

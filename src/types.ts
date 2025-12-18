@@ -1,22 +1,21 @@
-import type { Instruction, InstructionOptions } from './core/Instruction';
+import { Instruction, type InstructionOptions } from "./core/Instruction"; // Enums
 
-// Enums
 export enum SessionState {
-  IDLE = 'IDLE',
-  INSTRUCTING = 'INSTRUCTING', // Prompt is visible, waiting for user to start
-  VALIDATING = 'VALIDATING',   // User is performing task, system checking
-  REINFORCING_POS = 'REINFORCING_POS', // Success state
-  REINFORCING_NEG = 'REINFORCING_NEG', // Failure state
-  FINISHED = 'FINISHED'
+  IDLE = "IDLE",
+  INSTRUCTING = "INSTRUCTING", // Prompt is visible, waiting for user to start
+  VALIDATING = "VALIDATING", // User is performing task, system checking
+  REINFORCING_POS = "REINFORCING_POS", // Success state
+  REINFORCING_NEG = "REINFORCING_NEG", // Failure state
+  FINISHED = "FINISHED",
 }
 
 export enum FormFieldType {
-  TEXT = 'text',
-  LONG_TEXT = 'longText',
-  NUMBER = 'number',
-  EMAIL = 'email',
-  RADIO = 'radio',
-  MULTISELECT = 'multiselect',
+  TEXT = "text",
+  LONG_TEXT = "longText",
+  NUMBER = "number",
+  EMAIL = "email",
+  RADIO = "radio",
+  MULTISELECT = "multiselect",
 }
 
 // Interfaces for Form Instruction
@@ -41,7 +40,7 @@ export interface Program {
   description: string;
   audioTrack: string; // Simulated audio track name
   videoBackground: string;
-  instructions: Instruction[];
+  instructions: Instruction[]; // All instructions extend the base Instruction class
 }
 
 export interface SessionMetric {
