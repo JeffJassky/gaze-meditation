@@ -15,6 +15,7 @@ interface SpeechOptions extends InstructionOptions {
 export class SpeechInstruction extends Instruction<SpeechOptions> {
   private recognition: SpeechRecognition | null = null;
   public isListening = ref(false);
+  public currentTranscript = ref("");
   protected context: InstructionContext | null = null;
   private timeoutId: number | null = null;
   private startTime: number = 0;
@@ -25,6 +26,7 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     this.context = context;
     this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
     this.startTime = Date.now();
+    this.currentTranscript.value = "";
 
     // Start Timeout Logic
     if (this.options.timeout) {
@@ -68,17 +70,35 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
   }
 
   private handleResult(event: SpeechRecognitionEvent) {
-    for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const result = event.results[i];
-      for (let j = 0; j < result.length; ++j) {
-        const transcript = result[j].transcript.trim().toUpperCase();
-        const target = this.options.targetValue.toUpperCase();
-
-        if (transcript.includes(target)) {
-          this.complete(true);
-          return;
-        }
+    let fullTranscript = "";
+    // Reconstruct full transcript from all results
+    for (let i = 0; i < event.results.length; ++i) {
+      if (event.results[i].length > 0) {
+        fullTranscript += event.results[i][0].transcript;
       }
+    }
+    this.currentTranscript.value = fullTranscript;
+
+    const normalizedTranscript = fullTranscript.toLowerCase();
+    const targetWords = this.options.targetValue.split(' ');
+    
+    let searchIndex = 0;
+    let allFound = true;
+
+    for (const word of targetWords) {
+      const cleanWord = word.toLowerCase().replace(/[^\w\s]|_/g, "");
+      if (!cleanWord) continue;
+
+      const foundIndex = normalizedTranscript.indexOf(cleanWord, searchIndex);
+      if (foundIndex === -1) {
+        allFound = false;
+        break;
+      }
+      searchIndex = foundIndex + cleanWord.length;
+    }
+
+    if (allFound) {
+      this.complete(true);
     }
   }
 

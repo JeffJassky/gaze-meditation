@@ -452,7 +452,7 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new SpeechInstruction({
 				id: 'speech_test',
-				prompt: 'Say "this is a speech test"',
+				prompt: 'Speak these words',
 				targetValue: 'this is a speech test',
 				duration: 3000
 			})
