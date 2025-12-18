@@ -11,6 +11,7 @@ import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
 import type { Instruction } from '../core/Instruction'
 import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
+import AudioDebugPanel from './AudioDebugPanel.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
@@ -86,11 +87,14 @@ const initSession = async () => {
 
 	// Check if we need audio (program track or instructions)
 	if (
-		props.program.musicTrack ||
+		props.program.audio?.musicTrack ||
+		props.program.audio?.binaural ||
 		props.program.instructions.some(i => i.options.capabilities?.audioInput)
 	) {
 		needsAudio = true
 	}
+
+	console.log('[Theater] Needs Audio:', needsAudio, 'Program Audio:', props.program.audio)
 
 	// Check if we need speech
 	if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
@@ -101,13 +105,29 @@ const initSession = async () => {
 
 	// 2. Initialize Audio if needed
 	if (needsAudio) {
+		console.log('[Theater] Initializing Audio Stack...')
 		loadingMessage.value = 'Initializing Audio Engine...'
 		try {
 			await audioSession.setup()
 			// Preload Program Audio Track if exists
-			if (props.program.musicTrack) {
+			if (props.program.audio?.musicTrack && props.program.audio.musicTrack !== 'none') {
 				loadingMessage.value = 'Loading Audio Track...'
-				await audioSession.loadBuffer(props.program.musicTrack)
+				try {
+					await audioSession.loadBuffer(props.program.audio.musicTrack)
+				} catch (e) {
+					console.warn(`[Theater] Failed to load music track: ${props.program.audio.musicTrack}`, e)
+				}
+			}
+
+			// Start Binaural Beats if configured
+			if (props.program.audio?.binaural) {
+				console.log('[Theater] Configuring Binaural Beats...', props.program.audio.binaural)
+				loadingMessage.value = 'Configuring Binaural...'
+				audioSession.binaural.start({
+					carrierFreq: 100, // Default carrier
+					beatFreq: props.program.audio.binaural.hertz,
+					volume: props.program.audio.binaural.volume
+				})
 			}
 		} catch (e) {
 			console.warn('Audio Initialization Failed', e)
@@ -275,6 +295,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 
 const finishSession = () => {
 	state.value = SessionState.FINISHED
+	audioSession.binaural.stop()
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
@@ -309,6 +330,7 @@ onMounted(() => {
 
 		// Teardown Services
 		faceMeshService.stop()
+		audioSession.binaural.stop() // Ensure binaural stops
 		audioSession.end()
 		speechService.stop()
 
@@ -369,6 +391,8 @@ onMounted(() => {
 			:score="score"
 			@exit="emit('exit')"
 		/>
+
+		<AudioDebugPanel />
 	</div>
 </template>
 

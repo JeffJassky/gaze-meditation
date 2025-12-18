@@ -45,12 +45,20 @@ export interface ThemeConfig {
 	debugColor?: string
 }
 
+export interface ProgramBinauralConfig {
+	hertz: number // 8 by default
+	volume: number // 1 by default
+}
+
 // Data Models
 export interface Program {
 	id: string
 	title: string
 	description: string
-	musicTrack: string // Simulated audio track name
+	audio?: {
+		musicTrack?: string // Simulated audio track name
+		binaural?: ProgramBinauralConfig
+	}
 	videoBackground: string
 	instructions: Instruction[] // All instructions extend the base Instruction class
 	theme?: ThemeConfig // Optional theme configuration for the program

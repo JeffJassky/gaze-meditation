@@ -13,6 +13,7 @@ import { TypeInstruction } from '../instructions/TypeInstruction'
 import { NodInstruction } from '../instructions/NodInstruction'
 import { FractionationInstruction } from '../instructions/FractionationInstruction'
 import { ReadInstruction } from '../instructions/ReadInstruction' // Import new ReadInstruction
+import { audioSession } from '../services/audio'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
@@ -20,7 +21,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_calibration',
 		title: 'Eye Tracker Calibration',
 		description: 'Calibrate the WebGazer eye tracking system.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({
@@ -50,7 +51,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_verbal_recall',
 		title: 'Verbal Recall Beta',
 		description: 'Rapid fire word association and repetition.',
-		musicTrack: 'white_noise_low.mp3',
+		audio: { musicTrack: 'white_noise_low.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
@@ -80,7 +81,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_blink_debug',
 		title: 'Blink Calibration',
 		description: 'Debug tool for testing blink sensitivity.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
@@ -91,7 +92,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_deepening',
 		title: 'Deepening Protocol',
 		description: 'Advanced conditioning using fractionation, stillness, gaze, and affirmation.',
-		musicTrack: 'drone_dark.mp3',
+		audio: { musicTrack: 'drone_dark.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
@@ -127,7 +128,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'demo-form-program',
 		title: 'Demo Form Program',
 		description: 'A program to demonstrate the new FormInstruction.',
-		musicTrack: 'none', // Placeholder
+		audio: { musicTrack: 'none' }, // Placeholder
 		videoBackground: '/public/spiral.mp4', // Example background
 		instructions: [
 			new FormInstruction({
@@ -216,7 +217,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_total_induction',
 		title: 'Total Induction',
 		description: 'A comprehensive program designed for deep hypnotic induction.',
-		musicTrack: 'drone_dark.mp3', // Example, can be replaced
+		audio: { musicTrack: 'drone_dark.mp3' }, // Example, can be replaced
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
@@ -342,7 +343,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_blink_instruction',
 		title: 'Test Blink Instruction',
 		description: 'Dedicated program for testing BlinkInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({
@@ -356,7 +357,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_calibration_instruction',
 		title: 'Test Calibration Instruction',
 		description: 'Dedicated program for testing CalibrationInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({ id: 'calibration_test', prompt: 'Calibrate your eyes' })
@@ -366,7 +367,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_directional_gaze_instruction',
 		title: 'Test Directional Gaze Instruction',
 		description: 'Dedicated program for testing DirectionalGazeInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new DirectionalGazeInstruction({
@@ -387,7 +388,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_form_instruction',
 		title: 'Test Form Instruction',
 		description: 'Dedicated program for testing FormInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
@@ -403,7 +404,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_fractionation_instruction',
 		title: 'Test Fractionation Instruction',
 		description: 'Dedicated program for testing FractionationInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
@@ -417,7 +418,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_nod_instruction',
 		title: 'Test Nod Instruction',
 		description: 'Dedicated program for testing NodInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new NodInstruction({
@@ -436,7 +437,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_read_instruction',
 		title: 'Test Read Instruction',
 		description: 'Dedicated program for testing ReadInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
@@ -461,7 +462,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_speech_instruction',
 		title: 'Test Speech Instruction',
 		description: 'Dedicated program for testing SpeechInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
@@ -476,7 +477,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_stillness_instruction',
 		title: 'Test Stillness Instruction',
 		description: 'Dedicated program for testing StillnessInstruction.',
-		musicTrack: 'silence.mp3',
+		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new StillnessInstruction({
@@ -492,10 +493,27 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_type_instruction',
 		title: 'Test Type Instruction',
 		description: 'Dedicated program for testing TypeInstruction.',
-		musicTrack: 'silence.mp4',
+		audio: { musicTrack: 'silence.mp4' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new TypeInstruction({ id: 'type_test', prompt: 'Type "test"', targetPhrase: 'test' })
+		]
+	},
+	{
+		id: 'test_binaural_audio',
+		title: 'Test Binaural Audio',
+		description: 'Dedicated program for testing binaural beats integration.',
+		audio: {
+			binaural: { hertz: 8, volume: 0.5 }
+		},
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new ReadInstruction({
+				id: 'binaural_read_test',
+				prompt: 'Audio Test',
+				text: '8hz binural beats are playing at 50% volume',
+				duration: 10000
+			})
 		]
 	}
 ]
@@ -538,8 +556,16 @@ const handleCreateUser = () => {
 	activeTab.value = 'start'
 }
 
-const handleStartSession = (program: Program) => {
+const handleStartSession = async (program: Program) => {
 	if (!selectedUser.value) return
+	
+	// Initialize audio on user gesture to unlock AudioContext (especially for Safari/Chrome autoplay policies)
+	try {
+		await audioSession.setup()
+	} catch (e) {
+		console.warn('Failed to pre-initialize audio context', e)
+	}
+
 	emit('startSession', program, selectedUser.value)
 }
 
@@ -671,7 +697,7 @@ onMounted(() => {
 									>
 									<span
 										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>Audio: {{ prog.musicTrack }}</span
+										>Audio: {{ prog.audio?.musicTrack }}</span
 									>
 								</div>
 								<div class="mt-auto pt-4">
@@ -715,7 +741,7 @@ onMounted(() => {
 									>
 									<span
 										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>Audio: {{ prog.musicTrack }}</span
+										>Audio: {{ prog.audio?.musicTrack }}</span
 									>
 								</div>
 								<div class="mt-auto pt-4">

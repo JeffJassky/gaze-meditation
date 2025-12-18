@@ -7,17 +7,29 @@ export class BinauralEngine {
 	private right?: OscillatorNode
 	private gain?: GainNode
 
+	public isActive = false
+	public currentConfig?: BinauralConfig
+
 	constructor(session: AudioSession) {
 		this.session = session
 	}
 
 	start(config: BinauralConfig) {
+		console.log('[BinauralEngine] Starting...', config)
 		const ctx = this.session.ctx
 		const now = ctx.currentTime
 
+		if (this.isActive) {
+			console.warn('[BinauralEngine] Already active, stopping first.')
+			this.stop(0)
+		}
+
+		this.isActive = true
+		this.currentConfig = config
+
 		this.gain = ctx.createGain()
 		this.gain.gain.setValueAtTime(0, now)
-		this.gain.gain.linearRampToValueAtTime(config.volume ?? 0.4, now + 2)
+		this.gain.gain.linearRampToValueAtTime(config.volume ?? 0.4, now + 10)
 
 		const merger = ctx.createChannelMerger(2)
 
@@ -27,6 +39,10 @@ export class BinauralEngine {
 		this.left.frequency.value = config.carrierFreq
 		this.right.frequency.value = config.carrierFreq + config.beatFreq
 
+		console.log(
+			`[BinauralEngine] Osc Freqs: L=${this.left.frequency.value}, R=${this.right.frequency.value}`
+		)
+
 		this.left.connect(merger, 0, 0)
 		this.right.connect(merger, 0, 1)
 
@@ -35,25 +51,41 @@ export class BinauralEngine {
 
 		this.left.start()
 		this.right.start()
+		console.log('[BinauralEngine] Started.')
 	}
 
 	setBeatFrequency(freq: number) {
 		if (!this.left || !this.right) return
+		console.log('[BinauralEngine] Setting beat freq:', freq)
 		const now = this.session.ctx.currentTime
 
 		this.right.frequency.setTargetAtTime(this.left.frequency.value + freq, now, 0.5)
+		if (this.currentConfig) {
+			this.currentConfig.beatFreq = freq
+		}
 	}
 
-	stop(fade = 2) {
-		if (!this.left || !this.right || !this.gain) return
+	stop(fade = 10) {
+		if (!this.isActive) return
+		console.log('[BinauralEngine] Stopping (fade=' + fade + ')')
 		const now = this.session.ctx.currentTime
 
-		this.gain.gain.linearRampToValueAtTime(0, now + fade)
-		this.left.stop(now + fade)
-		this.right.stop(now + fade)
+		if (this.gain) {
+			this.gain.gain.cancelScheduledValues(now)
+			this.gain.gain.setValueAtTime(this.gain.gain.value, now)
+			this.gain.gain.linearRampToValueAtTime(0, now + fade)
+		}
+		
+		if (this.left) this.left.stop(now + fade)
+		if (this.right) this.right.stop(now + fade)
 
-		this.left = undefined
-		this.right = undefined
-		this.gain = undefined
+		setTimeout(() => {
+			this.left = undefined
+			this.right = undefined
+			this.gain = undefined
+			this.isActive = false
+			this.currentConfig = undefined
+			console.log('[BinauralEngine] Stopped and cleaned up.')
+		}, fade * 1000 + 100)
 	}
 }

@@ -12,6 +12,16 @@ export class AudioSession {
 	binaural: BinauralEngine = new BinauralEngine(this)
 
 	async setup() {
+		if (this.ctx && this.ctx.state !== 'closed') {
+			console.log('[AudioSession] Setup called, but context exists and is', this.ctx.state)
+			if (this.ctx.state === 'suspended') {
+				console.log('[AudioSession] Resuming existing suspended context...')
+				await this.ctx.resume()
+			}
+			return
+		}
+
+		console.log('[AudioSession] Setting up...')
 		this.ctx = new AudioContext()
 
 		this.masterGain = this.ctx.createGain()
@@ -25,28 +35,42 @@ export class AudioSession {
 			fx: this.ctx.createGain()
 		}
 
-		Object.values(this.buses).forEach(bus => {
+		Object.entries(this.buses).forEach(([name, bus]) => {
 			bus.gain.value = 1
 			bus.connect(this.masterGain)
+			console.log(`[AudioSession] Bus '${name}' created and connected.`)
 		})
 
 		if (this.ctx.state === 'suspended') {
+			console.log('[AudioSession] Resuming suspended context...')
 			await this.ctx.resume()
 		}
+		console.log('[AudioSession] Setup complete. State:', this.ctx.state)
 	}
 
 	setBusVolume(bus: AudioBusName, volume: number) {
+		console.log(`[AudioSession] Set Bus Volume [${bus}]: ${volume}`)
 		this.buses[bus].gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05)
 	}
 
 	setMasterVolume(volume: number) {
+		console.log(`[AudioSession] Set Master Volume: ${volume}`)
 		this.masterGain.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05)
 	}
 
 	async loadBuffer(path: string): Promise<AudioBuffer> {
-		const res = await fetch(path)
-		const buf = await res.arrayBuffer()
-		return this.ctx.decodeAudioData(buf)
+		console.log(`[AudioSession] Loading buffer: ${path}`)
+		try {
+			const res = await fetch(path)
+			if (!res.ok) throw new Error(`HTTP ${res.status}`)
+			const buf = await res.arrayBuffer()
+			const decoded = await this.ctx.decodeAudioData(buf)
+			console.log(`[AudioSession] Buffer loaded: ${path} (${decoded.duration.toFixed(2)}s)`)
+			return decoded
+		} catch (e) {
+			console.error(`[AudioSession] Failed to load buffer: ${path}`, e)
+			throw e
+		}
 	}
 
 	end() {
