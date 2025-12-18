@@ -1,7 +1,10 @@
 <template>
   <div
     class="type-view"
-    :style="{ opacity: 1 - (instruction.progress.value / 100), color: instruction.resolvedTheme.textColor }"
+    :style="{ 
+      opacity: instruction.isComplete.value ? 1 : 1 - (instruction.progress.value / 100), 
+      color: instruction.resolvedTheme.textColor 
+    }"
   >
     <div class="prompt">
       <p :style="{ color: instruction.resolvedTheme.secondaryTextColor }">

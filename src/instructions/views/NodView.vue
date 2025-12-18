@@ -11,18 +11,36 @@
     </div>
 
     <div class="guide" v-else>
-      <h1>NOD "YES"</h1>
-      <div class="arrow-container">
-        <!-- Visual guide based on relative pitch -->
+      <h1>{{ instruction.options.type === 'NO' ? 'SHAKE "NO"' : 'NOD "YES"' }}</h1>
+      
+      <!-- Vertical Layout (YES) -->
+      <div class="arrow-container vertical" v-if="instruction.options.type !== 'NO'">
+        <!-- UP (negative pitch) -->
         <div class="arrow up" :class="{ active: instruction.relativePitch.value < instruction.UP_THRESH }">▲</div>
         
-        <!-- Normalize position: Pitch / Threshold * Range (e.g. 130px) -->
-        <!-- UP (negative pitch) -> moves Up (negative Y) -->
-        <!-- DOWN (positive pitch) -> moves Down (positive Y) -->
-        <div class="head-dot" :style="{ transform: `translateY(${ (instruction.relativePitch.value / instruction.DOWN_THRESH) * 130 }px)`, backgroundColor: instruction.resolvedTheme.textColor }"></div>
+        <div class="head-dot" :style="{ 
+          transform: `translateY(${ (instruction.relativePitch.value / instruction.DOWN_THRESH) * 130 }px)`, 
+          backgroundColor: instruction.resolvedTheme.textColor 
+        }"></div>
         
+        <!-- DOWN (positive pitch) -->
         <div class="arrow down" :class="{ active: instruction.relativePitch.value > instruction.DOWN_THRESH }">▼</div>
       </div>
+
+      <!-- Horizontal Layout (NO) -->
+      <div class="arrow-container horizontal" v-else>
+        <!-- LEFT (negative yaw) -->
+        <div class="arrow left" :class="{ active: instruction.relativeYaw.value < instruction.LEFT_THRESH }">◀</div>
+        
+        <div class="head-dot" :style="{ 
+          transform: `translateX(${ (instruction.relativeYaw.value / instruction.RIGHT_THRESH) * 130 }px)`, 
+          backgroundColor: instruction.resolvedTheme.textColor 
+        }"></div>
+        
+        <!-- RIGHT (positive yaw) -->
+        <div class="arrow right" :class="{ active: instruction.relativeYaw.value > instruction.RIGHT_THRESH }">▶</div>
+      </div>
+
     </div>
   </div>
 </template>
@@ -47,7 +65,6 @@ const secondaryTextColor = computed(() => props.instruction.resolvedTheme.second
   align-items: center;
   justify-content: center;
   height: 100%;
-  /* color: white; is now set via inline style */
 }
 
 .counter {
@@ -75,7 +92,6 @@ const secondaryTextColor = computed(() => props.instruction.resolvedTheme.second
 }
 
 .guide p {
-    /* color: #888; is now set via inline style */
     letter-spacing: 2px;
 }
 
@@ -90,13 +106,23 @@ const secondaryTextColor = computed(() => props.instruction.resolvedTheme.second
 
 .arrow-container {
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arrow-container.vertical {
   height: 300px;
   width: 100px;
   border-left: 2px dashed v-bind(secondaryTextColor);
-  display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+}
+
+.arrow-container.horizontal {
+  width: 300px;
+  height: 100px;
+  border-top: 2px dashed v-bind(secondaryTextColor);
+  flex-direction: row;
 }
 
 .arrow {
@@ -111,12 +137,22 @@ const secondaryTextColor = computed(() => props.instruction.resolvedTheme.second
 
 .head-dot {
   position: absolute;
-  top: 50%;
-  left: -10px;
   width: 20px;
   height: 20px;
-  /* background: white; is now set via inline style */
   border-radius: 50%;
   transition: transform 0.05s linear;
+}
+
+.vertical .head-dot {
+    top: 50%;
+    left: -10px; /* Centered on the vertical line (width 100px, border-left at 0?) No, border-left is usually at left edge. Wait. */
+    /* Previous CSS had `left: -10px` and `border-left` on container. */
+    /* Container width 100px. border-left. Dot is relative to container. */
+    /* Let's center the dot on the line. If line is at left edge, dot at -10px is centered on it. */
+}
+
+.horizontal .head-dot {
+    left: 50%;
+    top: -10px; /* Centered on the horizontal line */
 }
 </style>

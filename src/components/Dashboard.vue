@@ -425,6 +425,12 @@ const TEST_PROGRAMS: Program[] = [
 				prompt: 'Nod your head twice',
 				nodsRequired: 2,
 				type: 'YES'
+			}),
+			new NodInstruction({
+				id: 'nod_test',
+				prompt: 'Shake your head twice',
+				nodsRequired: 2,
+				type: 'NO'
 			})
 		]
 	},
@@ -437,9 +443,19 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new ReadInstruction({
 				id: 'read_test',
-				prompt: 'Read this text',
-				text: 'This is a test message.',
-				duration: 3000
+				prompt: 'This waited 3 seconds to fade in',
+				text: 'It lasts 3 seconds, then fades out',
+				duration: 3000,
+				delay: 1000,
+				fadeInDuration: 1000,
+				fadeOutDuration: 1000
+			}),
+			new ReadInstruction({
+				id: 'read_test',
+				prompt: 'This shows up instantly',
+				text: 'lasts 1 second, then fades out over 5 seconds',
+				duration: 1000,
+				fadeOutDuration: 5000
 			})
 		]
 	},

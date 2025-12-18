@@ -78,13 +78,20 @@ const handleExit = () => {
         {{ props.currentInstruction.options.negativeReinforcement.message }}
       </h1>
 
-      <h1
-        v-else-if="props.state === SessionState.FINISHED"
-        class="text-5xl font-bold"
-        :style="{ color: resolvedTheme.textColor }"
-      >
-        Session Complete
-      </h1>
+      <div v-else-if="props.state === SessionState.FINISHED" class="space-y-4">
+        <h1
+          class="text-5xl font-bold"
+          :style="{ color: resolvedTheme.textColor }"
+        >
+          Session Complete
+        </h1>
+        <div class="text-7xl font-black animate-pulse" :style="{ color: resolvedTheme.accentColor }">
+          {{ props.score }}
+        </div>
+        <p class="text-xl tracking-widest opacity-60" :style="{ color: resolvedTheme.secondaryTextColor }">
+          POINTS EARNED
+        </p>
+      </div>
     </div>
   </div>
 </template>

@@ -132,29 +132,46 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 		// --- End New Logic ---
 	}
 
+	const isPosEnabled = currentInstr.value?.options.positiveReinforcement?.enabled !== false
+	const isNegEnabled = currentInstr.value?.options.negativeReinforcement?.enabled !== false
+
 	if (success) {
-		// Bonus Calc
-		const duration = currentInstr.value?.options.duration || 5000
-		const reaction = metrics?.reactionTime || 0
-		const remainingRatio = Math.max(0, (duration - reaction) / duration)
-		const points = Math.round(100 * remainingRatio)
+		if (isPosEnabled) {
+			// Bonus Calc
+			const duration = currentInstr.value?.options.duration || 5000
+			const reaction = metrics?.reactionTime || 0
+			const remainingRatio = Math.max(0, (duration - reaction) / duration)
+			const points = Math.round(100 * remainingRatio)
 
-		score.value += points
-		state.value = SessionState.REINFORCING_POS
-	} else {
-		score.value -= 50
-		state.value = SessionState.REINFORCING_NEG
-	}
-
-	// Time in reinforcement state
-	setTimeout(() => {
-		if (success) {
-			nextInstruction(instrIndex.value + 1)
+			score.value += points
+			state.value = SessionState.REINFORCING_POS
+			
+			// Time in reinforcement state
+			setTimeout(() => {
+				nextInstruction(instrIndex.value + 1)
+			}, 2000)
 		} else {
-			// Retry
-			nextInstruction(instrIndex.value)
+			// Skip reinforcement visuals and delay
+			nextInstruction(instrIndex.value + 1)
 		}
-	}, 2000)
+	} else {
+		if (isNegEnabled) {
+			score.value -= 50
+			state.value = SessionState.REINFORCING_NEG
+			
+			// Time in reinforcement state
+			setTimeout(() => {
+				// Retry
+				nextInstruction(instrIndex.value)
+			}, 2000)
+		} else {
+			// Skip reinforcement visuals and delay
+			// Retry immediately (or after very short delay to avoid tight loop potential if logic is broken)
+			setTimeout(() => {
+				nextInstruction(instrIndex.value)
+			}, 100) 
+		}
+	}
 }
 
 const finishSession = () => {

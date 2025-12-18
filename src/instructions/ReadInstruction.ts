@@ -1,46 +1,78 @@
-import { Instruction, type InstructionContext } from '../core/Instruction';
-import { markRaw } from 'vue';
-import ReadView from './views/ReadView.vue';
-import type { ThemeConfig } from '../types';
+import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
+import { markRaw, ref } from 'vue'
+import ReadView from './views/ReadView.vue'
+import type { ThemeConfig } from '../types'
 
-interface ReadInstructionConfig {
-  id: string;
-  prompt: string;
-  duration?: number; // Optional duration for how long the text is displayed
-  text: string; // The text content to display
+interface ReadInstructionConfig extends InstructionOptions {
+	id: string
+	prompt: string
+	duration?: number // Milliseconds to display text
+	text: string
+	delay?: number // Milliseconds to delay before displaying text
+	fadeInDuration?: number // Milliseconds
+	fadeOutDuration?: number // Milliseconds
 }
 
-export class ReadInstruction extends Instruction {
-  readonly text: string;
-  readonly component = markRaw(ReadView);
-  private timer: number | null = null;
-  // public resolvedTheme!: ThemeConfig; // Removed redundant declaration
+export class ReadInstruction extends Instruction<ReadInstructionConfig> {
+	readonly text: string
+	readonly component = markRaw(ReadView)
 
+	// Reactive state for the view
+	public isFadingOut = ref(false)
 
-  constructor(config: ReadInstructionConfig) {
-    super(config);
-    this.text = config.text;
-  }
+	private timer: number | null = null
+	private delayTimer: number | null = null
+	private fadeOutTimer: number | null = null
 
-  start(context: InstructionContext): void {
-    this.context = context;
-    this.resolvedTheme = context.resolvedTheme; // Store the resolved theme
-    if (this.options.duration) {
-      this.timer = window.setTimeout(() => {
-        this.context?.complete(true);
-      }, this.options.duration);
-    } else {
-      // If no duration, it completes immediately, or expects external trigger
-      // For a simple ReadInstruction, we can make it complete almost immediately if no duration.
-      // Or, it could wait for a user interaction in ReadView, but for now, let's assume auto-completion.
-      this.context?.complete(true); // Auto-complete if no duration, adjust if ReadView will have a "Next" button.
-    }
-  }
+	constructor(config: ReadInstructionConfig) {
+		super({
+			...config,
+			positiveReinforcement: { enabled: false, ...(config.positiveReinforcement || {}) },
+			negativeReinforcement: { enabled: false, ...(config.negativeReinforcement || {}) }
+		})
+		this.text = config.text
+	}
 
-  stop(): void {
-    if (this.timer !== null) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-  }
+	start(context: InstructionContext): void {
+		this.context = context
+		this.resolvedTheme = context.resolvedTheme
+		this.isFadingOut.value = false
+
+		const delayMs = this.options.delay || 0
+		const durationMs = this.options.duration || 0
+		const fadeOutMs = this.options.fadeOutDuration || 0
+
+		// 1. Wait for Delay
+		this.delayTimer = window.setTimeout(() => {
+			// 2. Wait for Duration (Reading time)
+			if (durationMs > 0) {
+				this.timer = window.setTimeout(() => {
+					// 3. Handle Fade Out
+					if (fadeOutMs > 0) {
+						this.isFadingOut.value = true
+						this.fadeOutTimer = window.setTimeout(() => {
+							this.context?.complete(true)
+						}, fadeOutMs)
+					} else {
+						// No fade out, complete immediately
+						this.context?.complete(true)
+					}
+				}, durationMs)
+			} else {
+				// If no duration is set, we typically wait for manual interaction
+				// But if auto-complete is expected without duration, it would go here.
+				// Assuming infinite hold if duration is missing/0.
+			}
+		}, delayMs)
+	}
+
+	stop(): void {
+		if (this.timer !== null) clearTimeout(this.timer)
+		if (this.delayTimer !== null) clearTimeout(this.delayTimer)
+		if (this.fadeOutTimer !== null) clearTimeout(this.fadeOutTimer)
+
+		this.timer = null
+		this.delayTimer = null
+		this.fadeOutTimer = null
+	}
 }
