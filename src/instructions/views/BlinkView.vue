@@ -7,7 +7,7 @@
 
 		<div
 			class="message"
-			:style="{ opacity: Math.max(0, 0.7 - instruction.eyeOpennessNormalized.value) }"
+			:style="{ opacity: Math.max(0, 0.8 - instruction.eyeOpennessNormalized.value) }"
 		>
 			<h1
 				v-if="instruction.status.value === 'FAILED'"

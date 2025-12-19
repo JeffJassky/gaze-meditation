@@ -8,6 +8,7 @@ export class AudioSession {
 
 	masterGain!: GainNode
 	buses!: Record<AudioBusName, GainNode>
+	private bufferCache = new Map<string, AudioBuffer>()
 	musicLooper: MusicLooper = new MusicLooper(this)
 	binaural: BinauralEngine = new BinauralEngine(this)
 
@@ -22,7 +23,7 @@ export class AudioSession {
 		}
 
 		console.log('[AudioSession] Setting up...')
-		this.ctx = new AudioContext()
+		this.ctx = new AudioContext({ latencyHint: 'balanced' })
 
 		this.masterGain = this.ctx.createGain()
 		this.masterGain.gain.value = 0.25
@@ -59,6 +60,11 @@ export class AudioSession {
 	}
 
 	async loadBuffer(path: string): Promise<AudioBuffer> {
+		if (this.bufferCache.has(path)) {
+			console.log(`[AudioSession] Cache hit: ${path}`)
+			return this.bufferCache.get(path)!
+		}
+
 		console.log(`[AudioSession] Loading buffer: ${path}`)
 		try {
 			const res = await fetch(path)
@@ -66,6 +72,8 @@ export class AudioSession {
 			const buf = await res.arrayBuffer()
 			const decoded = await this.ctx.decodeAudioData(buf)
 			console.log(`[AudioSession] Buffer loaded: ${path} (${decoded.duration.toFixed(2)}s)`)
+			
+			this.bufferCache.set(path, decoded)
 			return decoded
 		} catch (e) {
 			console.error(`[AudioSession] Failed to load buffer: ${path}`, e)

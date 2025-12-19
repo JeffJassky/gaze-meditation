@@ -21,7 +21,6 @@ import { speechService } from '../services/speechService'
 interface TheaterProps {
 	program: Program
 	subjectId: string
-	videoBackground: string // Add videoBackground prop
 }
 
 const props = defineProps<TheaterProps>()
@@ -170,8 +169,8 @@ const initSession = async () => {
 	}
 	loadingProgress.value = 90
 
-	// 4. Preload Video Background if needed (basic check)
-	if (props.program.videoBackground) {
+	// 4. Preload Background if needed (basic check)
+	if (props.program.videoBackground || props.program.spiralBackground) {
 		loadingMessage.value = 'Preloading Background...'
 		// Basic preload via fetch to ensure cached?
 		// Or rely on browser buffering.
@@ -363,13 +362,31 @@ onMounted(() => {
 		<!-- Video Background -->
 		<video
 			v-if="program.videoBackground"
-			:src="program.videoBackground"
 			autoplay
 			loop
 			muted
 			playsinline
+			disablePictureInPicture
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
-		></video>
+		>
+			<source
+				:src="program.videoBackground"
+				type="video/mp4"
+			/>
+		</video>
+
+		<!-- Spiral Background -->
+		<div
+			v-if="program.spiralBackground"
+			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
+			:style="{
+				backgroundImage: `url(${program.spiralBackground})`,
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				width: '150vmax',
+				height: '150vmax'
+			}"
+		></div>
 
 		<!-- Tint Overlay -->
 		<div
@@ -458,9 +475,21 @@ onMounted(() => {
 	transform: scale(0.9);
 }
 
-.instruction-enter-to,
 .instruction-leave-from {
 	opacity: 1;
 	transform: scale(1);
+}
+
+.spiral-rotation {
+	animation: spiral-rotate 4s linear infinite;
+}
+
+@keyframes spiral-rotate {
+	from {
+		transform: translate(-50%, -50%) rotate(0deg);
+	}
+	to {
+		transform: translate(-50%, -50%) rotate(360deg);
+	}
 }
 </style>

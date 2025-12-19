@@ -20,7 +20,8 @@ export const somaticResetFull: Program = {
 		musicTrack: '/audio/music.mp3',
 		binaural: { hertz: 6, volume: 0.5 }
 	},
-	videoBackground: '/spiral.mp4',
+	// videoBackground: '/loop2.mov',
+	spiralBackground: '/img/spiral.png',
 	instructions: [
 		// --- Block 1: The Mental "Handshake" (Pacing) ---
 		new ReadInstruction({
@@ -78,29 +79,23 @@ export const somaticResetFull: Program = {
 		}),
 		new DirectionalGazeInstruction({
 			prompt: 'Now... turn your head gently to the left.',
-			direction: 'LEFT',
-			duration: 10000,
-			leftSrc: '/assets/target_red.png', // Placeholder
-			rightSrc: '/assets/ignore_blue.png'
+			direction: 'LEFT'
 		}),
 		new DirectionalGazeInstruction({
 			prompt: 'Now to the right',
-			direction: 'RIGHT',
-			duration: 10000,
-			leftSrc: '/assets/ignore_blue.png',
-			rightSrc: '/assets/target_red.png'
+			direction: 'RIGHT'
 		}),
 		new ReadInstruction({ text: 'Back to center.' }),
 		new ReadInstruction({
 			text: 'Close your eyes for three seconds.'
 		}),
-		new ReadInstruction({ text: 'Open.', duration: 2000 }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 20000 }),
+		new ReadInstruction({ text: 'Open.' }),
+		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 12000 }),
 		new ReadInstruction({
 			text: 'Notice how the rest of your face follows the jaw.'
 		}),
 		new ReadInstruction({
-			text: 'The tension is starting to leak out.'
+			text: 'The tension is starting to fall away.'
 		}),
 		new TypeInstruction({
 			prompt: 'Type "i am present"',
@@ -111,12 +106,12 @@ export const somaticResetFull: Program = {
 		new ReadInstruction({
 			text: 'True relaxation starts with total stillness.'
 		}),
-		new StillnessInstruction({ prompt: 'Be Still', duration: 45000 }),
-		new ReadInstruction({ prompt: 'Good', text: 'Good.', duration: 2000 }),
+		new StillnessInstruction({ prompt: 'Be Still', duration: 30000 }),
+		new ReadInstruction({ text: 'Perfect.' }),
 		new ReadInstruction({
-			text: 'Now, let your jaw drop again.'
+			text: ['Eyes softening...', 'Now, relax that jaw again...']
 		}),
-		new RelaxJawInstruction({ prompt: 'Drop Jaw', duration: 30000 }),
+		new RelaxJawInstruction({ prompt: 'as your eyes soften on the center', duration: 30000 }),
 		new ReadInstruction({
 			text: 'Look at the swirling light on the screen.'
 		}),

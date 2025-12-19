@@ -30,7 +30,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Tongue Out',
 		description: 'Experimental blendshape detection.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new TongueOutInstruction({
 				prompt: 'Stick your tongue out!',
@@ -43,7 +43,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Close Eyes (Test)',
 		description: 'Instruction that waits for you to close your eyes.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new CloseEyesInstruction({
 				prompt: 'Close Your Eyes',
@@ -56,7 +56,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Open Eyes (Test)',
 		description: 'Instruction that waits for you to open your eyes.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new OpenEyesInstruction({
 				prompt: 'Open Your Eyes',
@@ -70,7 +70,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Manual Fractionation',
 		description: 'Sequence: Close -> Open -> Close -> Open',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
 				text: "Now in a moment, I'll ask you to close your eyes."
@@ -100,7 +100,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Relax Jaw',
 		description: 'Relax your jaw and let your mouth fall open.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new RelaxJawInstruction({
 				prompt: 'Open your mouth and relax your jaw',
@@ -113,7 +113,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Dont Blink',
 		description: "Stare at the screen. Don't you dare blink.",
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new BlinkInstruction({
 				prompt: 'Blink three times',
@@ -126,7 +126,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Calibration',
 		description: ' CalibrationInstruction.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [new CalibrationInstruction({ prompt: 'Calibrate your eyes' })]
 	},
 	{
@@ -134,7 +134,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Direct Your Gaze',
 		description: 'Gaze at one thing - and not the other.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new DirectionalGazeInstruction({
 				prompt: 'Gently turn your head to the left.',
@@ -160,7 +160,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Fill out a Form',
 		description: 'Answer questons in a form.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new FormInstruction({
 				prompt: 'Please enter your name',
@@ -175,7 +175,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Fractionation',
 		description: 'Open and close your eyes. Go deeper each time.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new FractionationInstruction({
 				prompt: 'Close your eyes.',
@@ -188,7 +188,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Nod & Shake your Head',
 		description: 'Nod or shake your head as instructed.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new NodInstruction({
 				prompt: 'Nod your head twice',
@@ -207,7 +207,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Read',
 		description: 'Simply read what is shown.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
 				prompt: 'This waited 3 seconds to fade in',
@@ -230,7 +230,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Compelled Speech',
 		description: "Speak the words you're told to.",
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new SpeechInstruction({
 				prompt: 'Speak these words',
@@ -244,7 +244,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Stay Still',
 		description: 'Stay very... very... still.',
 		audio: { musicTrack: '/audio/music.mp3' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
 				text: ['Prepare to be still.', 'Be still.']
@@ -260,7 +260,7 @@ const TEST_PROGRAMS: Program[] = [
 		title: 'Type',
 		description: 'Type the words you see them.',
 		audio: { musicTrack: 'silence.mp4' },
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [new TypeInstruction({ prompt: 'Type "test"', targetPhrase: 'test' })]
 	},
 	{
@@ -270,7 +270,7 @@ const TEST_PROGRAMS: Program[] = [
 		audio: {
 			binaural: { hertz: 6, volume: 0.5 }
 		},
-		videoBackground: '/spiral.mp4',
+		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
 				prompt: 'Audio Test (6Hz)',

@@ -3,21 +3,21 @@
 		<!-- Status Text replacing the old status-indicator h2s -->
 		<div
 			v-if="instruction.status.value === 'HOLDING'"
-			class="prompt-text"
+			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
 			{{ instruction.options.prompt }}
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'FAILED'"
-			class="prompt-text"
+			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.negativeColor || 'red' }"
 		>
 			{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'SUCCESS'"
-			class="prompt-text"
+			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.positiveColor || 'green' }"
 		>
 			PERFECT
@@ -161,8 +161,7 @@ const cursorStyle = computed(() => {
 }
 
 .prompt-text {
-	font-size: clamp(1.5rem, 5vw, 4rem);
-	font-weight: bold;
+	font-size: clamp(1rem, 3vw, 2.5rem);
 	margin-bottom: 2rem;
 	z-index: 10; /* Ensure text is above other elements if needed */
 }

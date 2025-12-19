@@ -43,7 +43,6 @@ const endSession = () => {
 			v-if="view === 'theater' && activeSession"
 			:program="activeSession.program"
 			:subjectId="activeSession.subjectId"
-			:videoBackground="activeSession.program.videoBackground"
 			@exit="endSession"
 		/>
 	</div>

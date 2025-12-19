@@ -63,8 +63,8 @@ export interface Program {
 		musicTrack?: string // Simulated audio track name
 		binaural?: ProgramBinauralConfig
 	}
-	videoBackground: string
-	videoReverse?: boolean
+	videoBackground?: string
+	spiralBackground?: string
 	instructions: Instruction[] // All instructions extend the base Instruction class
 	theme?: ThemeConfig // Optional theme configuration for the program
 }
