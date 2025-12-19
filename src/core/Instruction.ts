@@ -19,7 +19,7 @@ export interface InstructionCapabilities {
 }
 
 export interface InstructionOptions {
-	id: string
+	id?: string
 	prompt?: string
 	duration?: number // ms
 	capabilities?: InstructionCapabilities
@@ -48,6 +48,7 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 
 	constructor(options: TOptions) {
 		this.options = {
+			id: options.id || `inst_${Math.random().toString(36).substring(2, 11)}`,
 			duration: 5000, // Default duration
 			...options,
 			positiveReinforcement: {
@@ -60,6 +61,10 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 			}
 		}
 		this.resolvedTheme = DEFAULT_THEME // Initialize with default theme
+	}
+
+	get id(): string {
+		return this.options.id!
 	}
 
 	// Lifecycle: Called when instruction becomes active

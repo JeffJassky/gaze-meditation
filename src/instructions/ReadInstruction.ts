@@ -5,7 +5,6 @@ import { calculateDuration } from '../utils/time'
 import type { ThemeConfig } from '../types'
 
 export interface ReadInstructionConfig extends InstructionOptions {
-	id: string
 	prompt?: string
 	duration?: number // Milliseconds to display text
 	text: string | string[]

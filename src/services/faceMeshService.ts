@@ -345,14 +345,14 @@ class FaceMeshService {
 		)
 
 		// DEBUGGING LOGS
-		if (Date.now() % 500 < 50) {
-			// Log every ~0.5 seconds
-			console.log(
-				`EAR: ${avgEAR.toFixed(3)}, ` +
-					`NormEAR: ${this.debugData.eyeOpennessNormalized.toFixed(3)}, ` +
-					`BlinkDetected: ${this.debugData.blinkDetected}`
-			)
-		}
+		// if (Date.now() % 500 < 50) {
+		// 	// Log every ~0.5 seconds
+		// 	console.log(
+		// 		`EAR: ${avgEAR.toFixed(3)}, ` +
+		// 			`NormEAR: ${this.debugData.eyeOpennessNormalized.toFixed(3)}, ` +
+		// 			`BlinkDetected: ${this.debugData.blinkDetected}`
+		// 	)
+		// }
 		// END DEBUGGING LOGS
 
 		// Use normalized eye openness for blink detection

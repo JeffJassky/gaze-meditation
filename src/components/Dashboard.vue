@@ -33,7 +33,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new TongueOutInstruction({
-				id: 'tongue_test',
 				prompt: 'Stick your tongue out!',
 				duration: 20000
 			})
@@ -47,7 +46,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CloseEyesInstruction({
-				id: 'close_test',
 				prompt: 'Close Your Eyes',
 				text: 'Please close your eyes now. The instruction will complete when you do.'
 			})
@@ -61,7 +59,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new OpenEyesInstruction({
-				id: 'open_test',
 				prompt: 'Open Your Eyes',
 				text: 'Please open your eyes now. I will chime until you do.',
 				repeatAfter: 3 // faster for testing
@@ -76,30 +73,26 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'b3_12',
 				text: "Now in a moment, I'll ask you to close your eyes."
 			}),
 			new ReadInstruction({
-				id: 'b3_12',
 				text: "Each time you hear the bell, you'll open your eyes."
 			}),
-			new CloseEyesInstruction({ id: 'b3_11', text: 'Close your eyes.' }),
-			new OpenEyesInstruction({ id: 'b3_11', text: 'Open your eyes.' }),
+			new CloseEyesInstruction({ text: 'Close your eyes.' }),
+			new OpenEyesInstruction({ text: 'Open your eyes.' }),
 			new ReadInstruction({
-				id: 'b3_12',
 				text: [
 					'Good.',
 					'Each time the swirling light returns, you are 10 times more relaxed.'
 				]
 			}),
-			new CloseEyesInstruction({ id: 'b3_11', text: 'Close those eyes again.' }),
-			new OpenEyesInstruction({ id: 'b3_11', text: 'Open your eyes.' }),
+			new CloseEyesInstruction({ text: 'Close those eyes again.' }),
+			new OpenEyesInstruction({ text: 'Open your eyes.' }),
 			new ReadInstruction({
-				id: 'b3_12',
 				text: ['Deeper and deeper.']
 			}),
-			new CloseEyesInstruction({ id: 'b3_11', text: 'Close those eyes again.' }),
-			new OpenEyesInstruction({ id: 'b3_11', text: 'And open your eyes.' })
+			new CloseEyesInstruction({ text: 'Close those eyes again.' }),
+			new OpenEyesInstruction({ text: 'And open your eyes.' })
 		]
 	},
 	{
@@ -110,7 +103,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new RelaxJawInstruction({
-				id: 'jaw_test_hold',
 				prompt: 'Open your mouth and relax your jaw',
 				duration: 1000
 			})
@@ -124,7 +116,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({
-				id: 'blink_test',
 				prompt: 'Blink three times',
 				duration: 5000
 			})
@@ -136,9 +127,7 @@ const TEST_PROGRAMS: Program[] = [
 		description: ' CalibrationInstruction.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
-		instructions: [
-			new CalibrationInstruction({ id: 'calibration_test', prompt: 'Calibrate your eyes' })
-		]
+		instructions: [new CalibrationInstruction({ prompt: 'Calibrate your eyes' })]
 	},
 	{
 		id: 'test_directional_gaze_instruction',
@@ -148,14 +137,21 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new DirectionalGazeInstruction({
-				id: 'gaze_left_test',
 				prompt: 'Gently turn your head to the left.',
 				direction: 'LEFT'
 			}),
 			new DirectionalGazeInstruction({
-				id: 'gaze_right_test',
 				prompt: 'Gently turn your head to the right.',
 				direction: 'RIGHT'
+			}),
+			new DirectionalGazeInstruction({
+				prompt: 'Gently upward.',
+				direction: 'UP'
+			}),
+			new DirectionalGazeInstruction({
+				prompt: 'Down.',
+				direction: 'DOWN',
+				duration: 10000
 			})
 		]
 	},
@@ -167,7 +163,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
-				id: 'form_test',
 				prompt: 'Please enter your name',
 				question: 'What is your name?',
 				fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
@@ -183,7 +178,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
-				id: 'fractionation_test',
 				prompt: 'Close your eyes.',
 				cycles: 1
 			})
@@ -197,13 +191,11 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new NodInstruction({
-				id: 'nod_test',
 				prompt: 'Nod your head twice',
 				type: 'YES',
 				showProgress: true
 			}),
 			new NodInstruction({
-				id: 'nod_test',
 				prompt: 'Shake your head twice',
 				type: 'NO',
 				showProgress: true
@@ -218,7 +210,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'read_test',
 				prompt: 'This waited 3 seconds to fade in',
 				text: 'It lasts 3 seconds, then fades out',
 				duration: 3000,
@@ -227,7 +218,6 @@ const TEST_PROGRAMS: Program[] = [
 				fadeOutDuration: 1000
 			}),
 			new ReadInstruction({
-				id: 'read_test',
 				prompt: 'This shows up instantly',
 				text: 'lasts 1 second, then fades out over 5 seconds',
 				duration: 1000,
@@ -243,7 +233,6 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
-				id: 'speech_test',
 				prompt: 'Speak these words',
 				targetValue: 'this is a speech test',
 				duration: 3000
@@ -258,11 +247,9 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'b1_3',
 				text: ['Prepare to be still.', 'Be still.']
 			}),
 			new StillnessInstruction({
-				id: 'b1_4',
 				prompt: 'keep the blue dot centered in the ring.',
 				duration: 20000
 			})
@@ -274,9 +261,7 @@ const TEST_PROGRAMS: Program[] = [
 		description: 'Type the words you see them.',
 		audio: { musicTrack: 'silence.mp4' },
 		videoBackground: '/spiral.mp4',
-		instructions: [
-			new TypeInstruction({ id: 'type_test', prompt: 'Type "test"', targetPhrase: 'test' })
-		]
+		instructions: [new TypeInstruction({ prompt: 'Type "test"', targetPhrase: 'test' })]
 	},
 	{
 		id: 'test_binaural_audio',
@@ -288,13 +273,11 @@ const TEST_PROGRAMS: Program[] = [
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'binaural_read_6hz',
 				prompt: 'Audio Test (6Hz)',
 				text: '6hz binural beats are playing at 50% volume',
 				duration: 5000
 			}),
 			new ReadInstruction({
-				id: 'binaural_read_3hz',
 				prompt: 'Audio Test (3Hz)',
 				text: 'Slowing down to 3Hz... Deep relaxation.',
 				duration: 5000,
@@ -653,6 +636,4 @@ onMounted(() => {
 
 <style scoped>
 /* No specific scoped styles needed, using Tailwind */
-.dashboard {
-}
 </style>

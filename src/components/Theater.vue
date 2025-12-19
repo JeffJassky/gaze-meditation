@@ -112,7 +112,7 @@ const initSession = async () => {
 			await audioSession.setup()
 			// Start Program Audio Track if exists
 			if (props.program.audio?.musicTrack && props.program.audio.musicTrack !== 'none') {
-				loadingMessage.value = 'Starting Audio Track...'
+				loadingMessage.value = 'Initializing...'
 				try {
 					await audioSession.musicLooper.start({
 						track: props.program.audio.musicTrack,
