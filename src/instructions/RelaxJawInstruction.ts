@@ -133,7 +133,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 
 	protected complete() {
 		this.status.value = 'SUCCESS'
-		this.complete(true, {
+		super.complete(true, {
 			finalOpenness: this.currentOpenness.value,
 			baseline: this.baselineOpenness
 		})
