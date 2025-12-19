@@ -562,12 +562,14 @@ const TEST_PROGRAMS: Program[] = [
 		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
+			new ReadInstruction({
+				id: 'b1_3',
+				text: ['Prepare to be still.', 'Be still.']
+			}),
 			new StillnessInstruction({
-				id: 'stillness_test',
-				prompt: 'Remain perfectly still',
-				duration: 5000,
-				tolerance: 0.05,
-				mistakeMessage: 'DO NOT MOVE'
+				id: 'b1_4',
+				prompt: 'keep the blue dot centered in the ring.',
+				duration: 20000
 			})
 		]
 	},

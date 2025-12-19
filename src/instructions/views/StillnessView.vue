@@ -1,22 +1,29 @@
 <template>
-	<div
-		class="stillness-view"
-		:style="{ color: instruction.resolvedTheme.textColor }"
-	>
+	<div class="instruction-view stillness-view">
+		<!-- Status Text replacing the old status-indicator h2s -->
 		<div
-			class="status-indicator"
-			:class="{ error: instruction.status.value === 'FAILED' }"
-			:style="{ '--negative-color': instruction.resolvedTheme.negativeColor }"
+			v-if="instruction.status.value === 'HOLDING'"
+			class="prompt-text fade-in"
+			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
-			<h2 v-if="instruction.status.value === 'HOLDING'">
-				{{ instruction.options.prompt }}
-			</h2>
-			<h2 v-else-if="instruction.status.value === 'FAILED'">
-				{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
-			</h2>
-			<h2 v-else-if="instruction.status.value === 'SUCCESS'">PERFECT</h2>
+			{{ instruction.options.prompt }}
+		</div>
+		<div
+			v-else-if="instruction.status.value === 'FAILED'"
+			class="prompt-text fade-in"
+			:style="{ color: instruction.resolvedTheme.negativeColor || 'red' }"
+		>
+			{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
+		</div>
+		<div
+			v-else-if="instruction.status.value === 'SUCCESS'"
+			class="prompt-text fade-in"
+			:style="{ color: instruction.resolvedTheme.positiveColor || 'green' }"
+		>
+			PERFECT
 		</div>
 
+		<!-- Visualizer (Keep as is) -->
 		<div
 			class="visualizer"
 			v-if="instruction.status.value === 'HOLDING'"
@@ -33,6 +40,7 @@
 			></div>
 		</div>
 
+		<!-- Progress Bar (Keep as is) -->
 		<div
 			class="progress-bar"
 			v-if="instruction.status.value !== 'WAITING'"
@@ -134,31 +142,41 @@ const cursorStyle = computed(() => {
 </script>
 
 <style scoped>
-.stillness-view {
+/* Adapted from ReadView.vue */
+.instruction-view {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
 	justify-content: center;
+	align-items: center;
 	height: 100%;
+	text-align: center;
+	padding: 2rem;
 	position: relative;
-	/* color property is now set via inline style from resolvedTheme */
 }
 
-.status-indicator {
-	position: relative;
-	z-index: 10;
+.prompt-text {
+	font-size: clamp(1.5rem, 5vw, 4rem);
+	font-weight: bold;
+	margin-bottom: 2rem;
+	z-index: 10; /* Ensure text is above other elements if needed */
 }
 
-.status-indicator h2 {
-	font-size: 3rem;
-	letter-spacing: 0.2em;
-	text-transform: uppercase;
+.fade-in {
+	animation: fadeIn 1s ease-out forwards;
 }
 
-.status-indicator.error {
-	color: var(--negative-color); /* Use CSS variable for theming */
-	animation: shake 0.5s;
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
+
+/* Original StillnessView styles preserved below */
 
 .visualizer {
 	position: absolute;
@@ -175,8 +193,6 @@ const cursorStyle = computed(() => {
 
 .target-ring {
 	position: absolute;
-	/* width/height set via inline style */
-	/* border-width set via inline style */
 	border-style: solid;
 	border-color: rgba(255, 255, 255, 0.5);
 	background-color: rgba(255, 255, 255, 0.05); /* Slight background for safe zone */
@@ -189,8 +205,6 @@ const cursorStyle = computed(() => {
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	/* width/height/transform set via inline style */
-	/* background-color is now set via inline style from resolvedTheme */
 	border-radius: 50%;
 	transition: transform 0.2s ease-out, background-color 0.2s ease-out;
 }
@@ -208,20 +222,6 @@ const cursorStyle = computed(() => {
 
 .fill {
 	height: 100%;
-	/* background-color is now set via inline style from resolvedTheme */
 	transition: width 0.1s linear;
-}
-
-@keyframes shake {
-	0%,
-	100% {
-		transform: translateX(0);
-	}
-	25% {
-		transform: translateX(-10px);
-	}
-	75% {
-		transform: translateX(10px);
-	}
 }
 </style>

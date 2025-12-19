@@ -6,8 +6,8 @@ export const DEFAULT_THEME: ThemeConfig = {
 	accentColor: '#000000',
 	debugColor: '#FF0000',
 
-	positiveColor: '#10B981',
-	negativeColor: '#EF4444',
+	positiveColor: '#19344b',
+	negativeColor: '#19344b',
 	backgroundColor: '#00122f',
 	tint: {
 		color: '#00122f',

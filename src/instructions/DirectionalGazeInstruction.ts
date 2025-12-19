@@ -31,6 +31,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
 	constructor(options: DirectionalOptions) {
 		super({
+			duration: 0, // Default to 0 (immediate) if not specified, overriding base class default of 5000
 			...options,
 			capabilities: { faceMesh: true, ...options.capabilities }
 		})
@@ -82,6 +83,11 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
 			if (correct) {
 				this.correctFrames++
+				// If no duration is set, complete immediately on success
+				if (!this.options.duration || this.options.duration <= 0) {
+					this.complete(true)
+					return
+				}
 			} else {
 				// Adaptive Baseline: Only drift the neutral center when NOT performing the action.
 				// This allows the system to "find" the user's neutral posture (even if off-axis)
@@ -93,10 +99,12 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 			this.score.value = (this.correctFrames / this.totalFrames) * 100
 		}
 
-		// Check duration
-		if (Date.now() - this.startTime > (this.options.duration || 0)) {
-			this.complete(this.score.value > 50)
-			return
+		// Check duration only if it exists
+		if (this.options.duration && this.options.duration > 0) {
+			if (Date.now() - this.startTime > this.options.duration) {
+				this.complete(this.score.value > 50)
+				return
+			}
 		}
 
 		this.animationFrameId = requestAnimationFrame(() => this.loop())

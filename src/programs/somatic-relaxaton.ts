@@ -42,11 +42,11 @@ export const somaticResetFull: Program = {
 		}),
 		new ReadInstruction({
 			id: 'b1_3',
-			text: 'Prepare to be still.'
+			text: ['Prepare to be still.', 'Be still.']
 		}),
 		new StillnessInstruction({
 			id: 'b1_4',
-			prompt: 'Now, stay still to keep the blue dot centered in the ring.',
+			prompt: 'keep the blue dot centered in the ring.',
 			duration: 15000
 		}),
 		new ReadInstruction({
