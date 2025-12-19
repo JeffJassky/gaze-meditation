@@ -131,7 +131,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		this.animationFrameId = requestAnimationFrame(() => this.loop())
 	}
 
-	private complete() {
+	protected complete() {
 		this.status.value = 'SUCCESS'
 		this.complete(true, {
 			finalOpenness: this.currentOpenness.value,
