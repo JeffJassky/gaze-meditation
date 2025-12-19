@@ -45,11 +45,7 @@ class FaceMeshService {
 		blinkDetected: false,
 		eyeOpenness: 1.0, // 0 = closed, 1 = open
 		eyeOpennessNormalized: 1.0, // 0 = closed (0.15 EAR), 1 = open (0.35 EAR)
-		mouthOpenness: 0,
-
-		tongueDetected: false,
-		tongueProtrusion: 0,
-		tongueMaskBase64: '' // Base64 for visual debug
+		mouthOpenness: 0
 	})
 
 	private eyeOpennessMax = 0.35 // Represents fully open for normalization
