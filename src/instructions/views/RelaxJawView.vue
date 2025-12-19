@@ -4,22 +4,19 @@
 
     <!-- Visualizer hidden for now per user request -->
 
-    <div v-if="instruction.options.duration && instruction.options.duration > 0" 
-         class="progress-track"
-         :style="{ backgroundColor: instruction.resolvedTheme.secondaryTextColor + '33' }">
-      <div class="progress-fill" 
-           :style="{ 
-             width: instruction.progress.value + '%', 
-             backgroundColor: instruction.resolvedTheme.accentColor 
-           }">
-      </div>
-    </div>
+    <ProgressBar 
+      v-if="instruction.options.duration && instruction.options.duration > 0"
+      :progress="instruction.progress.value"
+      :track-color="instruction.resolvedTheme.secondaryTextColor + '33'"
+      :fill-color="instruction.resolvedTheme.accentColor"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 // import { computed } from 'vue'; // Unused while visualizer is hidden
 import type { RelaxJawInstruction } from '../RelaxJawInstruction';
+import ProgressBar from '../../components/ProgressBar.vue';
 
 // const props = defineProps<{ // Unused var warning if we don't use props in script
 //   instruction: RelaxJawInstruction;
@@ -85,17 +82,4 @@ const jawColor = computed(() => {
 .target-zone { ... }
 .jaw { ... }
 */
-
-.progress-track {
-    width: 300px;
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-    /* margin-bottom: 50px; Remove bottom margin since we are centering everything */
-}
-
-.progress-fill {
-    height: 100%;
-    transition: width 0.1s linear;
-}
 </style>

@@ -20,7 +20,7 @@ export interface InstructionCapabilities {
 
 export interface InstructionOptions {
 	id: string
-	prompt: string
+	prompt?: string
 	duration?: number // ms
 	capabilities?: InstructionCapabilities
 	onCompleteCallback?: (success: boolean, result?: any) => string | undefined // NEW
@@ -48,11 +48,11 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 			duration: 5000, // Default duration
 			...options,
 			positiveReinforcement: {
-				...{ enabled: true, message: 'REINFORCED' },
+				...{ enabled: false, message: 'Good' },
 				...(options.positiveReinforcement || {})
 			},
 			negativeReinforcement: {
-				...{ enabled: true, message: 'CORRECTION REQUIRED' },
+				...{ enabled: false, message: 'Not good' },
 				...(options.negativeReinforcement || {})
 			}
 		}

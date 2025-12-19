@@ -7,12 +7,12 @@ const isExpanded = ref(false)
 const updateInterval = ref<number | null>(null)
 
 // State to display
-const masterVolume = ref(1)
+const masterVolume = ref(0.25)
 const busVolumes = ref<Record<AudioBusName, number>>({
-	binaural: 1,
-	music: 1,
-	vocals: 1,
-	fx: 1
+	binaural: 0.25,
+	music: 0.25,
+	vocals: 0.25,
+	fx: 0.25
 })
 
 const binauralState = ref({

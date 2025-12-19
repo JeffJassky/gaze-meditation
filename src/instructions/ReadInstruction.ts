@@ -1,78 +1,99 @@
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import { markRaw, ref } from 'vue'
 import ReadView from './views/ReadView.vue'
+import { calculateDuration } from '../utils/time'
 import type { ThemeConfig } from '../types'
 
-interface ReadInstructionConfig extends InstructionOptions {
+export interface ReadInstructionConfig extends InstructionOptions {
 	id: string
-	prompt: string
+	prompt?: string
 	duration?: number // Milliseconds to display text
-	text: string
+	text: string | string[]
 	delay?: number // Milliseconds to delay before displaying text
 	fadeInDuration?: number // Milliseconds
 	fadeOutDuration?: number // Milliseconds
 }
 
 export class ReadInstruction extends Instruction<ReadInstructionConfig> {
-	readonly text: string
 	readonly component = markRaw(ReadView)
 
 	// Reactive state for the view
 	public isFadingOut = ref(false)
+	public currentText = ref('')
+	public currentIndex = ref(0)
+	public totalCount = ref(0)
 
-	private timer: number | null = null
-	private delayTimer: number | null = null
-	private fadeOutTimer: number | null = null
+	private activeTimer: number | null = null
+	private isStopped = false
 
 	constructor(config: ReadInstructionConfig) {
 		super({
 			...config,
+			fadeInDuration: config.fadeInDuration ?? 1000,
+			fadeOutDuration: config.fadeOutDuration ?? 1000,
 			positiveReinforcement: { enabled: false, ...(config.positiveReinforcement || {}) },
 			negativeReinforcement: { enabled: false, ...(config.negativeReinforcement || {}) }
 		})
-		this.text = config.text
+
+		const texts = Array.isArray(this.options.text) ? this.options.text : [this.options.text]
+		this.totalCount.value = texts.length
+		this.currentText.value = texts[0] || ''
 	}
 
 	start(context: InstructionContext): void {
 		this.context = context
 		this.resolvedTheme = context.resolvedTheme
 		this.isFadingOut.value = false
+		this.isStopped = false
+		this.currentIndex.value = 0
 
+		const texts = Array.isArray(this.options.text) ? this.options.text : [this.options.text]
 		const delayMs = this.options.delay || 0
-		const durationMs = this.options.duration || 0
-		const fadeOutMs = this.options.fadeOutDuration || 0
 
-		// 1. Wait for Delay
-		this.delayTimer = window.setTimeout(() => {
-			// 2. Wait for Duration (Reading time)
-			if (durationMs > 0) {
-				this.timer = window.setTimeout(() => {
-					// 3. Handle Fade Out
-					if (fadeOutMs > 0) {
-						this.isFadingOut.value = true
-						this.fadeOutTimer = window.setTimeout(() => {
-							this.context?.complete(true)
-						}, fadeOutMs)
-					} else {
-						// No fade out, complete immediately
-						this.context?.complete(true)
-					}
-				}, durationMs)
-			} else {
-				// If no duration is set, we typically wait for manual interaction
-				// But if auto-complete is expected without duration, it would go here.
-				// Assuming infinite hold if duration is missing/0.
-			}
+		// Initial delay
+		this.activeTimer = window.setTimeout(() => {
+			this.showNext(0, texts)
 		}, delayMs)
 	}
 
-	stop(): void {
-		if (this.timer !== null) clearTimeout(this.timer)
-		if (this.delayTimer !== null) clearTimeout(this.delayTimer)
-		if (this.fadeOutTimer !== null) clearTimeout(this.fadeOutTimer)
+	private showNext(index: number, texts: string[]) {
+		if (this.isStopped || index >= texts.length) {
+			if (!this.isStopped) this.context?.complete(true)
+			return
+		}
 
-		this.timer = null
-		this.delayTimer = null
-		this.fadeOutTimer = null
+		this.currentIndex.value = index
+		this.currentText.value = texts[index] || ''
+		this.isFadingOut.value = false
+
+		const durationMs = this.options.duration ?? calculateDuration(this.currentText.value)
+		const fadeOutMs = this.options.fadeOutDuration || 0
+
+		// If duration is Infinity, we do not schedule the next step.
+		// The instruction is expected to be completed externally (e.g. by subclass logic).
+		if (durationMs === Infinity) {
+			return
+		}
+
+		// 1. Wait for Duration (Reading time)
+		this.activeTimer = window.setTimeout(() => {
+			// 2. Handle Fade Out
+			if (fadeOutMs > 0) {
+				this.isFadingOut.value = true
+				this.activeTimer = window.setTimeout(() => {
+					this.showNext(index + 1, texts)
+				}, fadeOutMs)
+			} else {
+				this.showNext(index + 1, texts)
+			}
+		}, durationMs)
+	}
+
+	stop(): void {
+		this.isStopped = true
+		if (this.activeTimer !== null) {
+			clearTimeout(this.activeTimer)
+			this.activeTimer = null
+		}
 	}
 }

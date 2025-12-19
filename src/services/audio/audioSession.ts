@@ -25,7 +25,7 @@ export class AudioSession {
 		this.ctx = new AudioContext()
 
 		this.masterGain = this.ctx.createGain()
-		this.masterGain.gain.value = 1
+		this.masterGain.gain.value = 0.25
 		this.masterGain.connect(this.ctx.destination)
 
 		this.buses = {
@@ -36,7 +36,7 @@ export class AudioSession {
 		}
 
 		Object.entries(this.buses).forEach(([name, bus]) => {
-			bus.gain.value = 1
+			bus.gain.value = 0.25
 			bus.connect(this.masterGain)
 			console.log(`[AudioSession] Bus '${name}' created and connected.`)
 		})

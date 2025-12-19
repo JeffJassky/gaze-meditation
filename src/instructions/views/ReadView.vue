@@ -10,7 +10,7 @@ const props = defineProps<ReadViewProps>();
 const { instruction } = toRefs(props);
 
 onMounted(() => {
-  console.log(`ReadInstruction mounted with text: ${instruction.value.text}`);
+  console.log(`ReadInstruction mounted with text: ${instruction.value.currentText.value}`);
 });
 
 const containerStyle = computed(() => {
@@ -33,18 +33,23 @@ const containerStyle = computed(() => {
 
 <template>
   <div class="instruction-view read-view" :style="containerStyle">
-    <div class="prompt-text fade-in" :style="{ color: instruction.resolvedTheme.textColor }">
+    <div 
+      v-if="instruction.options.prompt"
+      class="prompt-text fade-in" 
+      :style="{ color: instruction.resolvedTheme.textColor }"
+    >
       {{ instruction.options.prompt }}
     </div>
     <div 
-      class="read-content leading-relaxed fade-in-delay" 
+      :key="instruction.currentIndex.value"
+      class="read-content leading-relaxed fade-in" 
       :style="{ 
         color: instruction.resolvedTheme.secondaryTextColor,
-        animationDelay: (instruction.options.delay || 0) / 1000 + 's',
+        animationDelay: instruction.currentIndex.value === 0 ? (instruction.options.delay || 0) / 1000 + 's' : '0s',
         animationDuration: (instruction.options.fadeInDuration || 1000) / 1000 + 's'
       }"
     >
-      {{ instruction.text }}
+      {{ instruction.currentText.value }}
     </div>
   </div>
 </template>
@@ -73,12 +78,6 @@ const containerStyle = computed(() => {
 
 .fade-in {
   animation: fadeIn 1s ease-out forwards;
-}
-
-.fade-in-delay {
-  animation: fadeIn 1.5s ease-out forwards;
-  animation-delay: 0.5s;
-  opacity: 0; /* Start invisible */
 }
 
 @keyframes fadeIn {

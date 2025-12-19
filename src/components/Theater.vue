@@ -371,6 +371,17 @@ onMounted(() => {
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		></video>
 
+		<!-- Tint Overlay -->
+		<div
+			v-if="currentResolvedTheme.tint"
+			class="absolute inset-0 pointer-events-none"
+			:style="{
+				backgroundColor: currentResolvedTheme.tint.color,
+				opacity: currentResolvedTheme.tint.opacity,
+				zIndex: 5
+			}"
+		></div>
+
 		<!-- 3D Background -->
 		<Visuals :state="state" />
 

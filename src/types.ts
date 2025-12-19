@@ -43,6 +43,10 @@ export interface ThemeConfig {
 	secondaryTextColor?: string
 	accentColor?: string
 	debugColor?: string
+	tint?: {
+		color: string // hex color
+		opacity: number // 0-1
+	}
 }
 
 export interface ProgramBinauralConfig {

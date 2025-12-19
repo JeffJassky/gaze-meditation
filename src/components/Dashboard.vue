@@ -13,12 +13,16 @@ import { TypeInstruction } from '../instructions/TypeInstruction'
 import { NodInstruction } from '../instructions/NodInstruction'
 import { FractionationInstruction } from '../instructions/FractionationInstruction'
 import { ReadInstruction } from '../instructions/ReadInstruction' // Import new ReadInstruction
+import { CloseEyesInstruction } from '../instructions/CloseEyesInstruction'
+import { OpenEyesInstruction } from '../instructions/OpenEyesInstruction'
 import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
 import { TongueOutInstruction } from '../instructions/TongueOutInstruction'
 import { audioSession } from '../services/audio'
+import somaticResetFull from '../programs/somatic-relaxaton'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
+	somaticResetFull,
 	{
 		id: 'prog_calibration',
 		title: 'Eye Tracker Calibration',
@@ -30,22 +34,6 @@ const FULL_PROGRAMS: Program[] = [
 				id: 'cal1',
 				prompt: 'Eye Calibration',
 				positiveReinforcement: { message: 'CALIBRATION COMPLETE' }
-			}),
-			new DirectionalGazeInstruction({
-				id: 'test_left',
-				prompt: 'Look Left',
-				direction: 'LEFT',
-				duration: 4000,
-				leftSrc: 'https://placehold.co/400x400/red/white?text=LEFT',
-				rightSrc: 'https://placehold.co/400x400/blue/white?text=IGNORE'
-			}),
-			new DirectionalGazeInstruction({
-				id: 'test_right',
-				prompt: 'Look Right',
-				direction: 'RIGHT',
-				duration: 4000,
-				leftSrc: 'https://placehold.co/400x400/red/white?text=IGNORE',
-				rightSrc: 'https://placehold.co/400x400/blue/white?text=RIGHT'
 			})
 		]
 	},
@@ -357,6 +345,69 @@ const TEST_PROGRAMS: Program[] = [
 		]
 	},
 	{
+		id: 'test_close_eyes',
+		title: 'Close Eyes (Test)',
+		description: 'Instruction that waits for you to close your eyes.',
+		audio: { musicTrack: '/audio/music.mp3' },
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new CloseEyesInstruction({
+				id: 'close_test',
+				prompt: 'Close Your Eyes',
+				text: 'Please close your eyes now. The instruction will complete when you do.'
+			})
+		]
+	},
+	{
+		id: 'test_open_eyes',
+		title: 'Open Eyes (Test)',
+		description: 'Instruction that waits for you to open your eyes.',
+		audio: { musicTrack: '/audio/music.mp3' },
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new OpenEyesInstruction({
+				id: 'open_test',
+				prompt: 'Open Your Eyes',
+				text: 'Please open your eyes now. I will chime until you do.',
+				repeatAfter: 3 // faster for testing
+			})
+		]
+	},
+	{
+		id: 'test_manual_fractionation',
+		title: 'Manual Fractionation',
+		description: 'Sequence: Close -> Open -> Close -> Open',
+		audio: { musicTrack: '/audio/music.mp3' },
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new ReadInstruction({
+				id: 'b3_12',
+				text: "Now in a moment, I'll ask you to close your eyes."
+			}),
+			new ReadInstruction({
+				id: 'b3_12',
+				text: "Each time you hear the bell, you'll open your eyes."
+			}),
+			new CloseEyesInstruction({ id: 'b3_11', text: 'Close your eyes.' }),
+			new OpenEyesInstruction({ id: 'b3_11', text: 'Open your eyes.' }),
+			new ReadInstruction({
+				id: 'b3_12',
+				text: [
+					'Good.',
+					'Each time the swirling light returns, you are 10 times more relaxed.'
+				]
+			}),
+			new CloseEyesInstruction({ id: 'b3_11', text: 'Close those eyes again.' }),
+			new OpenEyesInstruction({ id: 'b3_11', text: 'Open your eyes.' }),
+			new ReadInstruction({
+				id: 'b3_12',
+				text: ['Deeper and deeper.']
+			}),
+			new CloseEyesInstruction({ id: 'b3_11', text: 'Close those eyes again.' }),
+			new OpenEyesInstruction({ id: 'b3_11', text: 'And open your eyes.' })
+		]
+	},
+	{
 		id: 'test_relax_jaw',
 		title: 'Relax Jaw',
 		description: 'Relax your jaw and let your mouth fall open.',
@@ -403,15 +454,13 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new DirectionalGazeInstruction({
 				id: 'gaze_left_test',
-				prompt: 'Look Left',
-				direction: 'LEFT',
-				duration: 3000
+				prompt: 'Gently turn your head to the left.',
+				direction: 'LEFT'
 			}),
 			new DirectionalGazeInstruction({
 				id: 'gaze_right_test',
-				prompt: 'Look Right',
-				direction: 'RIGHT',
-				duration: 3000
+				prompt: 'Gently turn your head to the right.',
+				direction: 'RIGHT'
 			})
 		]
 	},
@@ -440,8 +489,8 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new FractionationInstruction({
 				id: 'fractionation_test',
-				prompt: 'Relax and count',
-				cycles: 2
+				prompt: 'Close your eyes.',
+				cycles: 1
 			})
 		]
 	},
