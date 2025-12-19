@@ -527,7 +527,7 @@ const TEST_PROGRAMS: Program[] = [
 				prompt: 'This waited 3 seconds to fade in',
 				text: 'It lasts 3 seconds, then fades out',
 				duration: 3000,
-				delay: 1000,
+				delay: 3000,
 				fadeInDuration: 1000,
 				fadeOutDuration: 1000
 			}),

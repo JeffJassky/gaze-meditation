@@ -88,7 +88,7 @@ const initSession = async () => {
 	// Check if we need audio (program track or instructions)
 	// Default to needing audio for binaural beats unless explicitly 'none'
 	if (
-		(props.program.audio?.musicTrack !== 'none') ||
+		props.program.audio?.musicTrack !== 'none' ||
 		props.program.audio?.binaural ||
 		props.program.instructions.some(i => i.options.capabilities?.audioInput)
 	) {
@@ -400,17 +400,22 @@ onMounted(() => {
 		</div>
 
 		<!-- Active Instruction View -->
-		<div
-			v-if="
-				(state === SessionState.INSTRUCTING || state === SessionState.VALIDATING) &&
-				currentInstr
-			"
-			class="absolute inset-0 z-10"
-		>
-			<component
-				:is="currentInstr.component"
-				:instruction="currentInstr"
-			/>
+		<div class="absolute inset-0 z-10 pointer-events-none">
+			<Transition
+				name="instruction"
+				mode="out-in"
+			>
+				<component
+					v-if="
+						(state === SessionState.INSTRUCTING || state === SessionState.VALIDATING) &&
+						currentInstr
+					"
+					:is="currentInstr.component"
+					:instruction="currentInstr"
+					:key="currentInstr.options.id"
+					class="pointer-events-auto"
+				/>
+			</Transition>
 		</div>
 
 		<!-- Heads Up Display -->
@@ -427,4 +432,35 @@ onMounted(() => {
 
 <style>
 /* Global styles if needed */
+.instruction-enter-active,
+.instruction-leave-active {
+	/* Define fallbacks just in case */
+	--duration-slow: 3s;
+	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
+
+	transition: opacity var(--duration-slow) var(--ease-glacial),
+		transform var(--duration-slow) var(--ease-glacial);
+	/* Ensure layout is stable during transition */
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.instruction-enter-from {
+	opacity: 0;
+	transform: scale(1.1);
+}
+
+.instruction-leave-to {
+	opacity: 0;
+	transform: scale(0.9);
+}
+
+.instruction-enter-to,
+.instruction-leave-from {
+	opacity: 1;
+	transform: scale(1);
+}
 </style>

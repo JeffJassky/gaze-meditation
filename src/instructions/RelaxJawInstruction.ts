@@ -133,13 +133,10 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 
 	private complete() {
 		this.status.value = 'SUCCESS'
-		this.stop()
-		setTimeout(() => {
-			this.context?.complete(true, {
-				finalOpenness: this.currentOpenness.value,
-				baseline: this.baselineOpenness
-			})
-		}, 500)
+		this.complete(true, {
+			finalOpenness: this.currentOpenness.value,
+			baseline: this.baselineOpenness
+		})
 	}
 
 	private lerp(start: number, end: number, amt: number) {

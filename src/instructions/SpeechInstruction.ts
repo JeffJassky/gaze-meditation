@@ -97,18 +97,18 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     }
 
     if (allFound) {
-      this.complete(true);
+      this.finish(true);
     }
   }
 
   private handleTimeout() {
-    this.complete(false);
+    this.finish(false);
   }
 
-  private complete(success: boolean) {
+  private finish(success: boolean) {
     if (this.timeoutId) clearTimeout(this.timeoutId);
     const reactionTime = Date.now() - this.startTime;
-    this.context?.complete(success, { reactionTime });
+    this.complete(success, { reactionTime });
   }
 
   get component() {

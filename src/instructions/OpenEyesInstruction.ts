@@ -7,6 +7,8 @@ import { playOneShot } from '../services/audio/oneShot'
 export interface OpenEyesInstructionOptions extends ReadInstructionConfig {
 	repeatAfter?: number // seconds, default 5
 	openEyesTrigger?: string
+	fallbackThresholdMs?: number
+	forceCompleteMs?: number
 }
 
 export class OpenEyesInstruction extends ReadInstruction {
@@ -16,17 +18,22 @@ export class OpenEyesInstruction extends ReadInstruction {
 	private isDetecting = false
 	private animationFrameId: number | null = null
 	private lastTriggerTime = 0
+	private startTime = 0
 
 	private readonly STABILITY_DURATION = 500
 	// Standard Fractionation thresholds relative to Open Baseline
 	private readonly OPEN_THRESHOLD = -0.035
 	private readonly REPEAT_INTERVAL_MS: number
 	private readonly TRIGGER_SOUND: string
+	private readonly FALLBACK_THRESHOLD_MS: number
+	private readonly FORCE_COMPLETE_MS: number
 
 	constructor(options: OpenEyesInstructionOptions) {
 		super({ ...options, duration: Infinity, capabilities: { faceMesh: true } })
 		this.REPEAT_INTERVAL_MS = (options.repeatAfter ?? 5) * 1000
 		this.TRIGGER_SOUND = options.openEyesTrigger ?? '/audio/fx/chimes.wav'
+		this.FALLBACK_THRESHOLD_MS = options.fallbackThresholdMs ?? 4000
+		this.FORCE_COMPLETE_MS = options.forceCompleteMs ?? 8000
 	}
 
 	async start(context: InstructionContext) {
@@ -37,6 +44,7 @@ export class OpenEyesInstruction extends ReadInstruction {
 		this.stableSince = 0
 		// Initialize so the first trigger happens immediately once detection starts
 		this.lastTriggerTime = Date.now() - this.REPEAT_INTERVAL_MS
+		this.startTime = Date.now()
 
 		await faceMeshService.init()
 
@@ -51,6 +59,13 @@ export class OpenEyesInstruction extends ReadInstruction {
 	private loop() {
 		const rawEAR = faceMeshService.debugData.eyeOpenness
 		const now = Date.now()
+		const elapsed = now - this.startTime
+
+		// Fallback 2: Force complete after timeout
+		if (elapsed > this.FORCE_COMPLETE_MS) {
+			this.finish()
+			return
+		}
 
 		// --- Adaptive Center Logic ---
 		if (!this.isInitialized) {
@@ -76,7 +91,16 @@ export class OpenEyesInstruction extends ReadInstruction {
 		}
 
 		const deviation = rawEAR - this.centerOpenness
-		const seemOpen = deviation > this.OPEN_THRESHOLD
+		let seemOpen = deviation > this.OPEN_THRESHOLD
+
+		// Fallback 1: Conservative absolute threshold check
+		if (!seemOpen && elapsed > this.FALLBACK_THRESHOLD_MS) {
+			// 0.22 is a conservative lower bound for "open".
+			// If rawEAR is above this, they are likely open even if adaptive logic fails.
+			if (rawEAR > 0.18) {
+				seemOpen = true
+			}
+		}
 
 		if (this.isDetecting) {
 			if (seemOpen) {

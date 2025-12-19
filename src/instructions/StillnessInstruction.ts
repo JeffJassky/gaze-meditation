@@ -115,16 +115,12 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 
 	private fail(reason: string) {
 		this.status.value = 'FAILED'
-		this.stop()
-		setTimeout(() => {
-			this.context?.complete(false, { reason })
-		}, 1000)
+		this.complete(false, { reason })
 	}
 
 	private succeed() {
 		this.status.value = 'SUCCESS'
-		this.stop()
-		this.context?.complete(true, { drift: this.drift.value })
+		this.complete(true, { drift: this.drift.value })
 	}
 
 	get component() {

@@ -123,9 +123,9 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 		return (1 - amt) * start + amt * end
 	}
 
-	private complete(success: boolean) {
-		this.stop()
-		this.context?.complete(success, { score: this.score.value })
+	protected complete(success: boolean) {
+		// Stop called by base complete()
+		super.complete(success, { score: this.score.value })
 	}
 
 	get component() {

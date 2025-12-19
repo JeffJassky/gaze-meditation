@@ -86,10 +86,7 @@ export class TongueOutInstruction extends Instruction<TongueOutOptions> {
 
   private complete() {
     this.status.value = 'SUCCESS';
-    this.stop();
-    setTimeout(() => {
-        this.context?.complete(true);
-    }, 500);
+    this.complete(true);
   }
 
   get component() {

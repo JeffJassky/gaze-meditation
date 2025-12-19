@@ -3,21 +3,21 @@
 		<!-- Status Text replacing the old status-indicator h2s -->
 		<div
 			v-if="instruction.status.value === 'HOLDING'"
-			class="prompt-text fade-in"
+			class="prompt-text"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
 			{{ instruction.options.prompt }}
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'FAILED'"
-			class="prompt-text fade-in"
+			class="prompt-text"
 			:style="{ color: instruction.resolvedTheme.negativeColor || 'red' }"
 		>
 			{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'SUCCESS'"
-			class="prompt-text fade-in"
+			class="prompt-text"
 			:style="{ color: instruction.resolvedTheme.positiveColor || 'green' }"
 		>
 			PERFECT
@@ -159,21 +159,6 @@ const cursorStyle = computed(() => {
 	font-weight: bold;
 	margin-bottom: 2rem;
 	z-index: 10; /* Ensure text is above other elements if needed */
-}
-
-.fade-in {
-	animation: fadeIn 1s ease-out forwards;
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
 }
 
 /* Original StillnessView styles preserved below */

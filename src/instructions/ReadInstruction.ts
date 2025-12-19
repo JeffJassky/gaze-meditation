@@ -29,8 +29,6 @@ export class ReadInstruction extends Instruction<ReadInstructionConfig> {
 	constructor(config: ReadInstructionConfig) {
 		super({
 			...config,
-			fadeInDuration: config.fadeInDuration ?? 1000,
-			fadeOutDuration: config.fadeOutDuration ?? 1000,
 			positiveReinforcement: { enabled: false, ...(config.positiveReinforcement || {}) },
 			negativeReinforcement: { enabled: false, ...(config.negativeReinforcement || {}) }
 		})

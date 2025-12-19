@@ -3,7 +3,8 @@ import { ReadInstruction, type ReadInstructionConfig } from './ReadInstruction'
 import { faceMeshService } from '../services/faceMeshService'
 
 export interface CloseEyesInstructionOptions extends ReadInstructionConfig {
-	// No specific options added yet, but interface allows for future expansion
+	fallbackThresholdMs?: number
+	forceCompleteMs?: number
 }
 
 export class CloseEyesInstruction extends ReadInstruction {
@@ -12,14 +13,19 @@ export class CloseEyesInstruction extends ReadInstruction {
 	private stableSince = 0
 	private isDetecting = false
 	private animationFrameId: number | null = null
+	private startTime = 0
 
 	private readonly STABILITY_DURATION = 500
 	private readonly CLOSE_THRESHOLD = -0.04
 	private readonly OPEN_THRESHOLD = -0.035
+	private readonly FALLBACK_THRESHOLD_MS: number
+	private readonly FORCE_COMPLETE_MS: number
 
 	constructor(options: CloseEyesInstructionOptions) {
 		// Set duration to Infinity so the ReadInstruction doesn't complete on its own
 		super({ ...options, duration: Infinity, capabilities: { faceMesh: true } })
+		this.FALLBACK_THRESHOLD_MS = options.fallbackThresholdMs ?? 4000
+		this.FORCE_COMPLETE_MS = options.forceCompleteMs ?? 8000
 	}
 
 	async start(context: InstructionContext) {
@@ -29,6 +35,7 @@ export class CloseEyesInstruction extends ReadInstruction {
 		this.isInitialized = false
 		this.centerOpenness = 0
 		this.stableSince = 0
+		this.startTime = Date.now()
 
 		await faceMeshService.init()
 
@@ -40,6 +47,13 @@ export class CloseEyesInstruction extends ReadInstruction {
 		// Always run this to update baseline/centerOpenness
 		const rawEAR = faceMeshService.debugData.eyeOpenness
 		const now = Date.now()
+		const elapsed = now - this.startTime
+
+		// Fallback 2: Force complete after timeout
+		if (elapsed > this.FORCE_COMPLETE_MS) {
+			this.finish()
+			return
+		}
 
 		// --- Adaptive Center Logic (Matching FractionationInstruction) ---
 		if (!this.isInitialized) {
@@ -69,7 +83,16 @@ export class CloseEyesInstruction extends ReadInstruction {
 		}
 
 		const deviation = rawEAR - this.centerOpenness
-		const isClosed = deviation < this.CLOSE_THRESHOLD
+		let isClosed = deviation < this.CLOSE_THRESHOLD
+
+		// Fallback 1: Conservative absolute threshold check
+		if (!isClosed && elapsed > this.FALLBACK_THRESHOLD_MS) {
+			// 0.2 is a conservative upper bound for "closed".
+			// If rawEAR is below this, they are likely closed even if adaptive logic fails.
+			if (rawEAR < 0.2) {
+				isClosed = true
+			}
+		}
 
 		// Only check for completion if we are past the warm-up period
 		if (this.isDetecting) {

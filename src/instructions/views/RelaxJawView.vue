@@ -2,27 +2,23 @@
   <div class="relax-jaw-view" :style="{ color: instruction.resolvedTheme.textColor }">
     <h1 class="prompt">{{ instruction.options.prompt }}</h1>
 
-    <!-- Visualizer hidden for now per user request -->
 
-    <ProgressBar 
-      v-if="instruction.options.duration && instruction.options.duration > 0"
-      :progress="instruction.progress.value"
-      :track-color="instruction.resolvedTheme.secondaryTextColor + '33'"
-      :fill-color="instruction.resolvedTheme.accentColor"
-    />
-  </div>
+		<!-- Visualizer hidden for now per user request -->
+
+		<ProgressBar
+			v-if="instruction.options.duration && instruction.options.duration > 0"
+			:progress="instruction.progress.value"
+			:track-color="instruction.resolvedTheme.secondaryTextColor + '33'"
+			:fill-color="instruction.resolvedTheme.accentColor"
+		/>
+	</div>
 </template>
 
 <script setup lang="ts">
-// import { computed } from 'vue'; // Unused while visualizer is hidden
 import type { RelaxJawInstruction } from '../RelaxJawInstruction';
 import ProgressBar from '../../components/ProgressBar.vue';
 
-// const props = defineProps<{ // Unused var warning if we don't use props in script
-//   instruction: RelaxJawInstruction;
-// }>();
-// But we use 'instruction' in template, which is fine with defineProps.
-defineProps<{
+const props = defineProps<{
   instruction: RelaxJawInstruction;
 }>();
 
@@ -47,26 +43,25 @@ const jawColor = computed(() => {
     return props.instruction.resolvedTheme.textColor;
 });
 */
-
 </script>
 
 <style scoped>
 .relax-jaw-view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
+	position: relative;
 }
 
 .prompt {
-  font-size: 2.5rem;
-  font-weight: 300;
-  margin-bottom: 3rem;
-  text-align: center;
-  z-index: 10;
+	font-size: 2.5rem;
+	font-weight: 300;
+	margin-bottom: 3rem;
+	text-align: center;
+	z-index: 10;
 }
 
 /* 

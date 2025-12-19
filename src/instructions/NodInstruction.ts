@@ -258,9 +258,7 @@ export class NodInstruction extends Instruction<NodOptions> {
 
 		if (this.nodsCompleted.value >= this.options.nodsRequired!) {
 			this.isFinished = true
-			this.completionTimer = window.setTimeout(() => {
-				this.context?.complete(true)
-			}, 500)
+			this.complete(true)
 		}
 	}
 

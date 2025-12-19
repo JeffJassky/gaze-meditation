@@ -228,12 +228,10 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
 
 		await this.speak('Exercise complete.')
 
-		setTimeout(() => {
-			this.context?.complete(true, {
-				metrics: { open: avgOpen, closed: avgClosed },
-				...faceMeshService.getCalibration()
-			})
-		}, 1000)
+		this.complete(true, {
+			metrics: { open: avgOpen, closed: avgClosed },
+			...faceMeshService.getCalibration()
+		})
 	}
 
 	stop() {

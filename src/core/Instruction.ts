@@ -36,6 +36,9 @@ export interface InstructionOptions {
 		binaural?: ProgramBinauralConfig
 	}
 	theme?: ThemeConfig // Optional theme configuration for the instruction
+	
+	// Fade options
+	fadeOutDuration?: number
 }
 
 export abstract class Instruction<TOptions extends InstructionOptions = InstructionOptions> {
@@ -67,6 +70,12 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 
 	// Lifecycle: Called every frame (optional)
 	// update(time: number, delta: number): void {}
+
+	// Helper to handle completion (Universal fade handled by Theater)
+	protected complete(success: boolean, metrics?: any, result?: any) {
+		this.stop()
+		this.context?.complete(success, metrics, result)
+	}
 
 	// Called by the engine after the instruction has completed
 	// Can return an instruction ID to jump to, otherwise continues sequentially

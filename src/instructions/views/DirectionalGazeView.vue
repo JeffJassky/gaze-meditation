@@ -27,6 +27,7 @@ const incorrectFeedbackBorder = computed(() => {
 })
 </script>
 
+
 <template>
 	<div class="absolute inset-0 pointer-events-none">
 		<!-- Split Screen Content -->
@@ -109,20 +110,5 @@ const incorrectFeedbackBorder = computed(() => {
 .prompt-text {
 	font-size: clamp(1.5rem, 5vw, 4rem); /* Responsive font size */
 	font-weight: bold;
-}
-
-.fade-in {
-	animation: fadeIn 1s ease-out forwards;
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-		transform: translateY(20px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
 }
 </style>

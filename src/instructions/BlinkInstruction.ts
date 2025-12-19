@@ -10,6 +10,7 @@ interface BlinkOptions extends InstructionOptions {
 
 export class BlinkInstruction extends Instruction<BlinkOptions> {
   public timeLeft = ref(0);
+  public progress = ref(0);
   public isBlinking = ref(false);
   public ear = ref(0); // Eye Aspect Ratio
   public eyeOpennessNormalized = ref(1.0); // Normalized 0-1 eye openness
@@ -19,6 +20,7 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   protected context: InstructionContext | null = null;
   private animationFrameId: number | null = null;
   private endTime = 0;
+  private duration = 0;
 
   constructor(options: BlinkOptions) {
     super({
@@ -34,7 +36,8 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
     
     await faceMeshService.init();
     
-    this.endTime = Date.now() + (this.options.duration || 10000);
+    this.duration = this.options.duration || 10000;
+    this.endTime = Date.now() + this.duration;
     this.loop();
   }
 
@@ -45,7 +48,10 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
   private loop() {
     if (this.status.value !== 'RUNNING') return;
 
-    this.timeLeft.value = Math.max(0, this.endTime - Date.now());
+    const now = Date.now();
+    this.timeLeft.value = Math.max(0, this.endTime - now);
+    this.progress.value = ((this.duration - this.timeLeft.value) / this.duration) * 100;
+    
     this.isBlinking.value = faceMeshService.debugData.blinkDetected;
     this.ear.value = faceMeshService.debugData.eyeOpenness;
     this.eyeOpennessNormalized.value = faceMeshService.debugData.eyeOpennessNormalized;
@@ -65,16 +71,12 @@ export class BlinkInstruction extends Instruction<BlinkOptions> {
 
   private fail() {
       this.status.value = 'FAILED';
-      this.stop();
-      setTimeout(() => {
-        this.context?.complete(false, { reason: 'Blinked' });
-      }, 1500);
+      this.complete(false, { reason: 'Blinked' });
   }
 
   private succeed() {
       this.status.value = 'SUCCESS';
-      this.stop();
-      this.context?.complete(true);
+      this.complete(true);
   }
 
   get component() {

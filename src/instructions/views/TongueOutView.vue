@@ -3,7 +3,7 @@
 		class="tongue-out-view"
 		:style="{ color: instruction.resolvedTheme.textColor }"
 	>
-		<h1 class="prompt">{{ instruction.options.prompt || 'Stick your tongue out' }}</h1>
+		<h1 class="prompt fade-in">{{ instruction.options.prompt || 'Stick your tongue out' }}</h1>
 
 		<!-- Status Indicator -->
 		<div
@@ -56,8 +56,7 @@ const props = defineProps<{
 const debugCanvasRef = ref<HTMLCanvasElement | null>(null)
 let rafId: number | null = null
 
-const updatePreview = () => {
-	const sourceCanvas = faceMeshService.getDebugCanvas()
+const updatePreview = () => {	const sourceCanvas = faceMeshService.getDebugCanvas()
 	if (debugCanvasRef.value && sourceCanvas) {
 		const ctx = debugCanvasRef.value.getContext('2d')
 		if (ctx) {
@@ -131,15 +130,6 @@ onUnmounted(() => {
 	width: 128px;
 	height: 128px;
 	border: 1px solid rgba(255, 255, 255, 0.2);
-	margin-top: 0.5rem;
-}
-
-.scroll-list {
-	max-height: 100px;
-	overflow-y: auto;
-	text-align: left;
-	background: rgba(0, 0, 0, 0.2);
-	padding: 0.5rem;
 	margin-top: 0.5rem;
 }
 </style>

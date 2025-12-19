@@ -27,7 +27,7 @@ export const somaticResetFull: Program = {
 			id: 'b1_1',
 			text: [
 				'Welcome.',
-				'This 20-minute flow will help you releax.',
+				'This 20-minute flow will help you relax.',
 				'It will help you release stress',
 				'and relax your mind.'
 			]
