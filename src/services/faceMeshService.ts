@@ -35,6 +35,8 @@ class FaceMeshService {
 		headYaw: 0,
 
 		headPitch: 0,
+		headX: 0,
+		headY: 0,
 
 		gazeX: 0,
 
@@ -211,12 +213,12 @@ class FaceMeshService {
 							if (faces.length > 0) {
 								this.processFace(faces[0])
 
-								if (frameCount % 60 === 0)
-									console.log(
-										`Face detected (Yaw: ${this.debugData.headYaw.toFixed(3)})`
-									)
+								// if (frameCount % 60 === 0)
+								// 	console.log(
+								// 		`Face detected (Yaw: ${this.debugData.headYaw.toFixed(3)})`
+								// 	)
 							} else {
-								if (frameCount % 60 === 0) console.log('No faces detected')
+								// if (frameCount % 60 === 0) console.log('No faces detected')
 							}
 						} catch (e) {
 							console.error('Detection Error:', e)
@@ -280,8 +282,12 @@ class FaceMeshService {
 		const headPitch = (nose.y - midEye.y) / iod
 
 		this.debugData.headYaw = headYaw
-
 		this.debugData.headPitch = headPitch
+
+		// Position (Normalized to Video Dimensions 0-1)
+		// 640x480 is hardcoded in init()
+		this.debugData.headX = nose.x / 640
+		this.debugData.headY = nose.y / 480
 
 		// Map to Screen using Calibration
 

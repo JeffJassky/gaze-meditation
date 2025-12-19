@@ -15,6 +15,8 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 	public drift = ref(0)
 	public driftX = ref(0) // Yaw diff
 	public driftY = ref(0) // Pitch diff
+	public driftXPos = ref(0) // X Position diff
+	public driftYPos = ref(0) // Y Position diff
 	// public resolvedTheme!: ThemeConfig; // Removed redundant declaration
 
 	protected context: InstructionContext | null = null
@@ -24,6 +26,8 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 	// Dynamic Centering
 	private centerPitch = 0
 	private centerYaw = 0
+	private centerHeadX = 0
+	private centerHeadY = 0
 	private isInitialized = false
 
 	constructor(options: StillnessOptions) {
@@ -62,12 +66,16 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 		if (this.status.value === 'HOLDING') {
 			const currentYaw = faceMeshService.debugData.headYaw
 			const currentPitch = faceMeshService.debugData.headPitch
+			const currentHeadX = faceMeshService.debugData.headX
+			const currentHeadY = faceMeshService.debugData.headY
 
 			// Initialization
 			if (!this.isInitialized) {
 				if (currentYaw !== 0 || currentPitch !== 0) {
 					this.centerYaw = currentYaw
 					this.centerPitch = currentPitch
+					this.centerHeadX = currentHeadX
+					this.centerHeadY = currentHeadY
 					this.isInitialized = true
 				}
 			} else {
@@ -78,6 +86,8 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 				const alpha = 0.05
 				this.centerYaw = this.lerp(this.centerYaw, currentYaw, alpha)
 				this.centerPitch = this.lerp(this.centerPitch, currentPitch, alpha)
+				this.centerHeadX = this.lerp(this.centerHeadX, currentHeadX, alpha)
+				this.centerHeadY = this.lerp(this.centerHeadY, currentHeadY, alpha)
 			}
 
 			// Calculate drift from the *Average* Center
@@ -85,11 +95,21 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 			// If moving, current diverges from lagging center.
 			const diffYaw = currentYaw - this.centerYaw
 			const diffPitch = currentPitch - this.centerPitch
+			const diffHeadX = currentHeadX - this.centerHeadX
+			const diffHeadY = currentHeadY - this.centerHeadY
 
 			this.driftX.value = diffYaw
 			this.driftY.value = diffPitch
+			this.driftXPos.value = diffHeadX
+			this.driftYPos.value = diffHeadY
 
-			const totalDrift = Math.hypot(diffYaw, diffPitch)
+			// Weight the position drift slightly more or similarly?
+			// Head Yaw/Pitch are roughly -1 to 1.
+			// Head Pos is 0 to 1.
+			// A shift of 0.02 in position is 2% of screen.
+			// A shift of 0.02 in Yaw is small rotation.
+			// Let's treat them equally for now, or maybe boost position sensitivity slightly if needed.
+			const totalDrift = Math.hypot(diffYaw, diffPitch, diffHeadX * 1.5, diffHeadY * 1.5)
 			this.drift.value = totalDrift
 
 			if (totalDrift > this.tolerance) {

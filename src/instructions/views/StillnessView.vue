@@ -128,8 +128,14 @@ const cursorStyle = computed(() => {
 	// when drift == tolerance, visualOffset should be maxTravel
 	const pixelsPerUnit = maxTravel / props.instruction.tolerance
 
-	const x = props.instruction.driftX.value * pixelsPerUnit
-	const y = props.instruction.driftY.value * pixelsPerUnit
+	// Combine rotation drift (driftX/Y) and position drift (driftXPos/YPos)
+	// Apply the same weighting (1.5) as in the logic
+	const x =
+		(props.instruction.driftX.value + (props.instruction.driftXPos.value || 0) * 1.5) *
+		pixelsPerUnit
+	const y =
+		(props.instruction.driftY.value + (props.instruction.driftYPos.value || 0) * 1.5) *
+		pixelsPerUnit
 
 	return {
 		width: `${discDiameter}px`,
