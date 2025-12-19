@@ -23,9 +23,16 @@ export class MusicLooper {
 		await this.crossfadeTo(config)
 	}
 
-	stop() {
+	stop(fade = 10) {
 		this.running = false
-		this.current?.source.stop()
+		if (this.current) {
+			const ctx = this.session.ctx
+			const now = ctx.currentTime
+			this.current.gain.gain.cancelScheduledValues(now)
+			this.current.gain.gain.setValueAtTime(this.current.gain.gain.value, now)
+			this.current.gain.gain.linearRampToValueAtTime(0, now + fade)
+			this.current.source.stop(now + fade)
+		}
 		this.current = undefined
 	}
 
@@ -37,6 +44,8 @@ export class MusicLooper {
 	private async crossfadeTo(config: AudioSessionConfig) {
 		const ctx = this.session.ctx
 		const buffer = await this.session.loadBuffer(config.track)
+
+		if (!this.running) return
 
 		const now = ctx.currentTime
 		const fade = config.loop?.crossfadeDuration ?? 10

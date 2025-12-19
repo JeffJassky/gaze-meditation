@@ -46,8 +46,8 @@ export interface ThemeConfig {
 }
 
 export interface ProgramBinauralConfig {
-	hertz: number // 8 by default
-	volume: number // 1 by default
+	hertz?: number // 6 by default
+	volume?: number // 0.5 by default
 }
 
 // Data Models
@@ -60,6 +60,7 @@ export interface Program {
 		binaural?: ProgramBinauralConfig
 	}
 	videoBackground: string
+	videoReverse?: boolean
 	instructions: Instruction[] // All instructions extend the base Instruction class
 	theme?: ThemeConfig // Optional theme configuration for the program
 }

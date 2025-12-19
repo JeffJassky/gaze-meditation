@@ -77,17 +77,5 @@ const incorrectFeedbackBorder = computed(() => {
     <!-- Feedback / Reward Visual -->
     <div v-if="instruction.isCorrect.value" class="absolute inset-0 border-[12px] transition-colors z-20" :style="{ borderColor: correctFeedbackBorder }"></div>
     <div v-else class="absolute inset-0 border-[12px] transition-colors z-20" :style="{ borderColor: incorrectFeedbackBorder }"></div>
-
-    <!-- Debug Dot -->
-    <div 
-      v-if="instruction.currentGaze.value"
-      class="fixed w-6 h-6 rounded-full border-2 border-black z-[9999] pointer-events-none transition-all duration-75 ease-linear"
-      :style="{ 
-          left: `${instruction.currentGaze.value.x}px`, 
-          top: `${instruction.currentGaze.value.y}px`,
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: debugColor
-      }"
-    ></div>
   </div>
 </template>

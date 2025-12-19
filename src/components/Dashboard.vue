@@ -23,7 +23,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_calibration',
 		title: 'Eye Tracker Calibration',
 		description: 'Calibrate the WebGazer eye tracking system.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({
@@ -83,7 +83,7 @@ const FULL_PROGRAMS: Program[] = [
 		id: 'prog_blink_debug',
 		title: 'Blink Calibration',
 		description: 'Debug tool for testing blink sensitivity.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({ id: 'b_debug', prompt: 'Keep eyes open', duration: 30000 })
@@ -346,7 +346,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_tongue_out',
 		title: 'Tongue Out',
 		description: 'Experimental blendshape detection.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new TongueOutInstruction({
@@ -360,7 +360,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_relax_jaw',
 		title: 'Relax Jaw',
 		description: 'Relax your jaw and let your mouth fall open.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new RelaxJawInstruction({
@@ -374,7 +374,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_blink_instruction',
 		title: 'Dont Blink',
 		description: "Stare at the screen. Don't you dare blink.",
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new BlinkInstruction({
@@ -388,7 +388,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_calibration_instruction',
 		title: 'Calibration',
 		description: ' CalibrationInstruction.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new CalibrationInstruction({ id: 'calibration_test', prompt: 'Calibrate your eyes' })
@@ -398,7 +398,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_directional_gaze_instruction',
 		title: 'Direct Your Gaze',
 		description: 'Gaze at one thing - and not the other.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new DirectionalGazeInstruction({
@@ -419,7 +419,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_form_instruction',
 		title: 'Fill out a Form',
 		description: 'Answer questons in a form.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FormInstruction({
@@ -435,7 +435,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_fractionation_instruction',
 		title: 'Fractionation',
 		description: 'Open and close your eyes. Go deeper each time.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new FractionationInstruction({
@@ -449,7 +449,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_nod_instruction',
 		title: 'Nod & Shake your Head',
 		description: 'Nod or shake your head as instructed.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new NodInstruction({
@@ -470,7 +470,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_read_instruction',
 		title: 'Read',
 		description: 'Simply read what is shown.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
@@ -493,9 +493,9 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_speech_instruction',
-		title: 'Speech',
+		title: 'Compelled Speech',
 		description: "Speak the words you're told to.",
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new SpeechInstruction({
@@ -510,7 +510,7 @@ const TEST_PROGRAMS: Program[] = [
 		id: 'test_stillness_instruction',
 		title: 'Stay Still',
 		description: 'Stay very... very... still.',
-		audio: { musicTrack: 'silence.mp3' },
+		audio: { musicTrack: '/audio/music.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new StillnessInstruction({
@@ -535,22 +535,22 @@ const TEST_PROGRAMS: Program[] = [
 	{
 		id: 'test_binaural_audio',
 		title: 'Binaural Audio',
-		description: 'Test of binaural audio (8hz to 4hz)',
+		description: 'Test of binaural audio (6hz to 3hz)',
 		audio: {
-			binaural: { hertz: 8, volume: 0.5 }
+			binaural: { hertz: 6, volume: 0.5 }
 		},
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new ReadInstruction({
-				id: 'binaural_read_8hz',
-				prompt: 'Audio Test (8Hz)',
-				text: '8hz binural beats are playing at 50% volume',
+				id: 'binaural_read_6hz',
+				prompt: 'Audio Test (6Hz)',
+				text: '6hz binural beats are playing at 50% volume',
 				duration: 5000
 			}),
 			new ReadInstruction({
-				id: 'binaural_read_4hz',
-				prompt: 'Audio Test (4Hz)',
-				text: 'Slowing down to 4Hz... Deep relaxation.',
+				id: 'binaural_read_3hz',
+				prompt: 'Audio Test (3Hz)',
+				text: 'Slowing down to 3Hz... Deep relaxation.',
 				duration: 5000,
 				audio: {
 					binaural: { hertz: 3, volume: 0.5 }
@@ -748,7 +748,7 @@ onMounted(() => {
 										@click="handleStartSession(prog)"
 										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
 									>
-										INITIALIZE
+										Start
 									</button>
 								</div>
 							</div>
@@ -792,7 +792,7 @@ onMounted(() => {
 										@click="handleStartSession(prog)"
 										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
 									>
-										INITIALIZE
+										Start
 									</button>
 								</div>
 							</div>

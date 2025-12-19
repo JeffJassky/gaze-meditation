@@ -86,8 +86,9 @@ const initSession = async () => {
 	}
 
 	// Check if we need audio (program track or instructions)
+	// Default to needing audio for binaural beats unless explicitly 'none'
 	if (
-		props.program.audio?.musicTrack ||
+		(props.program.audio?.musicTrack !== 'none') ||
 		props.program.audio?.binaural ||
 		props.program.instructions.some(i => i.options.capabilities?.audioInput)
 	) {
@@ -109,29 +110,31 @@ const initSession = async () => {
 		loadingMessage.value = 'Initializing Audio Engine...'
 		try {
 			await audioSession.setup()
-			// Preload Program Audio Track if exists
+			// Start Program Audio Track if exists
 			if (props.program.audio?.musicTrack && props.program.audio.musicTrack !== 'none') {
-				loadingMessage.value = 'Loading Audio Track...'
+				loadingMessage.value = 'Starting Audio Track...'
 				try {
-					await audioSession.loadBuffer(props.program.audio.musicTrack)
+					await audioSession.musicLooper.start({
+						track: props.program.audio.musicTrack,
+						volume: 0.8
+					})
 				} catch (e) {
 					console.warn(
-						`[Theater] Failed to load music track: ${props.program.audio.musicTrack}`,
+						`[Theater] Failed to start music track: ${props.program.audio.musicTrack}`,
 						e
 					)
 				}
 			}
 
-			// Start Binaural Beats if configured
-			if (props.program.audio?.binaural) {
-				console.log('[Theater] Configuring Binaural Beats...', props.program.audio.binaural)
-				loadingMessage.value = 'Configuring Binaural...'
-				audioSession.binaural.start({
-					carrierFreq: 100, // Default carrier
-					beatFreq: props.program.audio.binaural.hertz,
-					volume: props.program.audio.binaural.volume
-				})
-			}
+			// Start Binaural Beats (default to 6Hz if audio is enabled)
+			const bConfig = props.program.audio?.binaural
+			console.log('[Theater] Configuring Binaural Beats...', bConfig)
+			loadingMessage.value = 'Configuring Binaural...'
+			audioSession.binaural.start({
+				carrierFreq: 100, // Default carrier
+				beatFreq: bConfig?.hertz ?? 6,
+				volume: bConfig?.volume ?? 0.5
+			})
 		} catch (e) {
 			console.warn('Audio Initialization Failed', e)
 			// Decide if critical or not. For now, log and continue.
@@ -309,7 +312,8 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 
 const finishSession = () => {
 	state.value = SessionState.FINISHED
-	audioSession.binaural.stop()
+	audioSession.binaural.stop(3)
+	audioSession.musicLooper.stop(3)
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
@@ -345,6 +349,7 @@ onMounted(() => {
 		// Teardown Services
 		faceMeshService.stop()
 		audioSession.binaural.stop() // Ensure binaural stops
+		audioSession.musicLooper.stop()
 		speechService.stop()
 
 		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
