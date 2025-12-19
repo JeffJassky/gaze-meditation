@@ -115,7 +115,10 @@ const initSession = async () => {
 				try {
 					await audioSession.loadBuffer(props.program.audio.musicTrack)
 				} catch (e) {
-					console.warn(`[Theater] Failed to load music track: ${props.program.audio.musicTrack}`, e)
+					console.warn(
+						`[Theater] Failed to load music track: ${props.program.audio.musicTrack}`,
+						e
+					)
 				}
 			}
 
@@ -151,7 +154,7 @@ const initSession = async () => {
 
 	// 4. Initialize FaceMesh if needed
 	if (needsFaceMesh) {
-		loadingMessage.value = 'Starting Face Tracking...'
+		loadingMessage.value = 'Initializing...'
 		try {
 			// Wait for video element or let service create one
 			await faceMeshService.init()

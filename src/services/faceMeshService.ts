@@ -1,5 +1,6 @@
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import "@tensorflow/tfjs-backend-webgl";
+import * as ort from "onnxruntime-web";
 import { reactive } from "vue";
 
 export interface Point {
@@ -20,6 +21,11 @@ class FaceMeshService {
   private rafId: number | null = null;
 
   public isReady = false;
+  public isTongueDetectionEnabled = false;
+  private isProcessingTongue = false;
+  private tongueSession: { encoder: ort.InferenceSession; decoder: ort.InferenceSession } | null = null;
+  private tongueCanvas: HTMLCanvasElement | null = null;
+  private debugCanvas: HTMLCanvasElement | null = null;
 
   // Calibration: We track the "Normalized Iris Position" ranges
   // 0 = Center, -1 = Left/Up, 1 = Right/Down (approximately)
@@ -43,6 +49,10 @@ class FaceMeshService {
     eyeOpenness: 1.0, // 0 = closed, 1 = open
     eyeOpennessNormalized: 1.0, // 0 = closed (0.15 EAR), 1 = open (0.35 EAR)
     mouthOpenness: 0,
+
+    tongueDetected: false,
+    tongueProtrusion: 0,
+    tongueMaskBase64: '', // Base64 for visual debug
   });
 
   private eyeOpennessMax = 0.35; // Represents fully open for normalization
@@ -305,19 +315,35 @@ class FaceMeshService {
 
     this.debugData.gazeY = screenY;
 
-    // Calculate Mouth Openness
-    const upperLip = keypoints[13];
-    const lowerLip = keypoints[14];
+    // Calculate Mouth Openness (Use Inner Landmarks for strict gating)
+    const upperLipInner = keypoints[13];
+    const lowerLipInner = keypoints[14];
     const mouthLeft = keypoints[61];
     const mouthRight = keypoints[291];
 
-    if (upperLip && lowerLip && mouthLeft && mouthRight) {
-      const mouthV = this.getDistance(upperLip, lowerLip);
+    if (upperLipInner && lowerLipInner && mouthLeft && mouthRight) {
+      const mouthV = this.getDistance(upperLipInner, lowerLipInner);
       const mouthH = this.getDistance(mouthLeft, mouthRight);
-      // Avoid division by zero
       if (mouthH > 0) {
         this.debugData.mouthOpenness = mouthV / mouthH;
       }
+    }
+
+    // Gate: 0.05 (Inner lips must be separated)
+    if (this.isTongueDetectionEnabled && this.debugData.mouthOpenness > 0.05 && !this.isProcessingTongue) {
+      this.isProcessingTongue = true;
+      this.processTongue(keypoints).finally(() => {
+          this.isProcessingTongue = false;
+      });
+    } else if (!this.isTongueDetectionEnabled || this.debugData.mouthOpenness <= 0.05) {
+        if (!this.isProcessingTongue) {
+            this.debugData.tongueDetected = false;
+            this.debugData.tongueProtrusion = 0;
+            if (this.debugCanvas) {
+                const dctx = this.debugCanvas.getContext('2d');
+                if (dctx) dctx.clearRect(0, 0, 256, 256);
+            }
+        }
     }
 
     this.updateBlinkStatus(keypoints);
@@ -584,6 +610,259 @@ class FaceMeshService {
       return null;
 
     return { x: this.debugData.gazeX, y: this.debugData.gazeY };
+  }
+
+  public getDebugCanvas(): HTMLCanvasElement | null {
+    return this.debugCanvas;
+  }
+
+  public async enableTongueDetection() {
+    this.isTongueDetectionEnabled = true;
+    if (!this.tongueSession) {
+        await this.loadTongueModels();
+    }
+  }
+
+  public disableTongueDetection() {
+    this.isTongueDetectionEnabled = false;
+    this.debugData.tongueDetected = false;
+    this.debugData.tongueProtrusion = 0;
+    // We keep the models loaded for performance if re-enabled
+  }
+
+  private async loadTongueModels() {
+    try {
+        ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/";
+        ort.env.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 4, 8);
+        ort.env.logLevel = 'error'; 
+
+        console.log("Loading SlimSAM models...");
+        
+        const sessionOptions: ort.InferenceSession.SessionOptions = { 
+            executionProviders: ['webgpu', 'wasm'],
+            graphOptimizationLevel: 'all'
+        };
+
+        const [encoder, decoder] = await Promise.all([
+            ort.InferenceSession.create('/models/slimsam/vision_encoder_quantized.onnx', sessionOptions),
+            ort.InferenceSession.create('/models/slimsam/prompt_encoder_mask_decoder_quantized.onnx', sessionOptions)
+        ]);
+
+        this.tongueSession = { encoder, decoder };
+        console.log(`SlimSAM models loaded. Encoder Provider: ${encoder.handler?.constructor.name || 'unknown'}`);
+
+        this.tongueCanvas = document.createElement('canvas');
+        this.tongueCanvas.width = 1024;
+        this.tongueCanvas.height = 1024;
+
+        this.debugCanvas = document.createElement('canvas');
+        this.debugCanvas.width = 256;
+        this.debugCanvas.height = 256;
+
+    } catch (e) {
+        console.error("Failed to load SlimSAM models:", e);
+        this.isTongueDetectionEnabled = false;
+    }
+  }
+
+  private async processTongue(keypoints: faceLandmarksDetection.Keypoint[]) {
+    if (!this.tongueSession || !this.video || !this.tongueCanvas) return;
+
+    // 1. Extract Mouth ROI
+    const rightOuter = keypoints[263];
+    const leftOuter = keypoints[33];
+    const iod = Math.hypot(rightOuter.x - leftOuter.x, rightOuter.y - leftOuter.y);
+    if (iod <= 0) return;
+
+    const upper = keypoints[13];
+    const lower = keypoints[14];
+    const left = keypoints[61];
+    const right = keypoints[291];
+    
+    const centerX = (left.x + right.x) / 2;
+    const centerY = (upper.y + lower.y) / 2; 
+
+    const cropSize = iod * 1.8; // Wider context to see face vs mouth
+    const cropX = centerX - cropSize / 2;
+    const cropY = centerY - cropSize / 2;
+
+    const ctx = this.tongueCanvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    
+    ctx.clearRect(0, 0, 1024, 1024);
+    ctx.drawImage(this.video, cropX, cropY, cropSize, cropSize, 0, 0, 1024, 1024);
+    
+    const imageData = ctx.getImageData(0, 0, 1024, 1024);
+    const { data } = imageData;
+
+    const size = 1024 * 1024;
+    const floatData = new Float32Array(3 * size);
+    const mean = [123.675, 116.28, 103.53];
+    const invStd = [1/58.395, 1/57.12, 1/57.375];
+
+    for (let i = 0; i < size; i++) {
+        const i4 = i << 2; 
+        floatData[i] = (data[i4] - mean[0]) * invStd[0];
+        floatData[i + size] = (data[i4 + 1] - mean[1]) * invStd[1];
+        floatData[i + size * 2] = (data[i4 + 2] - mean[2]) * invStd[2];
+    }
+
+    const inputTensor = new ort.Tensor('float32', floatData, [1, 3, 1024, 1024]);
+
+    // 2. Run Encoder
+    const encoderFeeds = { pixel_values: inputTensor }; 
+    const encoderResults = await this.tongueSession.encoder.run(encoderFeeds);
+    
+    const imageEmbeddings = encoderResults.image_embeddings || encoderResults.last_hidden_state || Object.values(encoderResults)[0]; 
+    const imagePositionalEmbeddings = encoderResults.image_positional_embeddings || Object.values(encoderResults)[1];
+
+    // 3. Prepare Point Hints
+    // Foreground: Landmark 14 (Inner Lower Lip)
+    // Background: Upper lip + outer mouth corners + far corners of face
+    const l14 = keypoints[14];
+    const l13 = keypoints[13];
+    const l61 = keypoints[61];
+    const l291 = keypoints[291];
+
+    const points = [
+        (l14.x - cropX) / cropSize * 1024, (l14.y - cropY) / cropSize * 1024, // 1: Foreground
+        (l13.x - cropX) / cropSize * 1024, (l13.y - cropY) / cropSize * 1024, // 0: Background
+        (l61.x - cropX) / cropSize * 1024, (l61.y - cropY) / cropSize * 1024, // 0: Background
+        (l291.x - cropX) / cropSize * 1024, (l291.y - cropY) / cropSize * 1024, // 0: Background
+        100, 100,    // Far TL
+        924, 100,    // Far TR
+        100, 924,    // Far BL
+        924, 924     // Far BR
+    ];
+    const labels = [1, 0, 0, 0, 0, 0, 0, 0]; // 1=Foreground, 0=Background
+
+    const maskInput = new Float32Array(256 * 256);
+    const maskInputTensor = new ort.Tensor('float32', maskInput, [1, 1, 256, 256]);
+    const hasMaskInputTensor = new ort.Tensor('float32', new Float32Array([0]), [1]);
+    const originalSizes = new BigInt64Array([BigInt(1024), BigInt(1024)]);
+    const reshapedInputSizes = new BigInt64Array([BigInt(1024), BigInt(1024)]);
+
+    // 4. Run Decoder
+    const allPossibleFeeds: any = {
+        image_embeddings: imageEmbeddings,
+        image_positional_embeddings: imagePositionalEmbeddings,
+        input_points: new ort.Tensor('float32', new Float32Array(points), [1, 1, 8, 2]),
+        input_labels: new ort.Tensor('int64', new BigInt64Array(labels.map(l => BigInt(l))), [1, 1, 8]),
+        input_masks: maskInputTensor,
+        has_input_masks: hasMaskInputTensor,
+        original_sizes: new ort.Tensor('int64', originalSizes, [2]),
+        reshaped_input_sizes: new ort.Tensor('int64', reshapedInputSizes, [2])
+    };
+
+    const decoderFeeds: any = {};
+    this.tongueSession.decoder.inputNames.forEach(name => {
+        if (allPossibleFeeds[name]) decoderFeeds[name] = allPossibleFeeds[name];
+    });
+
+    try {
+        const decoderResults = await this.tongueSession.decoder.run(decoderFeeds);
+        const masks = decoderResults.pred_masks || decoderResults['masks'] || Object.values(decoderResults)[0];
+        const iouScores = decoderResults.iou_scores || Object.values(decoderResults)[1];
+        
+        const maskData = masks.data as Float32Array;
+        const dims = masks.dims; 
+        const maskH = dims[dims.length - 2];
+        const maskW = dims[dims.length - 1];
+        const numMasks = dims[dims.length - 3] || 1;
+        
+        // Pick the mask with the highest IOU score among those provided
+        let bestMaskIdx = 0;
+        if (iouScores) {
+            const scores = iouScores.data as Float32Array;
+            let maxScore = -1;
+            for (let i = 0; i < numMasks; i++) {
+                if (scores[i] > maxScore) {
+                    maxScore = scores[i];
+                    bestMaskIdx = i;
+                }
+            }
+        }
+
+        const maskStride = maskH * maskW;
+        const maskOffset = bestMaskIdx * maskStride;
+
+        let minY = maskH;
+        let maxY = 0;
+        let pixelCount = 0;
+        
+        // Standard threshold (logits > 0.0)
+        for (let y = 0; y < maskH; y++) { 
+             const row = maskOffset + y * maskW;
+             for (let x = 0; x < maskW; x++) {
+                 if (maskData[row + x] > 0.0) { 
+                     if (y < minY) minY = y;
+                     if (y > maxY) maxY = y;
+                     pixelCount++;
+                 }
+             }
+        }
+        
+        // Update Debug Canvas Directly
+        if (this.debugCanvas) { 
+            const dctx = this.debugCanvas.getContext('2d');
+            if (dctx) {
+                dctx.drawImage(this.tongueCanvas, 0, 0, 1024, 1024, 0, 0, 256, 256);
+                
+                if (pixelCount > 0) {
+                    const overlay = dctx.createImageData(256, 256);
+                    overlay.data.fill(0); 
+
+                    for (let y = 0; y < 256; y++) {
+                        const maskY = Math.floor((y / 256) * maskH);
+                        const mRow = maskOffset + maskY * maskW;
+                        for (let x = 0; x < 256; x++) {
+                            const maskX = Math.floor((x / 256) * maskW);
+                            if (maskData[mRow + maskX] > 0.0) {
+                                const idx = (y * 256 + x) * 4;
+                                overlay.data[idx] = 255;   
+                                overlay.data[idx+1] = 0;   
+                                overlay.data[idx+2] = 255; 
+                                overlay.data[idx+3] = 160; 
+                            }
+                        }
+                    }
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 256;
+                    tempCanvas.height = 256;
+                    tempCanvas.getContext('2d')?.putImageData(overlay, 0, 0);
+                    dctx.drawImage(tempCanvas, 0, 0);
+                }
+
+                points.forEach((val, i) => {
+                    if (i % 2 === 0 && i < 8) { // Draw all primary hints
+                        const px = (points[i] / 1024) * 256;
+                        const py = (points[i+1] / 1024) * 256;
+                        dctx.fillStyle = labels[i/2] === 1 ? '#00ff00' : '#ff0000';
+                        dctx.beginPath();
+                        dctx.arc(px, py, 4, 0, Math.PI * 2);
+                        dctx.fill();
+                    }
+                });
+            }
+        }
+        
+        // Threshold: adjust for mask resolution (256x256 has fewer pixels than 1024x1024)
+        const detectionThreshold = (maskH * maskW) / 300; 
+        
+        if (pixelCount > detectionThreshold) { 
+            if (!this.debugData.tongueDetected) console.log("👅 Tongue Detected!");
+            this.debugData.tongueDetected = true;
+            const tongueHeightRelative = (maxY - minY) / maskH;
+            const realHeight = tongueHeightRelative * cropSize;
+            this.debugData.tongueProtrusion = Math.min(1.0, realHeight / iod);
+        } else {
+             this.debugData.tongueDetected = false;
+             this.debugData.tongueProtrusion = 0;
+        }
+
+    } catch (e) {
+        console.error("Decoder Error:", e);
+    }
   }
 
   public stop() {

@@ -14,6 +14,7 @@ import { NodInstruction } from '../instructions/NodInstruction'
 import { FractionationInstruction } from '../instructions/FractionationInstruction'
 import { ReadInstruction } from '../instructions/ReadInstruction' // Import new ReadInstruction
 import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
+import { TongueOutInstruction } from '../instructions/TongueOutInstruction'
 import { audioSession } from '../services/audio'
 
 // Full Programs
@@ -112,7 +113,8 @@ const FULL_PROGRAMS: Program[] = [
 				id: 'n1',
 				prompt: 'Nod if you are ready',
 				nodsRequired: 3,
-				type: 'YES'
+				type: 'YES',
+				showProgress: true
 			}),
 			new BlinkInstruction({ id: 'b1', prompt: 'Do not blink', duration: 10000 }),
 			new TypeInstruction({
@@ -341,9 +343,23 @@ const FULL_PROGRAMS: Program[] = [
 // Test Programs
 const TEST_PROGRAMS: Program[] = [
 	{
+		id: 'test_tongue_out',
+		title: 'Tongue Out',
+		description: 'Experimental blendshape detection.',
+		audio: { musicTrack: 'silence.mp3' },
+		videoBackground: '/spiral.mp4',
+		instructions: [
+			new TongueOutInstruction({
+				id: 'tongue_test',
+				prompt: 'Stick your tongue out!',
+				duration: 20000
+			})
+		]
+	},
+	{
 		id: 'test_relax_jaw',
-		title: 'Test Relax Jaw',
-		description: 'Dedicated program for testing RelaxJawInstruction.',
+		title: 'Relax Jaw',
+		description: 'Relax your jaw and let your mouth fall open.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -356,8 +372,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_blink_instruction',
-		title: 'Test Blink Instruction',
-		description: 'Dedicated program for testing BlinkInstruction.',
+		title: 'Dont Blink',
+		description: "Stare at the screen. Don't you dare blink.",
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -370,8 +386,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_calibration_instruction',
-		title: 'Test Calibration Instruction',
-		description: 'Dedicated program for testing CalibrationInstruction.',
+		title: 'Calibration',
+		description: ' CalibrationInstruction.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -380,8 +396,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_directional_gaze_instruction',
-		title: 'Test Directional Gaze Instruction',
-		description: 'Dedicated program for testing DirectionalGazeInstruction.',
+		title: 'Direct Your Gaze',
+		description: 'Gaze at one thing - and not the other.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -401,8 +417,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_form_instruction',
-		title: 'Test Form Instruction',
-		description: 'Dedicated program for testing FormInstruction.',
+		title: 'Fill out a Form',
+		description: 'Answer questons in a form.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -417,8 +433,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_fractionation_instruction',
-		title: 'Test Fractionation Instruction',
-		description: 'Dedicated program for testing FractionationInstruction.',
+		title: 'Fractionation',
+		description: 'Open and close your eyes. Go deeper each time.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -431,27 +447,29 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_nod_instruction',
-		title: 'Test Nod Instruction',
-		description: 'Dedicated program for testing NodInstruction.',
+		title: 'Nod & Shake your Head',
+		description: 'Nod or shake your head as instructed.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
 			new NodInstruction({
 				id: 'nod_test',
 				prompt: 'Nod your head twice',
-				type: 'YES'
+				type: 'YES',
+				showProgress: true
 			}),
 			new NodInstruction({
 				id: 'nod_test',
 				prompt: 'Shake your head twice',
-				type: 'NO'
+				type: 'NO',
+				showProgress: true
 			})
 		]
 	},
 	{
 		id: 'test_read_instruction',
-		title: 'Test Read Instruction',
-		description: 'Dedicated program for testing ReadInstruction.',
+		title: 'Read',
+		description: 'Simply read what is shown.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -475,8 +493,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_speech_instruction',
-		title: 'Test Speech Instruction',
-		description: 'Dedicated program for testing SpeechInstruction.',
+		title: 'Speech',
+		description: "Speak the words you're told to.",
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -490,8 +508,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_stillness_instruction',
-		title: 'Test Stillness Instruction',
-		description: 'Dedicated program for testing StillnessInstruction.',
+		title: 'Stay Still',
+		description: 'Stay very... very... still.',
 		audio: { musicTrack: 'silence.mp3' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -506,8 +524,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_type_instruction',
-		title: 'Test Type Instruction',
-		description: 'Dedicated program for testing TypeInstruction.',
+		title: 'Type',
+		description: 'Type the words you see them.',
 		audio: { musicTrack: 'silence.mp4' },
 		videoBackground: '/spiral.mp4',
 		instructions: [
@@ -516,8 +534,8 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_binaural_audio',
-		title: 'Test Binaural Audio',
-		description: 'Dedicated program for testing binaural beats integration.',
+		title: 'Binaural Audio',
+		description: 'Test of binaural audio (8hz to 4hz)',
 		audio: {
 			binaural: { hertz: 8, volume: 0.5 }
 		},
@@ -609,7 +627,7 @@ onMounted(() => {
 
 <template>
 	<div
-		class="h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex"
+		class="dashboard h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex"
 	>
 		<!-- Sidebar -->
 		<aside class="w-64 border-r border-zinc-800 bg-zinc-900/50 p-6 flex flex-col gap-8">
@@ -889,4 +907,6 @@ onMounted(() => {
 
 <style scoped>
 /* No specific scoped styles needed, using Tailwind */
+.dashboard {
+}
 </style>

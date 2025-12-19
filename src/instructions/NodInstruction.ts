@@ -52,12 +52,12 @@ export class NodInstruction extends Instruction<NodOptions> {
 
 	// Thresholds (Relative to dynamic center)
 	// Pitch: -Up, +Down
-	public readonly UP_THRESH = -0.015
-	public readonly DOWN_THRESH = 0.015
+	public readonly UP_THRESH = -0.008 // nodding is mostly down from baseline
+	public readonly DOWN_THRESH = 0.012
 
 	// Yaw: -Left, +Right
-	public readonly LEFT_THRESH = -0.015
-	public readonly RIGHT_THRESH = 0.015
+	public readonly LEFT_THRESH = -0.009
+	public readonly RIGHT_THRESH = 0.009
 
 	async start(context: InstructionContext) {
 		this.context = context
@@ -91,11 +91,13 @@ export class NodInstruction extends Instruction<NodOptions> {
 				this.isInitialized = true
 			}
 		} else {
-			// Continuous Center Adaptation (High Pass Filter equivalent)
-			// Slowly drift center towards current raw value
-			// Alpha 0.02 means it takes ~50 frames (~1 sec) to move 63% of the way to a new posture
-			// This filters out static posture changes but preserves quick nods
-			const alpha = 0.01
+			// Continuous Center Adaptation (Low Pass Filter for the center point)
+			// Slowly drift the baseline 'center' towards the current raw posture.
+			// - Higher alpha: Faster adaptation, less smoothing (center follows movement more closely).
+			// - Lower alpha: Slower adaptation, more smoothing (center stays more stable).
+			// 0.01 means it takes ~100 frames (~2 sec @ 60fps) to move 63% of the way to a new posture.
+			// This filters out slow posture changes (drift) while preserving quick nod deviations.
+			const alpha = 0.02
 			this.centerPitch = this.lerp(this.centerPitch, rawPitch, alpha)
 			this.centerYaw = this.lerp(this.centerYaw, rawYaw, alpha)
 		}
