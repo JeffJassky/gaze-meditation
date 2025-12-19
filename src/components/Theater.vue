@@ -11,7 +11,7 @@ import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
 import type { Instruction } from '../core/Instruction'
 import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
-import AudioDebugPanel from './AudioDebugPanel.vue'
+import TransportControl from './TransportControl.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
@@ -31,6 +31,52 @@ const emit = defineEmits<{
 const state = ref<SessionState>(SessionState.IDLE)
 const instrIndex = ref(0)
 const score = ref(0)
+const isPaused = ref(false)
+const controlsVisible = ref(false)
+const isMenuOpen = ref(false)
+const isHoveringControls = ref(false)
+const controlsTimer = ref<number | null>(null)
+
+const showControls = () => {
+	controlsVisible.value = true
+	if (controlsTimer.value) clearTimeout(controlsTimer.value)
+	
+	if (!isMenuOpen.value && !isHoveringControls.value) {
+		controlsTimer.value = window.setTimeout(() => {
+			if (!isMenuOpen.value && !isHoveringControls.value) {
+				controlsVisible.value = false
+			}
+		}, 5000)
+	}
+}
+
+// Watchers to update timer logic when state changes
+watch([isMenuOpen, isHoveringControls], ([menuOpen, hovering]) => {
+	if (menuOpen || hovering) {
+		controlsVisible.value = true
+		if (controlsTimer.value) clearTimeout(controlsTimer.value)
+	} else {
+		// Resume timer if neither is active
+		showControls()
+	}
+})
+
+const handlePause = () => {
+	isPaused.value = true
+	if (timerRef.value) clearTimeout(timerRef.value)
+	currentInstr.value?.stop()
+}
+
+const handlePlay = () => {
+	isPaused.value = false
+	nextInstruction(instrIndex.value)
+}
+
+const handleRestart = () => {
+	isPaused.value = false
+	nextInstruction(0)
+}
+
 const timerRef = ref<number | null>(null)
 const startTimeRef = ref<number>(Date.now())
 const metricsRef = ref<SessionMetric[]>([])
@@ -358,7 +404,11 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="relative w-full h-full bg-black overflow-hidden cursor-crosshair">
+	<div 
+		class="relative w-full h-full bg-black overflow-hidden cursor-crosshair"
+		@mousemove="showControls"
+		@click="showControls"
+	>
 		<!-- Video Background -->
 		<video
 			v-if="program.videoBackground"
@@ -443,11 +493,36 @@ onMounted(() => {
 			@exit="emit('exit')"
 		/>
 
-		<AudioDebugPanel />
+		<Transition name="fade">
+			<TransportControl
+				v-show="controlsVisible"
+				:instructions="program.instructions"
+				:currentIndex="instrIndex"
+				:isPlaying="!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE"
+				@play="handlePlay"
+				@pause="handlePause"
+				@restart="handleRestart"
+				@select="nextInstruction"
+				@menu-toggle="(val) => isMenuOpen = val"
+				@mouseenter="isHoveringControls = true"
+				@mouseleave="isHoveringControls = false"
+			/>
+		</Transition>
+
 	</div>
 </template>
 
 <style>
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+
 /* Global styles if needed */
 .instruction-enter-active,
 .instruction-leave-active {

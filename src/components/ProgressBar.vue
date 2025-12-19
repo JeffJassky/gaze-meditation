@@ -23,7 +23,6 @@ defineProps<{
 
 <style scoped>
 .progress-track {
-	width: 300px;
 	height: 8px;
 	border-radius: 4px;
 	overflow: hidden;

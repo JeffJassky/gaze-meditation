@@ -86,10 +86,6 @@ export const somaticResetFull: Program = {
 			direction: 'RIGHT'
 		}),
 		new ReadInstruction({ text: 'Back to center.' }),
-		new ReadInstruction({
-			text: 'Close your eyes for three seconds.'
-		}),
-		new ReadInstruction({ text: 'Open.' }),
 		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 12000 }),
 		new ReadInstruction({
 			text: 'Notice how the rest of your face follows the jaw.'
