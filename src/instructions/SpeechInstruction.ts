@@ -97,7 +97,10 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     }
 
     if (allFound) {
-      this.finish(true);
+      // Small delay to let the UI reflect the final word before resolving
+      setTimeout(() => {
+        this.finish(true);
+      }, 150);
     }
   }
 
