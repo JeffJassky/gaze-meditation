@@ -17,11 +17,11 @@ export const somaticResetFull: Program = {
 	title: 'The Somatic Reset',
 	description: 'A 20-minute, high-density flow for total physical release.',
 	audio: {
-		musicTrack: '/audio/music.mp3',
+		musicTrack: 'audio/music.mp3',
 		binaural: { hertz: 6, volume: 0.5 }
 	},
 	// videoBackground: '/loop2.mov',
-	spiralBackground: '/img/spiral.png',
+	spiralBackground: 'img/spiral.png',
 	instructions: [
 		// --- Block 1: The Mental "Handshake" (Pacing) ---
 		new ReadInstruction({

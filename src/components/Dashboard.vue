@@ -19,6 +19,7 @@ import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
 import { TongueOutInstruction } from '../instructions/TongueOutInstruction'
 import { audioSession } from '../services/audio'
 import somaticResetFull from '../programs/somatic-relaxaton'
+import Home from './Home.vue'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [somaticResetFull]
@@ -301,8 +302,9 @@ const emit = defineEmits<{
 const users = ref<User[]>([])
 const sessions = ref<SessionLog[]>([])
 const selectedUser = ref<string>('')
-const activeTab = ref<'start' | 'history' | 'users'>('start')
+const activeTab = ref<'home' | 'start' | 'history' | 'users'>('home')
 const newUserName = ref('')
+const isSidebarOpen = ref(false)
 
 const refreshData = () => {
 	users.value = getUsers()
@@ -356,18 +358,120 @@ onMounted(() => {
 
 <template>
 	<div
-		class="dashboard h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex"
+		class="dashboard h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex flex-col md:flex-row relative overflow-hidden"
 	>
+		<!-- Mobile Header -->
+		<header
+			class="md:hidden flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900"
+		>
+			<div class="flex flex-col">
+				<h1 class="text-xl font-bold tracking-tighter text-white">GAZE</h1>
+				<p class="text-[10px] text-zinc-500 uppercase tracking-widest">v2.1</p>
+			</div>
+			<button
+				@click="isSidebarOpen = !isSidebarOpen"
+				class="p-2 text-zinc-400 hover:text-white transition-colors"
+			>
+				<svg
+					v-if="!isSidebarOpen"
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M4 6h16M4 12h16m-7 6h7"
+					/>
+				</svg>
+				<svg
+					v-else
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M6 18L18 6M6 6l12 12"
+					/>
+				</svg>
+			</button>
+		</header>
+
+		<!-- Mobile Overlay -->
+		<div
+			v-if="isSidebarOpen"
+			@click="isSidebarOpen = false"
+			class="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+		></div>
+
 		<!-- Sidebar -->
-		<aside class="w-64 border-r border-zinc-800 bg-zinc-900/50 p-6 flex flex-col gap-8">
-			<div>
+		<aside
+			:class="`fixed md:static inset-y-0 left-0 w-64 border-r border-zinc-800 bg-zinc-900 md:bg-zinc-900/50 p-6 flex flex-col gap-8 z-50 transform transition-transform duration-300 ease-in-out ${
+				isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+			}`"
+		>
+			<div class="hidden md:block">
 				<h1 class="text-2xl font-bold tracking-tighter text-white mb-1">NCRS</h1>
 				<p class="text-xs text-zinc-500 uppercase tracking-widest">Research Suite v2.1</p>
 			</div>
 
+			<!-- Subject Selection -->
+			<div class="space-y-2">
+				<label class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider"
+					>Active Subject</label
+				>
+				<select
+					class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-xs text-white focus:ring-1 focus:ring-cyan-500 outline-none appearance-none cursor-pointer"
+					v-model="selectedUser"
+				>
+					<option value="">-- Choose Subject --</option>
+					<option
+						v-for="u in users"
+						:key="u.id"
+						:value="u.id"
+					>
+						{{ u.name }}
+					</option>
+				</select>
+				<p
+					v-if="users.length === 0"
+					class="text-[10px] text-red-400/80 leading-tight"
+				>
+					No subjects found. Create one in 'Subjects' tab.
+				</p>
+			</div>
+
 			<nav class="flex flex-col gap-2">
 				<button
-					@click="activeTab = 'start'"
+					@click="
+						() => {
+							activeTab = 'home'
+							isSidebarOpen = false
+						}
+					"
+					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+						activeTab === 'home'
+							? 'bg-zinc-800 text-cyan-400'
+							: 'hover:bg-zinc-800/50 text-zinc-400'
+					}`"
+				>
+					Home
+				</button>
+				<button
+					@click="
+						() => {
+							activeTab = 'start'
+							isSidebarOpen = false
+						}
+					"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'start'
 							? 'bg-zinc-800 text-cyan-400'
@@ -377,7 +481,12 @@ onMounted(() => {
 					Start Session
 				</button>
 				<button
-					@click="activeTab = 'history'"
+					@click="
+						() => {
+							activeTab = 'history'
+							isSidebarOpen = false
+						}
+					"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'history'
 							? 'bg-zinc-800 text-cyan-400'
@@ -387,7 +496,12 @@ onMounted(() => {
 					Data Logs
 				</button>
 				<button
-					@click="activeTab = 'users'"
+					@click="
+						() => {
+							activeTab = 'users'
+							isSidebarOpen = false
+						}
+					"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'users'
 							? 'bg-zinc-800 text-cyan-400'
@@ -400,45 +514,17 @@ onMounted(() => {
 		</aside>
 
 		<!-- Main Content -->
-		<main class="flex-1 p-12 overflow-y-auto">
+		<main class="flex-1 p-6 md:p-12 overflow-y-auto">
+			<Home v-if="activeTab === 'home'" />
+
 			<div
 				v-if="activeTab === 'start'"
 				class="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
 				<header>
-					<h2 class="text-3xl font-light text-white mb-2">Configure Session</h2>
-					<p class="text-zinc-500">
-						Select a subject and a conditioning protocol to begin.
-					</p>
+					<h2 class="text-3xl font-light text-white mb-2">Select a Program</h2>
+					<p class="text-zinc-500">Select a conditioning protocol to begin.</p>
 				</header>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-					<!-- Subject Select -->
-					<div class="space-y-4">
-						<label class="text-xs uppercase font-bold text-zinc-500 tracking-wider"
-							>Select Subject</label
-						>
-						<select
-							class="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-4 text-white focus:ring-2 focus:ring-cyan-500 outline-none appearance-none"
-							v-model="selectedUser"
-						>
-							<option value="">-- Choose Subject --</option>
-							<option
-								v-for="u in users"
-								:key="u.id"
-								:value="u.id"
-							>
-								{{ u.name }} (Score: {{ u.totalScore }})
-							</option>
-						</select>
-						<p
-							v-if="users.length === 0"
-							class="text-sm text-red-400"
-						>
-							No subjects found. Create one in 'Subjects' tab.
-						</p>
-					</div>
-				</div>
 
 				<div class="space-y-4">
 					<label class="text-xs uppercase font-bold text-zinc-500 tracking-wider"

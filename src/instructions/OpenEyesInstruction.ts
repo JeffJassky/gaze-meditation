@@ -29,13 +29,12 @@ export class OpenEyesInstruction extends ReadInstruction {
 	private readonly FORCE_COMPLETE_MS: number
 
 	constructor(options: OpenEyesInstructionOptions) {
-		super({ ...options, duration: Infinity, capabilities: { faceMesh: true } })
-		this.REPEAT_INTERVAL_MS = (options.repeatAfter ?? 5) * 1000
-		this.TRIGGER_SOUND = options.openEyesTrigger ?? '/audio/fx/chimes.wav'
-		this.FALLBACK_THRESHOLD_MS = options.fallbackThresholdMs ?? 4000
-		this.FORCE_COMPLETE_MS = options.forceCompleteMs ?? 8000
-	}
-
+		        super({ ...options, duration: Infinity, capabilities: { faceMesh: true } })
+		        this.REPEAT_INTERVAL_MS = (options.repeatAfter ?? 5) * 1000
+		        this.TRIGGER_SOUND = options.openEyesTrigger ?? 'audio/fx/chimes.wav'
+		        this.FALLBACK_THRESHOLD_MS = options.fallbackThresholdMs ?? 4000
+		        this.FORCE_COMPLETE_MS = options.forceCompleteMs ?? 8000
+		    }
 	async start(context: InstructionContext) {
 		super.start(context)
 
