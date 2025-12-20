@@ -18,7 +18,7 @@
 
 			<h1 v-else-if="instruction.status.value === 'SUCCESS'">GOOD</h1>
 
-			<h1 v-else>EYES WIDE</h1>
+			<h1 v-else>Open your eyes wide</h1>
 		</div>
 
 		<div class="progress-container">
@@ -63,10 +63,7 @@ const props = defineProps<{
 }
 
 .message h1 {
-	font-size: 4rem;
-	font-weight: 900;
-	letter-spacing: 5px;
-	text-transform: uppercase;
+	font-size: 3rem;
 	/* color: #ff3333; is now set via inline style for FAILED state */
 }
 

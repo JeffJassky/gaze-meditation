@@ -23,34 +23,47 @@
 			PERFECT
 		</div>
 
-		<!-- Visualizer (Keep as is) -->
+		<!-- Visualizer -->
 		<div
 			class="visualizer"
-			v-if="instruction.status.value === 'HOLDING'"
+			v-if="instruction.status.value !== 'WAITING'"
 		>
-			<!-- A target ring -->
-			<div
-				class="target-ring"
-				:style="targetRingStyle"
-			></div>
+			<!-- Circular Progress Ring -->
+			<svg
+				:width="OUTER_SIZE"
+				:height="OUTER_SIZE"
+				class="progress-ring"
+			>
+				<!-- Subtle background track -->
+				<circle
+					class="progress-ring-track"
+					:cx="OUTER_SIZE / 2"
+					:cy="OUTER_SIZE / 2"
+					:r="radius"
+					stroke-width="1"
+					stroke="rgba(255, 255, 255, 0.1)"
+					fill="none"
+				/>
+				<!-- The actual progress ring -->
+				<circle
+					class="progress-ring-fill"
+					:cx="OUTER_SIZE / 2"
+					:cy="OUTER_SIZE / 2"
+					:r="radius"
+					:stroke-width="BORDER_WIDTH"
+					:stroke="indicatorColor"
+					fill="none"
+					stroke-linecap="round"
+					:stroke-dasharray="circumference"
+					:stroke-dashoffset="dashOffset"
+					:transform="`rotate(-90 ${OUTER_SIZE / 2} ${OUTER_SIZE / 2})`"
+				/>
+			</svg>
 			<!-- The user's head position -->
 			<div
 				class="cursor"
+				v-if="instruction.status.value === 'HOLDING'"
 				:style="cursorStyle"
-			></div>
-		</div>
-
-		<!-- Progress Bar (Keep as is) -->
-		<div
-			class="progress-bar"
-			v-if="instruction.status.value !== 'WAITING'"
-		>
-			<div
-				class="fill"
-				:style="{
-					width: instruction.progress.value + '%',
-					backgroundColor: instruction.resolvedTheme.positiveColor
-				}"
 			></div>
 		</div>
 	</div>
@@ -66,7 +79,14 @@ const props = defineProps<{
 
 const OUTER_SIZE = 300
 const DISC_RATIO = 0.9
-const BORDER_WIDTH = 10
+const BORDER_WIDTH = 8
+
+const radius = (OUTER_SIZE - BORDER_WIDTH) / 2
+const circumference = 2 * Math.PI * radius
+
+const dashOffset = computed(() => {
+	return circumference * (1 - props.instruction.progress.value / 100)
+})
 
 function hexToRgb(hex: string) {
 	// Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
@@ -106,15 +126,6 @@ const indicatorColor = computed(() => {
 	)
 
 	return interpolateColor(startColor, endColor, factor)
-})
-
-const targetRingStyle = computed(() => {
-	return {
-		width: `${OUTER_SIZE}px`,
-		height: `${OUTER_SIZE}px`,
-		borderWidth: `${BORDER_WIDTH}px`,
-		borderColor: indicatorColor.value
-	}
 })
 
 const cursorStyle = computed(() => {
@@ -181,14 +192,16 @@ const cursorStyle = computed(() => {
 	justify-content: center;
 }
 
-.target-ring {
+.progress-ring {
 	position: absolute;
-	border-style: solid;
-	border-color: rgba(255, 255, 255, 0.5);
-	background-color: rgba(255, 255, 255, 0.05); /* Slight background for safe zone */
-	border-radius: 50%;
-	box-sizing: border-box;
-	transition: border-color 0.2s ease-out;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.progress-ring-fill {
+	transition: stroke-dashoffset 0.1s linear, stroke 0.2s ease-out;
 }
 
 .cursor {
@@ -197,21 +210,5 @@ const cursorStyle = computed(() => {
 	left: 50%;
 	border-radius: 50%;
 	transition: transform 0.2s ease-out, background-color 0.2s ease-out;
-}
-
-.progress-bar {
-	width: 80%;
-	height: 10px;
-	background: #333;
-	border-radius: 5px;
-	overflow: hidden;
-	position: absolute;
-	bottom: 50px;
-	z-index: 10;
-}
-
-.fill {
-	height: 100%;
-	transition: width 0.1s linear;
 }
 </style>

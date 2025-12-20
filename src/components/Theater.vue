@@ -524,14 +524,28 @@ onMounted(() => {
 }
 
 /* Global styles if needed */
-.instruction-enter-active,
-.instruction-leave-active {
+.instruction-enter-active {
 	/* Define fallbacks just in case */
 	--duration-slow: 3s;
 	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
 
 	transition: opacity var(--duration-slow) var(--ease-glacial),
 		transform var(--duration-slow) var(--ease-glacial);
+	/* Ensure layout is stable during transition */
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.instruction-leave-active {
+	/* Define fallbacks just in case */
+	--duration-slow: 3s;
+	--ease-in-glacial: cubic-bezier(0.75, 0, 1, 1);
+
+	transition: opacity var(--duration-slow) var(--ease-in-glacial),
+		transform var(--duration-slow) var(--ease-in-glacial);
 	/* Ensure layout is stable during transition */
 	position: absolute;
 	top: 0;

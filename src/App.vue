@@ -51,8 +51,10 @@ const endSession = () => {
 <style>
 /* No specific scoped styles needed, using Tailwind */
 :root {
-	/* The "Glacial" Ease */
+	/* The "Glacial" Ease (Strong Ease-Out) */
 	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
+	/* Strong Ease-In to match */
+	--ease-in-glacial: cubic-bezier(0.75, 0, 1, 1);
 
 	/* You can also define different speeds as variables */
 	--duration-slow: 3s;

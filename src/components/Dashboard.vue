@@ -419,8 +419,10 @@ onMounted(() => {
 			}`"
 		>
 			<div class="hidden md:block">
-				<h1 class="text-2xl font-bold tracking-tighter text-white mb-1">NCRS</h1>
-				<p class="text-xs text-zinc-500 uppercase tracking-widest">Research Suite v2.1</p>
+				<h1 class="text-2xl font-bold tracking-tighter text-white mb-1">GAZE</h1>
+				<p class="text-xs text-zinc-500 uppercase tracking-widest">
+					Interactive Meditation
+				</p>
 			</div>
 
 			<!-- Subject Selection -->

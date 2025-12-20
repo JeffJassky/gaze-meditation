@@ -3,7 +3,7 @@ import type { ThemeConfig } from './types'
 export const DEFAULT_THEME: ThemeConfig = {
 	textColor: '#ffffff',
 	secondaryTextColor: '#ffffff',
-	accentColor: '#000000',
+	accentColor: '#ffffff',
 	debugColor: '#FF0000',
 
 	positiveColor: '#19344b',

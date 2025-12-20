@@ -22,7 +22,7 @@ const contentStyle = computed(() => {
 	if (isFading) {
 		return {
 			opacity: 0,
-			transition: `opacity ${duration}ms var(--ease-glacial, ease-out)`
+			transition: `opacity ${duration}ms var(--ease-in-glacial, ease-in)`
 		}
 	}
 	

@@ -86,7 +86,7 @@ export const somaticResetFull: Program = {
 			direction: 'RIGHT'
 		}),
 		new ReadInstruction({ text: 'Back to center.' }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 12000 }),
+		new RelaxJawInstruction({ prompt: 'Relax your jaw' }),
 		new ReadInstruction({
 			text: 'Notice how the rest of your face follows the jaw.'
 		}),
@@ -100,9 +100,9 @@ export const somaticResetFull: Program = {
 
 		// --- Block 3: Establishing the "Stillness" (The Deepening) ---
 		new ReadInstruction({
-			text: 'True relaxation starts with total stillness.'
+			text: 'True relaxation starts with stillness.'
 		}),
-		new StillnessInstruction({ prompt: 'Be Still', duration: 30000 }),
+		new StillnessInstruction({ prompt: 'Be still.', duration: 30000 }),
 		new ReadInstruction({ text: 'Perfect.' }),
 		new ReadInstruction({
 			text: ['Eyes softening...', 'Now, relax that jaw again...']
