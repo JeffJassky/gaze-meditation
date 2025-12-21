@@ -81,7 +81,11 @@ const incorrectFeedbackBorder = computed(() => {
 				class="prompt-text"
 				:style="{ color: textColor }"
 			>
-				{{ instruction.options.prompt }}
+				<span
+					v-for="(segment, index) in instruction.options.prompt.split('~')"
+					:key="index"
+					class="block"
+				>{{ segment }}</span>
 			</div>
 
 			<ProgressBar

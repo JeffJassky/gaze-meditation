@@ -48,7 +48,11 @@ const submitForm = () => {
 <template>
   <div class="form-instruction-view p-8 mx-auto" :style="{ color: textColor }">
     <h2 class="text-3xl font-bold mb-6 text-center">
-      {{ instruction.question }}
+      <span
+        v-for="(segment, index) in instruction.question.split('~')"
+        :key="index"
+        class="block"
+      >{{ segment }}</span>
     </h2>
 
     <form @submit.prevent="submitForm" class="space-y-6">

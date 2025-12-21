@@ -79,7 +79,11 @@ const targetWords = computed(() => {
 				class="text-2xl font-medium mb-4"
 				:style="{ color: instruction.resolvedTheme.textColor }"
 			>
-				{{ instruction.options.prompt }}
+				<span
+					v-for="(segment, index) in instruction.options.prompt.split('~')"
+					:key="index"
+					class="block"
+				>{{ segment }}</span>
 			</p>
 
 			<div class="text-6xl font-bold tracking-tight drop-shadow-2xl relative inline-block">

@@ -6,7 +6,11 @@
 			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
-			{{ instruction.options.prompt }}
+			<span
+				v-for="(segment, index) in instruction.options.prompt.split('~')"
+				:key="index"
+				class="block"
+			>{{ segment }}</span>
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'FAILED'"

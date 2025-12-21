@@ -8,7 +8,11 @@
 			v-if="instruction.options.prompt"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
-			{{ instruction.options.prompt }}
+			<span
+				v-for="(segment, index) in instruction.options.prompt.split('~')"
+				:key="index"
+				class="block"
+			>{{ segment }}</span>
 		</div>
 
 		<div

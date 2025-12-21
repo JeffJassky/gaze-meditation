@@ -42,74 +42,88 @@ const initialTrainingProgram: Program = {
 			cooldown: 0
 		}),
 		new CloseEyesInstruction({
+			cooldown: 0,
 			text: 'Close your eyes.',
-			duration: 3000 // Short hold
+			duration: 3000 // Short hold,
 		}),
 		new ReadInstruction({
-			text: ['Good.', 'Now, you will hear a chime when it is time to open them.'],
-			cooldown: 0
+			cooldown: 0,
+			text: ['Good.', 'Now, you will hear a chime when it is time to open them.']
 		}),
 		new OpenEyesInstruction({
+			cooldown: 0,
 			text: 'Open your eyes.'
 		}),
 
 		// 2. Jaw Relaxation
 		new RelaxJawInstruction({
-			prompt: 'Relax your jaw completely so your mouth opens slightly.',
+			cooldown: 0,
+			prompt: 'Relax your jaw completely ~ so your mouth opens slightly.',
 			duration: 3000
 		}),
 
 		// 3. Stillness
 		new ReadInstruction({
-			text: ['Excellent.', 'Now, find a comfortable position and stay completely still.']
+			cooldown: 0,
+			text: ['Excellent.', 'Now, find a comfortable position  ~ and stay completely still.']
 		}),
 		new StillnessInstruction({
+			cooldown: 0,
 			prompt: 'Keep the blue dot centered in the ring.',
-			duration: 5000
+			duration: 15000
 		}),
 
 		// 4. No Blink
 		new ReadInstruction({
-			text: ['Sometimes, you will be asked to keep your eyes open.']
+			cooldown: 0,
+			text: ['Sometimes, you will be asked ~ to keep your eyes open.']
 		}),
 		new NoBlinkInstruction({
+			cooldown: 0,
 			prompt: 'Do not blink.',
-			duration: 8000
+			duration: 10000
 		}),
 
 		// 5. Gaze Direction
 		new ReadInstruction({
+			cooldown: 0,
 			text: [
 				"Sometimes, you'll be asked questons.",
 				'You can answer by nodding ~ or shaking your head.'
 			]
 		}),
 		new NodInstruction({
+			cooldown: 0,
 			prompt: 'Do you understand?',
 			type: 'YES'
 		}),
 		new ReadInstruction({
+			cooldown: 0,
 			text: ['You may also be asked ~ to adjust your head and gaze.']
 		}),
 		new DirectionalGazeInstruction({
-			prompt: 'For example,  ~ drop your gaze and head gently now.',
+			cooldown: 0,
+			prompt: 'For example, ~ lower your gaze and head gently now.',
 			direction: 'DOWN'
 		}),
 
 		// 7. Verbal
 		new ReadInstruction({
+			cooldown: 0,
 			text: [
-				'Finally, your voice can guide the session.',
-				"We'll show you a phrase to speak aloud."
+				'Finally, your voice can be used ~ for verbal affirmations.',
+				"We'll show you a phrase to affirm aloud."
 			]
 		}),
 		new SpeechInstruction({
+			cooldown: 0,
 			prompt: 'Say "I am ready"',
 			targetValue: 'I am ready',
 			duration: 5000
 		}),
 
 		new ReadInstruction({
+			cooldown: 0,
 			text: ['Perfect.', 'You are ready to begin.']
 		})
 	]

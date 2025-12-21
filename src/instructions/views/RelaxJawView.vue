@@ -3,7 +3,13 @@
 		class="relax-jaw-view"
 		:style="{ color: instruction.resolvedTheme.textColor }"
 	>
-		<h1 class="prompt">{{ instruction.options.prompt }}</h1>
+		<h1 class="prompt">
+			<span
+				v-for="(segment, index) in instruction.options.prompt.split('~')"
+				:key="index"
+				class="block"
+			>{{ segment }}</span>
+		</h1>
 
 		<!-- Visualizer hidden for now per user request -->
 
