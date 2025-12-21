@@ -78,7 +78,7 @@ const incorrectFeedbackBorder = computed(() => {
 			<!-- Instruction Text -->
 			<div
 				v-if="instruction.options.prompt"
-				class="prompt-text fade-in mb-8"
+				class="prompt-text"
 				:style="{ color: textColor }"
 			>
 				{{ instruction.options.prompt }}
@@ -91,24 +91,14 @@ const incorrectFeedbackBorder = computed(() => {
 				:fill-color="accentColor"
 			/>
 		</div>
-
-		<!-- Feedback / Reward Visual -->
-		<div
-			v-if="instruction.isCorrect.value"
-			class="absolute inset-0 border-[12px] transition-colors z-20"
-			:style="{ borderColor: correctFeedbackBorder }"
-		></div>
-		<div
-			v-else
-			class="absolute inset-0 border-[12px] transition-colors z-20"
-			:style="{ borderColor: incorrectFeedbackBorder }"
-		></div>
 	</div>
 </template>
 
 <style scoped>
 .prompt-text {
-	font-size: clamp(1.5rem, 5vw, 4rem); /* Responsive font size */
-	font-weight: bold;
+	font-size: clamp(1rem, 3vw, 2.5rem);
+	max-width: 800px;
+	margin-bottom: 2rem;
+	z-index: 10;
 }
 </style>

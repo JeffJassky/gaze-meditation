@@ -167,9 +167,9 @@ const initSession = async () => {
 		needsFaceMesh = true
 	}
 
-    if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
-        needsSpeech = true
-    }
+	if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
+		needsSpeech = true
+	}
 
 	// Check if we need audio (program track or instructions)
 	// Default to needing audio for binaural beats unless explicitly 'none'
@@ -184,38 +184,48 @@ const initSession = async () => {
 	console.log('[Theater] Capabilities:', { needsAudio, needsFaceMesh, needsSpeech })
 
 	// 1.5 Check Permissions (Pre-flight)
-	if (needsFaceMesh || needsSpeech || (needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))) {
+	if (
+		needsFaceMesh ||
+		needsSpeech ||
+		(needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))
+	) {
 		try {
 			// Determine what we need
-			const camQuery = needsFaceMesh ? navigator.permissions.query({ name: 'camera' as any }) : Promise.resolve(null)
-			const micQuery = (needsSpeech || (needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))) 
-				? navigator.permissions.query({ name: 'microphone' as any }) 
+			const camQuery = needsFaceMesh
+				? navigator.permissions.query({ name: 'camera' as any })
 				: Promise.resolve(null)
-			
+			const micQuery =
+				needsSpeech ||
+				(needsAudio &&
+					props.program.instructions.some(i => i.options.capabilities?.audioInput))
+					? navigator.permissions.query({ name: 'microphone' as any })
+					: Promise.resolve(null)
+
 			const [camStatus, micStatus] = await Promise.all([camQuery, micQuery])
-			
+
 			let missingCam = camStatus?.state === 'prompt'
 			let missingMic = micStatus?.state === 'prompt'
-			
+
 			// If API not supported, assume we might need to prompt (fallthrough)
 			// But usually init() handles it. We mainly want to catch the 'prompt' state to show UI.
-			
+
 			if (missingCam || missingMic) {
 				// Pause init and show UI
 				loadingMessage.value = 'Waiting for Access'
-				permissionType.value = missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
+				permissionType.value =
+					missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
 				showPermissionRequest.value = true
-				
+
 				// Wait for user interaction
 				await new Promise<void>(resolve => {
-					const unwatch = watch(showPermissionRequest, (val) => {
+					const unwatch = watch(showPermissionRequest, val => {
 						if (!val) {
 							unwatch()
 							resolve()
 						}
 					})
 				})
-				
+
 				loadingMessage.value = 'Initializing...'
 			}
 		} catch (e) {
@@ -265,7 +275,9 @@ const initSession = async () => {
 			await speechService.start()
 		} catch (e) {
 			console.warn('Speech Initialization Failed', e)
-			alert('Microphone access is required for this session. Please enable it in your browser settings and try again.')
+			alert(
+				'Microphone access is required for this session. Please enable it in your browser settings and try again.'
+			)
 			emit('exit')
 			return
 		}
@@ -540,7 +552,7 @@ onMounted(() => {
 
 <template>
 	<div
-		class="relative w-full h-full bg-black overflow-hidden cursor-crosshair"
+		class="relative w-full h-full bg-black overflow-hidden"
 		@mousemove="showControls"
 		@click="handleScreenClick"
 	>
@@ -560,7 +572,7 @@ onMounted(() => {
 			/>
 		</video>
 
-		<!-- Spiral Background -->
+		<!-- Spiral Background (Blurred Base) -->
 		<div
 			v-if="program.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
@@ -569,7 +581,25 @@ onMounted(() => {
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
-				height: '150vmax'
+				height: '150vmax',
+				filter: 'blur(8px)',
+				opacity: 0.8
+			}"
+		></div>
+
+		<!-- Spiral Background (Sharp Center Mask) -->
+		<div
+			v-if="program.spiralBackground"
+			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
+			:style="{
+				backgroundImage: `url(${program.spiralBackground})`,
+				backgroundSize: 'cover',
+				backgroundPosition: 'center',
+				width: '150vmax',
+				height: '150vmax',
+				filter: 'blur(3px)',
+				'-webkit-mask-image': 'radial-gradient(circle, black 0%, transparent 20%)',
+				'mask-image': 'radial-gradient(circle, black 0%, transparent 20%)'
 			}"
 		></div>
 
@@ -608,21 +638,36 @@ onMounted(() => {
 						:progress="loadingProgress"
 						:fill-color="currentResolvedTheme.positiveColor || '#10b981'"
 					/>
-					
+
 					<!-- Permission Request Button -->
-					<div v-if="showPermissionRequest" class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+					<div
+						v-if="showPermissionRequest"
+						class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+					>
 						<p class="text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
-							This session uses biofeedback. To proceed, we need temporary access to your 
-							<span class="text-white font-bold">{{ permissionType === 'both' ? 'Camera & Microphone' : permissionType === 'camera' ? 'Camera' : 'Microphone' }}</span>.
-							<br><span class="text-xs opacity-50 block mt-2">Data is processed locally on your device and is never recorded.</span>
+							This session uses biofeedback. To proceed, we need temporary access to
+							your
+							<span class="text-white font-bold">{{
+								permissionType === 'both'
+									? 'Camera & Microphone'
+									: permissionType === 'camera'
+									? 'Camera'
+									: 'Microphone'
+							}}</span
+							>. <br /><span class="text-xs opacity-50 block mt-2"
+								>Data is processed locally on your device and is never
+								recorded.</span
+							>
 						</p>
-						<button 
+						<button
 							@click.stop="handleGrantAccess"
 							class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105"
-							:style="{ 
+							:style="{
 								backgroundColor: currentResolvedTheme.positiveColor || '#10b981',
 								color: '#000',
-								boxShadow: `0 0 20px ${(currentResolvedTheme.positiveColor || '#10b981')}40`
+								boxShadow: `0 0 20px ${
+									currentResolvedTheme.positiveColor || '#10b981'
+								}40`
 							}"
 						>
 							Grant Access

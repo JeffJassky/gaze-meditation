@@ -81,7 +81,7 @@ const handleExit = () => {
 						class="text-5xl font-bold"
 						:style="{ color: resolvedTheme.textColor }"
 					>
-						Session Complete
+						Session Complete.
 					</h1>
 					<template v-if="props.score > 0">
 						<div

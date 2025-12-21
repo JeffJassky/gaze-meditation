@@ -274,10 +274,6 @@ const TEST_PROGRAMS: Program[] = [
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
 		instructions: [
-			new ReadInstruction({
-				text: ['Prepare to be still.', 'Be still.'],
-				skipIntro: true
-			}),
 			new StillnessInstruction({
 				prompt: 'keep the blue dot centered in the ring.',
 				duration: 20000

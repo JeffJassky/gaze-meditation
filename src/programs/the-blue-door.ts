@@ -50,15 +50,12 @@ export const theBlueDoor: Program = {
 		}),
 		new CloseEyesInstruction({ text: 'Close your eyes.' }),
 		new OpenEyesInstruction({ text: 'Open your eyes.' }),
-		new ReadInstruction({
-			text: 'The light is heavy.'
-		}),
 
 		// --- Block 2: The Descent (The Spiral Staircase) ---
 		new ReadInstruction({
 			text: [
 				"In your mind's eye, I want you to imagine...",
-				'you are standing at the top of a staircase.',
+				"you're standing at the top of a staircase.",
 				'A long, spiral staircase.',
 				'It is made of ancient stone.',
 				'You are going to walk down.'
@@ -69,31 +66,31 @@ export const theBlueDoor: Program = {
 		}),
 		new RelaxJawInstruction({ prompt: 'Relax your jaw as you step down', duration: 10000 }),
 		new ReadInstruction({
-			text: ['9...', 'feeling the cool stone under your feet.']
+			text: ['9', 'feeling the cool stone under your feet.']
 		}),
 		new DirectionalGazeInstruction({
-			prompt: 'Tilting your head slightly downward',
+			prompt: 'Tilt your head slightly downward',
 			direction: 'DOWN'
 		}),
 		new ReadInstruction({
 			text: [
-				'8... ',
+				'8',
 				'deeper down into the dim light.',
-				'7... ',
+				'7',
 				'circling down, around and around.',
-				'6... ',
+				'6',
 				'feeling safer and deeper with every step.',
-				'5...',
-				'4...',
+				'5',
+				'4',
 				'Halfway there.',
-				'3...',
+				'3',
 				' almost at the bottom.',
-				'2... ',
+				'2',
 				'seeing the floor approaching.',
-
-				'1... ',
+				'1',
 				'Step off the last step.'
-			]
+			],
+			cooldown: 0
 		}),
 		new StillnessInstruction({ prompt: 'Standing at the bottom.', duration: 20000 }),
 
