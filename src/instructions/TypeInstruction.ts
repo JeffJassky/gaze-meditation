@@ -33,36 +33,23 @@ export class TypeInstruction extends Instruction<TypeOptions> {
 		this.isComplete.value = false
 		this.normalizedTargetPhrase = this.normalizeString(this.options.targetPhrase)
 		this.updateProgress()
-
-		this.handler = (e: KeyboardEvent) => {
-			if (this.isComplete.value) return
-
-			// Handle backspace
-			if (e.key === 'Backspace') {
-				this.input.value = this.input.value.slice(0, -1)
-				this.updateProgress() // Also update progress on backspace
-				return
-			}
-
-			// Handle typing (basic chars)
-			if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-				this.input.value += e.key
-				this.checkInput()
-			}
-		}
-
-		window.addEventListener('keydown', this.handler)
 	}
 
 	stop() {
-		if (this.handler) {
-			window.removeEventListener('keydown', this.handler)
-			this.handler = null
-		}
 		if (this.completionTimer) {
 			clearTimeout(this.completionTimer)
 			this.completionTimer = null
 		}
+	}
+
+	/**
+	 * Called by TypeView when the hidden input changes.
+	 * This supports mobile keyboards and ensures consistent behavior.
+	 */
+	public handleInputUpdate(newValue: string) {
+		if (this.isComplete.value) return
+		this.input.value = newValue
+		this.checkInput()
 	}
 
 	private checkInput() {

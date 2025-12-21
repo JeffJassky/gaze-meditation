@@ -61,29 +61,19 @@ export class ReadInstruction extends Instruction<ReadInstructionConfig> {
 
 		this.currentIndex.value = index
 		this.currentText.value = texts[index] || ''
-		this.isFadingOut.value = false
 
 		const durationMs = this.options.duration ?? calculateDuration(this.currentText.value)
-		const fadeOutMs = this.options.fadeOutDuration || 0
 
 		// If duration is Infinity, we do not schedule the next step.
-		// The instruction is expected to be completed externally (e.g. by subclass logic).
 		if (durationMs === Infinity) {
 			return
 		}
 
-		// 1. Wait for Duration (Reading time)
+		// Wait for Duration (Reading time) + Cooldown
+		const cooldown = this.options.cooldown ?? 2000
 		this.activeTimer = window.setTimeout(() => {
-			// 2. Handle Fade Out
-			if (fadeOutMs > 0) {
-				this.isFadingOut.value = true
-				this.activeTimer = window.setTimeout(() => {
-					this.showNext(index + 1, texts)
-				}, fadeOutMs)
-			} else {
-				this.showNext(index + 1, texts)
-			}
-		}, durationMs)
+			this.showNext(index + 1, texts)
+		}, durationMs + cooldown)
 	}
 
 	stop(): void {

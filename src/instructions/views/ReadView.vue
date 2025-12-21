@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { toRefs, onMounted, computed } from 'vue'
-import { ReadInstruction } from '../ReadInstruction' // Adjust path as necessary
+import { toRefs, onMounted } from 'vue'
+import { ReadInstruction } from '../ReadInstruction'
 
 interface ReadViewProps {
 	instruction: ReadInstruction
@@ -12,52 +12,35 @@ const { instruction } = toRefs(props)
 onMounted(() => {
 	console.log(`ReadInstruction mounted with text: ${instruction.value.currentText.value}`)
 })
-
-const contentStyle = computed(() => {
-	const isFading = instruction.value.isFadingOut.value
-	// Use configured fadeOutDuration or match the fadeIn default (4s) or --duration-slow (3s)
-	// ReadInstruction defaults fadeOutDuration to 1000ms if not set, so we use that.
-	const duration = instruction.value.options.fadeOutDuration || 1000
-	
-	if (isFading) {
-		return {
-			opacity: 0,
-			transition: `opacity ${duration}ms var(--ease-in-glacial, ease-in)`
-		}
-	}
-	
-	return {
-		opacity: 1,
-		transition: 'opacity 0s'
-	}
-})
 </script>
 
 <template>
 	<div class="instruction-view read-view">
 		<div
 			v-if="instruction.options.prompt"
-			class="prompt-text fade-in"
+			class="prompt-text"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
 			{{ instruction.options.prompt }}
 		</div>
-		<div
-			:key="instruction.currentIndex.value"
-			class="read-content leading-relaxed fade-in"
-			:style="[contentStyle, {
-				color: instruction.resolvedTheme.secondaryTextColor,
-				animationDelay:
-					instruction.currentIndex.value === 0
-						? (instruction.options.delay || 0) / 1000 + 's'
-						: '0s',
-				animationDuration: (instruction.options.fadeInDuration || 4000) / 1000 + 's',
-				animationFillMode: 'forwards',
-				animationTimingFunction: 'var(--ease-glacial, cubic-bezier(0.19, 1, 0.22, 1))'
-			}]"
+
+		<Transition
+			name="read-segment"
+			mode="out-in"
 		>
-			{{ instruction.currentText.value }}
-		</div>
+			<div
+				:key="instruction.currentIndex.value"
+				class="read-content leading-relaxed"
+				:style="{ color: instruction.resolvedTheme.secondaryTextColor }"
+			>
+				<span
+					v-for="(segment, index) in instruction.currentText.value.split('~')"
+					:key="index"
+					class="inline-block"
+					>{{ segment }}</span
+				>
+			</div>
+		</Transition>
 	</div>
 </template>
 
@@ -70,16 +53,35 @@ const contentStyle = computed(() => {
 	height: 100%;
 	text-align: center;
 	padding: 2rem;
-	/* Transition handled by inline style */
+	position: relative;
 }
 
 .prompt-text {
-	font-size: clamp(1.5rem, 5vw, 4rem); /* Responsive font size */
+	font-size: clamp(1.5rem, 5vw, 4rem);
 	font-weight: bold;
 	margin-bottom: 2rem;
+	z-index: 10;
 }
 
 .read-content {
-	font-size: clamp(1rem, 3vw, 2.5rem); /* Responsive font size */
+	font-size: clamp(1rem, 3vw, 2.5rem);
+	max-width: 800px;
+	width: 100%;
+}
+
+/* Internal transition for text segments */
+.read-segment-enter-active,
+.read-segment-leave-active {
+	transition: opacity 2s ease-in-out, transform 2s ease-in-out;
+}
+
+.read-segment-enter-from {
+	opacity: 0;
+	transform: scale(1.15);
+}
+
+.read-segment-leave-to {
+	opacity: 0;
+	transform: scale(0.93);
 }
 </style>

@@ -39,6 +39,12 @@ export interface InstructionOptions {
 	
 	// Fade options
 	fadeOutDuration?: number
+
+	// Delay after completion before next instruction starts
+	cooldown?: number
+
+	// If true, the session intro (reminders) will be skipped if this is the first instruction
+	skipIntro?: boolean
 }
 
 export abstract class Instruction<TOptions extends InstructionOptions = InstructionOptions> {
@@ -50,6 +56,7 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 		this.options = {
 			id: options.id || `inst_${Math.random().toString(36).substring(2, 11)}`,
 			duration: 5000, // Default duration
+			cooldown: 2000, // Default cooldown
 			...options,
 			positiveReinforcement: {
 				...{ enabled: false, message: 'Good' },

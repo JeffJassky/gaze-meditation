@@ -1,11 +1,16 @@
 <template>
-  <div
-    class="fractionation-view"
-    :class="{ 'eyes-closed-bg': instruction.status.value === 'CLOSED' }"
-    :style="{ color: instruction.resolvedTheme.textColor }"
-  >
-    <div class="content">
-      <h1 class="fade-in" v-if="instruction.status.value === 'READY'">GET READY</h1>
+	<div
+		class="fractionation-view"
+		:class="{ 'eyes-closed-bg': instruction.status.value === 'CLOSED' }"
+		:style="{ color: instruction.resolvedTheme.textColor }"
+	>
+		<div class="content">
+			<h1
+				class="fade-in"
+				v-if="instruction.status.value === 'READY'"
+			>
+				GET READY
+			</h1>
 
 			<h1
 				class="fade-in"
@@ -59,10 +64,9 @@ import type { FractionationInstruction } from '../FractionationInstruction'
 import EyeGraphic from '../../components/EyeGraphic.vue'
 
 const props = defineProps<{
-  instruction: FractionationInstruction;
-}>();
+	instruction: FractionationInstruction
+}>()
 </script>
-
 
 <style scoped>
 .fractionation-view {
@@ -88,7 +92,6 @@ h1 {
 	letter-spacing: 10px;
 	font-weight: 100;
 	text-transform: uppercase;
-	margin-bottom: 20px;
 }
 
 .cycle-info {

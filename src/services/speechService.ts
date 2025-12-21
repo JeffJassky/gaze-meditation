@@ -75,22 +75,46 @@ class SpeechService {
      }
   }
 
-  start() {
+  start(): Promise<void> {
      this._isStopping = false
      if (!this.recognition) {
         this.init()
      }
      
-     if (this.recognition && !this.isListening.value) {
-        try {
-           this.recognition.start()
-           this.isListening.value = true
-           console.log('Speech Service Started')
-        } catch (e) {
-           // Already started?
-           console.warn('Speech start error', e)
+     return new Promise((resolve, reject) => {
+        if (this.recognition && !this.isListening.value) {
+           // One-time listeners for this start attempt
+           const onStart = () => {
+              this.isListening.value = true
+              console.log('Speech Service Started')
+              resolve()
+              cleanup()
+           }
+           const onError = (event: any) => {
+              console.warn('Speech start error', event.error)
+              reject(event.error)
+              cleanup()
+           }
+           
+           const cleanup = () => {
+              this.recognition!.removeEventListener('start', onStart)
+              this.recognition!.removeEventListener('error', onError)
+           }
+
+           this.recognition.addEventListener('start', onStart)
+           this.recognition.addEventListener('error', onError)
+
+           try {
+              this.recognition.start()
+           } catch (e) {
+              // Usually means already started
+              console.warn('Speech start exception', e)
+              resolve() // Assume it's running
+           }
+        } else {
+           resolve() // Already listening
         }
-     }
+     })
   }
 
   stop() {

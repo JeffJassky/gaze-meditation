@@ -56,7 +56,8 @@ const props = defineProps<{
 const debugCanvasRef = ref<HTMLCanvasElement | null>(null)
 let rafId: number | null = null
 
-const updatePreview = () => {	const sourceCanvas = faceMeshService.getDebugCanvas()
+const updatePreview = () => {
+	const sourceCanvas = faceMeshService.getDebugCanvas()
 	if (debugCanvasRef.value && sourceCanvas) {
 		const ctx = debugCanvasRef.value.getContext('2d')
 		if (ctx) {
@@ -90,7 +91,7 @@ onUnmounted(() => {
 .prompt {
 	font-size: 2.5rem;
 	font-weight: 300;
-	margin-bottom: 2rem;
+	margin-bottom: 0;
 }
 
 .status-icon {

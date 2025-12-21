@@ -37,6 +37,7 @@ class FaceMeshService {
 		headPitch: 0,
 		headX: 0,
 		headY: 0,
+		faceScale: 0, // Inter-Ocular Distance (approx Z-depth proxy)
 
 		gazeX: 0,
 
@@ -279,6 +280,7 @@ class FaceMeshService {
 
 		this.debugData.headYaw = headYaw
 		this.debugData.headPitch = headPitch
+		this.debugData.faceScale = iod // Store raw IOD as scale proxy
 
 		// Position (Normalized to Video Dimensions 0-1)
 		// 640x480 is hardcoded in init()

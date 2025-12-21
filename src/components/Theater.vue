@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed, provide } from 'vue' // Add provide
+import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue' // Add shallowRef
 import {
 	SessionState,
 	type Program,
@@ -9,9 +9,11 @@ import {
 } from '../types' // Import ThemeConfig
 import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
 import type { Instruction } from '../core/Instruction'
+import { ReadInstruction } from '../instructions/ReadInstruction' // Import ReadInstruction
 import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
 import TransportControl from './TransportControl.vue'
+import ProgressBar from './ProgressBar.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
@@ -28,7 +30,8 @@ const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
 
-const state = ref<SessionState>(SessionState.IDLE)
+const state = ref<SessionState>(SessionState.INITIALIZING)
+const sessionInstructions = shallowRef<Instruction[]>([]) // Use shallowRef to avoid deep reactivity/unwrapping
 const instrIndex = ref(0)
 const score = ref(0)
 const isPaused = ref(false)
@@ -40,7 +43,7 @@ const controlsTimer = ref<number | null>(null)
 const showControls = () => {
 	controlsVisible.value = true
 	if (controlsTimer.value) clearTimeout(controlsTimer.value)
-	
+
 	if (!isMenuOpen.value && !isHoveringControls.value) {
 		controlsTimer.value = window.setTimeout(() => {
 			if (!isMenuOpen.value && !isHoveringControls.value) {
@@ -84,13 +87,40 @@ const metricsRef = ref<SessionMetric[]>([])
 const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME) // Reactive theme for providing
 
 // Loading State
-const loadingMessage = ref('Initializing...')
+const loadingMessage = ref('Loading')
 const loadingProgress = ref(0)
+const showLoadingContent = ref(false)
+const showPermissionRequest = ref(false)
+const permissionType = ref<'camera' | 'microphone' | 'both'>('both')
+
+const handleScreenClick = (e: MouseEvent) => {
+	// If permission request is visible, ignore screen clicks for controls
+	if (showPermissionRequest.value) return
+
+	showControls()
+
+	// If it's a tap on the left/right side, navigate
+	const width = window.innerWidth
+	const x = e.clientX
+
+	// Threshold for side taps (outer 25%)
+	const threshold = width * 0.25
+
+	if (x < threshold) {
+		if (instrIndex.value > 0) {
+			nextInstruction(instrIndex.value - 1)
+		}
+	} else if (x > width - threshold) {
+		if (instrIndex.value < sessionInstructions.value.length - 1) {
+			nextInstruction(instrIndex.value + 1)
+		}
+	}
+}
 
 // Computed for current instruction object
 const currentInstr = computed(() => {
-	if (instrIndex.value < props.program.instructions.length) {
-		return props.program.instructions[instrIndex.value]
+	if (instrIndex.value < sessionInstructions.value.length) {
+		return sessionInstructions.value[instrIndex.value]
 	}
 	return undefined
 })
@@ -99,6 +129,7 @@ const currentInstr = computed(() => {
 watch(
 	[currentInstr, () => props.program],
 	([newInstr, newProgram]) => {
+		console.log('[Theater] currentInstr changed:', newInstr?.options?.id)
 		if (newInstr) {
 			currentResolvedTheme.value = getInstructionEffectiveTheme(
 				newProgram as Program,
@@ -112,13 +143,19 @@ watch(
 	{ immediate: true, deep: true }
 ) // Immediate ensures theme is set on initial load
 
-// Provide the current resolved theme
-provide('resolvedTheme', currentResolvedTheme.value)
+// Provide the current resolved theme as a ref
+provide('resolvedTheme', currentResolvedTheme)
 
 const initSession = async () => {
+	console.log('[Theater] Starting initSession')
 	state.value = SessionState.INITIALIZING
 	loadingProgress.value = 0
-	loadingMessage.value = 'Analyzing Program...'
+	showLoadingContent.value = false
+
+	// Trigger content fade-in slightly after mount
+	setTimeout(() => {
+		showLoadingContent.value = true
+	}, 100)
 
 	// 1. Determine Capabilities Needed
 	let needsFaceMesh = false
@@ -130,6 +167,10 @@ const initSession = async () => {
 		needsFaceMesh = true
 	}
 
+    if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
+        needsSpeech = true
+    }
+
 	// Check if we need audio (program track or instructions)
 	// Default to needing audio for binaural beats unless explicitly 'none'
 	if (
@@ -140,24 +181,57 @@ const initSession = async () => {
 		needsAudio = true
 	}
 
-	console.log('[Theater] Needs Audio:', needsAudio, 'Program Audio:', props.program.audio)
+	console.log('[Theater] Capabilities:', { needsAudio, needsFaceMesh, needsSpeech })
 
-	// Check if we need speech
-	if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
-		needsSpeech = true
+	// 1.5 Check Permissions (Pre-flight)
+	if (needsFaceMesh || needsSpeech || (needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))) {
+		try {
+			// Determine what we need
+			const camQuery = needsFaceMesh ? navigator.permissions.query({ name: 'camera' as any }) : Promise.resolve(null)
+			const micQuery = (needsSpeech || (needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))) 
+				? navigator.permissions.query({ name: 'microphone' as any }) 
+				: Promise.resolve(null)
+			
+			const [camStatus, micStatus] = await Promise.all([camQuery, micQuery])
+			
+			let missingCam = camStatus?.state === 'prompt'
+			let missingMic = micStatus?.state === 'prompt'
+			
+			// If API not supported, assume we might need to prompt (fallthrough)
+			// But usually init() handles it. We mainly want to catch the 'prompt' state to show UI.
+			
+			if (missingCam || missingMic) {
+				// Pause init and show UI
+				loadingMessage.value = 'Waiting for Access'
+				permissionType.value = missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
+				showPermissionRequest.value = true
+				
+				// Wait for user interaction
+				await new Promise<void>(resolve => {
+					const unwatch = watch(showPermissionRequest, (val) => {
+						if (!val) {
+							unwatch()
+							resolve()
+						}
+					})
+				})
+				
+				loadingMessage.value = 'Initializing...'
+			}
+		} catch (e) {
+			console.warn('Permissions Query API not supported', e)
+			// Proceed to let browser handle it naturally
+		}
 	}
 
 	loadingProgress.value = 20
 
 	// 2. Initialize Audio if needed
 	if (needsAudio) {
-		console.log('[Theater] Initializing Audio Stack...')
-		loadingMessage.value = 'Initializing Audio Engine...'
 		try {
 			await audioSession.setup()
 			// Start Program Audio Track if exists
 			if (props.program.audio?.musicTrack && props.program.audio.musicTrack !== 'none') {
-				loadingMessage.value = 'Initializing...'
 				try {
 					await audioSession.musicLooper.start({
 						track: props.program.audio.musicTrack,
@@ -171,30 +245,29 @@ const initSession = async () => {
 				}
 			}
 
-			// Start Binaural Beats (default to 6Hz if audio is enabled)
+			// Start Binaural Beats
 			const bConfig = props.program.audio?.binaural
-			console.log('[Theater] Configuring Binaural Beats...', bConfig)
-			loadingMessage.value = 'Configuring Binaural...'
 			audioSession.binaural.start({
-				carrierFreq: 100, // Default carrier
+				carrierFreq: 100,
 				beatFreq: bConfig?.hertz ?? 6,
 				volume: bConfig?.volume ?? 0.5
 			})
 		} catch (e) {
 			console.warn('Audio Initialization Failed', e)
-			// Decide if critical or not. For now, log and continue.
 		}
 	}
 	loadingProgress.value = 50
 
 	// 3. Initialize Speech if needed
 	if (needsSpeech) {
-		loadingMessage.value = 'Initializing Speech Recognition...'
 		try {
 			await speechService.init()
-			speechService.start()
+			await speechService.start()
 		} catch (e) {
 			console.warn('Speech Initialization Failed', e)
+			alert('Microphone access is required for this session. Please enable it in your browser settings and try again.')
+			emit('exit')
+			return
 		}
 	}
 
@@ -202,9 +275,7 @@ const initSession = async () => {
 
 	// 4. Initialize FaceMesh if needed
 	if (needsFaceMesh) {
-		loadingMessage.value = 'Initializing...'
 		try {
-			// Wait for video element or let service create one
 			await faceMeshService.init()
 		} catch (e) {
 			console.error('FaceMesh Initialization Failed', e)
@@ -215,73 +286,136 @@ const initSession = async () => {
 	}
 	loadingProgress.value = 90
 
-	// 4. Preload Background if needed (basic check)
-	if (props.program.videoBackground || props.program.spiralBackground) {
-		loadingMessage.value = 'Preloading Background...'
-		// Basic preload via fetch to ensure cached?
-		// Or rely on browser buffering.
-		// For now, simple delay or skip.
+	// Prepend Reminders
+	const reminders: Instruction[] = []
+	const reminderText: string[] = []
+	const firstInstruction = props.program.instructions[0]
+	const shouldSkipIntro = firstInstruction?.options.skipIntro === true
+
+	if (!shouldSkipIntro) {
+		if (needsFaceMesh && needsSpeech) {
+			reminderText.push('Find yourself in a quiet, well-lit space ~ for optimal biofeedback.')
+		}
+		if (needsSpeech) {
+			reminderText.push('Find yourself in a quiet space ~ for optimal biofeedback.')
+		}
+		if (needsFaceMesh) {
+			reminderText.push('Find yourself in a well-lit space ~ for optimal biofeedback.')
+		}
+
+		reminders.push(
+			new ReadInstruction({
+				id: 'reminder-dnd',
+				text: [
+					...reminderText,
+					'To avoid interruptions,',
+					'consider putting your device ~ into do not disturb mode.'
+				]
+			})
+		)
 	}
 
-	loadingProgress.value = 100
-	loadingMessage.value = 'Ready'
+	sessionInstructions.value = [...reminders, ...props.program.instructions]
+	console.log('[Theater] Instructions Prepared:', sessionInstructions.value.length)
 
-	// Start Session
+	loadingProgress.value = 100
+
+	// Start Session Sequence
 	setTimeout(() => {
-		nextInstruction(0)
+		// Fade out content first
+		showLoadingContent.value = false
+
+		// Wait for content fade out (1s transition), then start session (fading out background)
+		setTimeout(() => {
+			console.log('[Theater] Starting first instruction')
+			nextInstruction(0)
+		}, 1200)
 	}, 500)
 }
 
+const handleGrantAccess = () => {
+	showPermissionRequest.value = false
+}
+
 const nextInstruction = (index: number) => {
-	if (index >= props.program.instructions.length) {
-		finishSession()
+	console.log('[Theater] nextInstruction:', index)
+
+	if (index >= sessionInstructions.value.length) {
+		// Stop previous if exists
+
+		if (currentInstr.value) {
+			currentInstr.value.stop()
+		}
+
+		// Increment index to trigger instruction fade out
+
+		instrIndex.value = index
+
+		// Wait for instruction transition to complete (3s per style)
+
+		setTimeout(() => {
+			finishSession()
+		}, 3000)
+
 		return
 	}
 
 	// Stop previous if exists
+
 	if (currentInstr.value) {
 		currentInstr.value.stop()
 	}
 
 	instrIndex.value = index
+
 	state.value = SessionState.INSTRUCTING
 
+	console.log(
+		'[Theater] State set to INSTRUCTING, currentInstr:',
+		currentInstr.value?.options?.id
+	)
+
 	// Apply Instruction Audio Settings if present
+
 	if (currentInstr.value?.options.audio?.binaural) {
 		const b = currentInstr.value.options.audio.binaural
-		// Ensure engine is active or start it? For now assuming adjust if active.
+
 		if (audioSession.binaural.isActive) {
-			console.log('[Theater] Adjusting Binaural:', b)
 			if (b.hertz !== undefined) audioSession.binaural.setBeatFrequency(b.hertz)
+
 			if (b.volume !== undefined) audioSession.binaural.setVolume(b.volume)
 		}
 	}
 
-	// Short delay for "Get Ready" (or 0 for optimization)
-	// Logic: View is rendered. Instruction logic NOT started.
 	if (timerRef.value) clearTimeout(timerRef.value)
+
 	timerRef.value = window.setTimeout(() => {
 		state.value = SessionState.VALIDATING
+
 		if (currentInstr.value) {
-			// We already have currentResolvedTheme reactive var that updates on changes
-			// Use the current value of currentResolvedTheme.value
 			currentInstr.value.start({
 				complete: (success, metrics, result) =>
 					triggerReinforcement(success, metrics, result),
-				resolvedTheme: currentResolvedTheme.value // Pass the provided theme
+
+				resolvedTheme: currentResolvedTheme.value
 			})
 		}
-	}, 500) // 500ms delay to read prompt before active
+	}, 500)
 }
 
 const findInstructionIndexById = (id: string): number => {
-	return props.program.instructions.findIndex(instr => instr.id === id)
+	return sessionInstructions.value.findIndex(instr => instr.id === id)
 }
+
+// Trigger reinforcement ... (rest of function unchanged, just verifying use of sessionInstructions/instrIndex)
+
 const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	if (timerRef.value) clearTimeout(timerRef.value)
 
 	// Stop instruction logic (stop listening/tracking)
 	currentInstr.value?.stop()
+
+	const cooldown = currentInstr.value?.options.cooldown ?? 2000
 
 	// Record Metric
 	if (currentInstr.value) {
@@ -301,7 +435,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 					// Wait for reinforcement period then jump
 					setTimeout(() => {
 						nextInstruction(jumpToIndex)
-					}, 2000)
+					}, cooldown)
 					return // Exit here as we are jumping
 				} else {
 					console.warn(
@@ -330,10 +464,12 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			// Time in reinforcement state
 			setTimeout(() => {
 				nextInstruction(instrIndex.value + 1)
-			}, 2000)
+			}, cooldown)
 		} else {
-			// Skip reinforcement visuals and delay
-			nextInstruction(instrIndex.value + 1)
+			// Skip reinforcement visuals but respect cooldown
+			setTimeout(() => {
+				nextInstruction(instrIndex.value + 1)
+			}, cooldown)
 		}
 	} else {
 		if (isNegEnabled) {
@@ -344,13 +480,12 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			setTimeout(() => {
 				// Retry
 				nextInstruction(instrIndex.value)
-			}, 2000)
+			}, cooldown)
 		} else {
-			// Skip reinforcement visuals and delay
-			// Retry immediately (or after very short delay to avoid tight loop potential if logic is broken)
+			// Skip reinforcement visuals but respect cooldown
 			setTimeout(() => {
 				nextInstruction(instrIndex.value)
-			}, 100)
+			}, cooldown)
 		}
 	}
 }
@@ -404,10 +539,10 @@ onMounted(() => {
 </script>
 
 <template>
-	<div 
+	<div
 		class="relative w-full h-full bg-black overflow-hidden cursor-crosshair"
 		@mousemove="showControls"
-		@click="showControls"
+		@click="handleScreenClick"
 	>
 		<!-- Video Background -->
 		<video
@@ -453,18 +588,49 @@ onMounted(() => {
 		<Visuals :state="state" />
 
 		<!-- Loading Overlay -->
-		<div
-			v-if="state === SessionState.INITIALIZING"
-			class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-90 text-white"
-		>
-			<div class="text-2xl font-bold mb-4">{{ loadingMessage }}</div>
-			<div class="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
+		<Transition name="fade-slow">
+			<div
+				v-if="state === SessionState.INITIALIZING"
+				class="absolute inset-0 z-50 bg-black text-white"
+			>
 				<div
-					class="h-full bg-green-500 transition-all duration-300 ease-out"
-					:style="{ width: `${loadingProgress}%` }"
-				></div>
+					class="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-1000 ease-in-out"
+					:class="showLoadingContent ? 'opacity-100' : 'opacity-0'"
+				>
+					<div
+						class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-24 text-2xl text-center w-full"
+						:style="{ color: currentResolvedTheme.positiveColor || '#10b981' }"
+					>
+						{{ loadingMessage }}
+					</div>
+					<ProgressBar
+						v-if="!showPermissionRequest"
+						:progress="loadingProgress"
+						:fill-color="currentResolvedTheme.positiveColor || '#10b981'"
+					/>
+					
+					<!-- Permission Request Button -->
+					<div v-if="showPermissionRequest" class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+						<p class="text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
+							This session uses biofeedback. To proceed, we need temporary access to your 
+							<span class="text-white font-bold">{{ permissionType === 'both' ? 'Camera & Microphone' : permissionType === 'camera' ? 'Camera' : 'Microphone' }}</span>.
+							<br><span class="text-xs opacity-50 block mt-2">Data is processed locally on your device and is never recorded.</span>
+						</p>
+						<button 
+							@click.stop="handleGrantAccess"
+							class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105"
+							:style="{ 
+								backgroundColor: currentResolvedTheme.positiveColor || '#10b981',
+								color: '#000',
+								boxShadow: `0 0 20px ${(currentResolvedTheme.positiveColor || '#10b981')}40`
+							}"
+						>
+							Grant Access
+						</button>
+					</div>
+				</div>
 			</div>
-		</div>
+		</Transition>
 
 		<!-- Active Instruction View -->
 		<div class="absolute inset-0 z-10 pointer-events-none">
@@ -491,24 +657,27 @@ onMounted(() => {
 			:currentInstruction="currentInstr"
 			:score="score"
 			@exit="emit('exit')"
+			class="z-50"
 		/>
 
 		<Transition name="fade">
 			<TransportControl
 				v-show="controlsVisible"
-				:instructions="program.instructions"
+				:instructions="sessionInstructions"
 				:currentIndex="instrIndex"
-				:isPlaying="!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE"
+				:isPlaying="
+					!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE
+				"
 				@play="handlePlay"
 				@pause="handlePause"
 				@restart="handleRestart"
 				@select="nextInstruction"
-				@menu-toggle="(val) => isMenuOpen = val"
+				@menu-toggle="val => (isMenuOpen = val)"
 				@mouseenter="isHoveringControls = true"
 				@mouseleave="isHoveringControls = false"
+				@click.stop
 			/>
 		</Transition>
-
 	</div>
 </template>
 
@@ -580,5 +749,13 @@ onMounted(() => {
 	to {
 		transform: translate(-50%, -50%) rotate(360deg);
 	}
+}
+
+.fade-slow-leave-active {
+	transition: opacity 2s ease-in-out;
+}
+
+.fade-slow-leave-to {
+	opacity: 0;
 }
 </style>

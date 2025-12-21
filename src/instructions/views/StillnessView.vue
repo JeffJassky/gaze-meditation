@@ -2,7 +2,7 @@
 	<div class="instruction-view stillness-view">
 		<!-- Status Text replacing the old status-indicator h2s -->
 		<div
-			v-if="instruction.status.value === 'HOLDING'"
+			v-if="instruction.status.value === 'HOLDING' || instruction.status.value === 'WAITING'"
 			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.textColor }"
 		>
@@ -13,37 +13,24 @@
 			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.negativeColor || 'red' }"
 		>
-			{{ instruction.options.mistakeMessage || 'MOVEMENT DETECTED' }}
+			{{ instruction.options.mistakeMessage || 'Movement detected.' }}
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'SUCCESS'"
 			class="prompt-text leading-relaxed"
 			:style="{ color: instruction.resolvedTheme.positiveColor || 'green' }"
 		>
-			PERFECT
+			Perfect
 		</div>
 
 		<!-- Visualizer -->
-		<div
-			class="visualizer"
-			v-if="instruction.status.value !== 'WAITING'"
-		>
+		<div class="visualizer">
 			<!-- Circular Progress Ring -->
 			<svg
 				:width="OUTER_SIZE"
 				:height="OUTER_SIZE"
 				class="progress-ring"
 			>
-				<!-- Subtle background track -->
-				<circle
-					class="progress-ring-track"
-					:cx="OUTER_SIZE / 2"
-					:cy="OUTER_SIZE / 2"
-					:r="radius"
-					stroke-width="1"
-					stroke="rgba(255, 255, 255, 0.1)"
-					fill="none"
-				/>
 				<!-- The actual progress ring -->
 				<circle
 					class="progress-ring-fill"
@@ -57,12 +44,13 @@
 					:stroke-dasharray="circumference"
 					:stroke-dashoffset="dashOffset"
 					:transform="`rotate(-90 ${OUTER_SIZE / 2} ${OUTER_SIZE / 2})`"
+					:style="{ filter: `drop-shadow(0 0 8px ${indicatorColor})` }"
 				/>
 			</svg>
 			<!-- The user's head position -->
 			<div
 				class="cursor"
-				v-if="instruction.status.value === 'HOLDING'"
+				v-if="instruction.status.value !== 'SUCCESS'"
 				:style="cursorStyle"
 			></div>
 		</div>
@@ -141,8 +129,9 @@ const cursorStyle = computed(() => {
 
 	// Combine rotation drift (driftX/Y) and position drift (driftXPos/YPos)
 	// Apply the same weighting (1.5) as in the logic
+	// X is inverted as per user request
 	const x =
-		(props.instruction.driftX.value + (props.instruction.driftXPos.value || 0) * 1.5) *
+		-(props.instruction.driftX.value + (props.instruction.driftXPos.value || 0) * 1.5) *
 		pixelsPerUnit
 	const y =
 		(props.instruction.driftY.value + (props.instruction.driftYPos.value || 0) * 1.5) *
@@ -153,7 +142,8 @@ const cursorStyle = computed(() => {
 		height: `${discDiameter}px`,
 		transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
 		opacity: 0.8,
-		backgroundColor: indicatorColor.value
+		backgroundColor: indicatorColor.value,
+		filter: `drop-shadow(0 0 8px ${indicatorColor.value})`
 	}
 })
 </script>
@@ -173,7 +163,6 @@ const cursorStyle = computed(() => {
 
 .prompt-text {
 	font-size: clamp(1rem, 3vw, 2.5rem);
-	margin-bottom: 2rem;
 	z-index: 10; /* Ensure text is above other elements if needed */
 }
 
@@ -198,10 +187,11 @@ const cursorStyle = computed(() => {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	pointer-events: none;
+	overflow: visible;
 }
 
 .progress-ring-fill {
-	transition: stroke-dashoffset 0.1s linear, stroke 0.2s ease-out;
+	transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease-in-out;
 }
 
 .cursor {
@@ -209,6 +199,6 @@ const cursorStyle = computed(() => {
 	top: 50%;
 	left: 50%;
 	border-radius: 50%;
-	transition: transform 0.2s ease-out, background-color 0.2s ease-out;
+	transition: transform 0.5s ease-out, background-color 0.2s ease-out;
 }
 </style>

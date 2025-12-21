@@ -1,48 +1,32 @@
 <template>
-  <div class="relax-jaw-view" :style="{ color: instruction.resolvedTheme.textColor }">
-    <h1 class="prompt">{{ instruction.options.prompt }}</h1>
-
+	<div
+		class="relax-jaw-view"
+		:style="{ color: instruction.resolvedTheme.textColor }"
+	>
+		<h1 class="prompt">{{ instruction.options.prompt }}</h1>
 
 		<!-- Visualizer hidden for now per user request -->
 
-		<ProgressBar
+		<div
 			v-if="instruction.options.duration && instruction.options.duration > 0"
-			:progress="instruction.progress.value"
-			:track-color="instruction.resolvedTheme.secondaryTextColor + '33'"
-			:fill-color="instruction.resolvedTheme.accentColor"
-		/>
+			class="progress-container"
+		>
+			<ProgressBar
+				:progress="instruction.progress.value"
+				:track-color="instruction.resolvedTheme.positiveColor + '33'"
+				:fill-color="instruction.resolvedTheme.positiveColor"
+			/>
+		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
-import type { RelaxJawInstruction } from '../RelaxJawInstruction';
-import ProgressBar from '../../components/ProgressBar.vue';
+import type { RelaxJawInstruction } from '../RelaxJawInstruction'
+import ProgressBar from '../../components/ProgressBar.vue'
 
 const props = defineProps<{
-  instruction: RelaxJawInstruction;
-}>();
-
-
-/* Visualizer Logic - Commented out
-const MAX_PIXELS = 100; 
-const SENSITIVITY = 500; 
-
-const targetGapPx = computed(() => {
-    const thresh = props.instruction.options.threshold || 0.15;
-    return Math.min(MAX_PIXELS, thresh * SENSITIVITY);
-});
-
-const currentGapPx = computed(() => {
-    return Math.min(MAX_PIXELS * 1.5, Math.max(0, props.instruction.relativeOpenness.value * SENSITIVITY));
-});
-
-const jawColor = computed(() => {
-    if (props.instruction.isJawOpen.value) {
-        return props.instruction.resolvedTheme.positiveColor || '#00ff00';
-    }
-    return props.instruction.resolvedTheme.textColor;
-});
-*/
+	instruction: RelaxJawInstruction
+}>()
 </script>
 
 <style scoped>
@@ -59,22 +43,11 @@ const jawColor = computed(() => {
 .prompt {
 	font-size: 2.5rem;
 	font-weight: 300;
-	margin-bottom: 3rem;
 	text-align: center;
 	z-index: 10;
 }
 
-/* 
-.visualizer-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+.progress-container {
+	width: 300px;
 }
-
-.visualizer { ... }
-.target-zone { ... }
-.jaw { ... }
-*/
 </style>

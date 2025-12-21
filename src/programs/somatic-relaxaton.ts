@@ -3,10 +3,10 @@ import {
 	ReadInstruction,
 	StillnessInstruction,
 	NodInstruction,
-	BlinkInstruction,
+	NoBlinkInstruction,
 	DirectionalGazeInstruction,
 	RelaxJawInstruction,
-	TypeInstruction,
+	// TypeInstruction,
 	SpeechInstruction,
 	OpenEyesInstruction,
 	CloseEyesInstruction
@@ -49,7 +49,7 @@ export const somaticResetFull: Program = {
 			text: 'Notice the way your body feels against the chair.'
 		}),
 		new ReadInstruction({
-			text: 'Notice the weight of your hands in your lap.'
+			text: 'Notice the weight of your hands.'
 		}),
 		new ReadInstruction({
 			text: 'Do you want to release the stress you’ve been carrying?'
@@ -70,7 +70,7 @@ export const somaticResetFull: Program = {
 		new ReadInstruction({
 			text: 'Keep your eyes fixed on the center.'
 		}),
-		new BlinkInstruction({ prompt: "Don't Blink", duration: 30000 }),
+		new NoBlinkInstruction({ prompt: "Don't Blink", duration: 30000 }),
 		new ReadInstruction({
 			text: 'Your eyes are starting to feel dry.'
 		}),
@@ -93,10 +93,10 @@ export const somaticResetFull: Program = {
 		new ReadInstruction({
 			text: 'The tension is starting to fall away.'
 		}),
-		new TypeInstruction({
-			prompt: 'Type "i am present"',
-			targetPhrase: 'i am present'
-		}),
+		// new TypeInstruction({
+		// 	prompt: 'Type "i am present"',
+		// 	targetPhrase: 'i am present'
+		// }),
 
 		// --- Block 3: Establishing the "Stillness" (The Deepening) ---
 		new ReadInstruction({
@@ -172,42 +172,24 @@ export const somaticResetFull: Program = {
 			duration: 5000
 		}),
 		new StillnessInstruction({ prompt: 'Stillness', duration: 20000 }),
-		new ReadInstruction({
-			text: 'Look left.',
-			duration: 2000
+		new DirectionalGazeInstruction({
+			prompt: 'Turn your head gently left',
+			direction: 'LEFT'
 		}),
 		new DirectionalGazeInstruction({
-			prompt: 'Look Left',
-			direction: 'LEFT',
-			duration: 15000,
-			leftSrc: '/assets/target_red.png',
-			rightSrc: '/assets/ignore_blue.png'
-		}),
-		new ReadInstruction({
-			text: 'Look right.',
-			duration: 2000
-		}),
-		new DirectionalGazeInstruction({
-			prompt: 'Look Right',
-			direction: 'RIGHT',
-			duration: 15000,
-			leftSrc: '/assets/ignore_blue.png',
-			rightSrc: '/assets/target_red.png'
+			prompt: 'Now right.',
+			direction: 'RIGHT'
 		}),
 		new ReadInstruction({ text: 'Center.', duration: 2000 }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 40000 }),
+		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 20000 }),
 		new ReadInstruction({
-			text: 'As the jaw hangs, the shoulders drop.',
+			text: ['As the jaw hangs,', 'allow your shoulders to feel heavy.'],
 			duration: 4000
 		}),
-		new TypeInstruction({
-			prompt: 'Type "releasing the weight"',
-			targetPhrase: 'releasing the weight'
-		}),
-		new SpeechInstruction({
-			prompt: 'Say "My shoulders are heavy"',
-			targetValue: 'My shoulders are heavy',
-			duration: 5000
+		new NodInstruction({
+			prompt: 'Do your shoulders feel heavy? Nod.',
+			nodsRequired: 1,
+			type: 'YES'
 		}),
 
 		// --- Block 5: The Cognitive Bypass (Confusion/Engagement) ---
@@ -219,10 +201,10 @@ export const somaticResetFull: Program = {
 			text: 'Type them as quickly or as slowly as you feel.',
 			duration: 4000
 		}),
-		new TypeInstruction({
-			prompt: 'Type phrase',
-			targetPhrase: 'soft... quiet... heavy... drifting... floating'
-		}),
+		// new TypeInstruction({
+		// 	prompt: 'Type phrase',
+		// 	targetPhrase: 'soft... quiet... heavy... drifting... floating'
+		// }),
 		new ReadInstruction({
 			text: 'Is your mind becoming quiet?',
 			duration: 3000
@@ -237,7 +219,7 @@ export const somaticResetFull: Program = {
 			text: 'Good. Just the music. Just the words.',
 			duration: 4000
 		}),
-		new StillnessInstruction({ prompt: 'Deep Stillness', duration: 60000 }),
+		new StillnessInstruction({ prompt: 'Deep stillness', duration: 60000 }),
 		new CloseEyesInstruction({ text: 'Close your eyes.' }),
 		new OpenEyesInstruction({ text: 'Open your eyes.' }),
 		new CloseEyesInstruction({ text: 'And closed again.' }),
@@ -245,76 +227,35 @@ export const somaticResetFull: Program = {
 
 		// --- Block 6: The Total Dissolve (Full Body) ---
 		new ReadInstruction({
-			text: 'Feel the relaxation moving down your arms.',
-			duration: 4000
+			text: 'Feel the relaxation moving down your arms.'
 		}),
 		new ReadInstruction({
-			text: 'Into your elbows.',
-			duration: 3000
+			text: 'Into your elbows.'
 		}),
 		new ReadInstruction({
-			text: 'Into your wrists.',
-			duration: 3000
+			text: 'Into your wrists.'
 		}),
 		new ReadInstruction({
-			text: 'Into your fingertips.',
-			duration: 3000
+			text: 'Into your fingertips.'
 		}),
-		new ReadInstruction({
-			text: 'Are your hands heavy?',
-			duration: 3000
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 60000 }),
-		new ReadInstruction({
-			text: 'Your jaw is loose. Your neck is soft.',
-			duration: 4000
-		}),
-		new ReadInstruction({ text: 'Look left.', duration: 2000 }),
-		new DirectionalGazeInstruction({
-			prompt: 'Look Left',
-			direction: 'LEFT',
-			duration: 5000,
-			leftSrc: '/assets/target_red.png',
-			rightSrc: '/assets/ignore_blue.png'
-		}),
-		new ReadInstruction({ text: 'Look right.', duration: 2000 }),
-		new DirectionalGazeInstruction({
-			prompt: 'Look Right',
-			direction: 'RIGHT',
-			duration: 5000,
-			leftSrc: '/assets/ignore_blue.png',
-			rightSrc: '/assets/target_red.png'
-		}),
+		new NodInstruction({ prompt: 'Are your hands heavy?', nodsRequired: 1, type: 'YES' }),
+		new RelaxJawInstruction({ prompt: 'Jaw relaxing even more' }),
 		new ReadInstruction({
 			text: 'Close your eyes.'
 		}),
-		new StillnessInstruction({ prompt: 'Blind Stillness', duration: 30000 }),
-		new ReadInstruction({
-			text: 'Open your eyes.'
-		}),
-		new TypeInstruction({
-			prompt: 'Type "i am completely relaxed"',
-			targetPhrase: 'i am completely relaxed'
-		}),
+		new StillnessInstruction({ prompt: 'Blind stillness', duration: 30000 }),
+
+		new OpenEyesInstruction({ text: 'Open your eyes.' }),
 
 		// --- Block 7: Subconscious Anchoring ---
 		new ReadInstruction({
-			text: 'This feeling of peace belongs to you.'
+			text: ['Completely relaxed', 'This feeling is always available to you.']
 		}),
 		new ReadInstruction({
-			text: 'Can you take this feeling with you into your day?'
+			text: 'You will take this feeling with you today.'
 		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
 		new ReadInstruction({
 			text: 'Whenever you feel stress, you will remember this looseness.'
-		}),
-		new ReadInstruction({
-			text: 'Do you agree to let go of unnecessary tension?'
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new SpeechInstruction({
-			targetValue: 'I choose peace'
 		}),
 		new StillnessInstruction({ prompt: 'Absorb', duration: 40000 }),
 		new RelaxJawInstruction({ prompt: 'Final Release', duration: 20000 }),
@@ -336,9 +277,9 @@ export const somaticResetFull: Program = {
 		new ReadInstruction({
 			text: ['3', '2...', 'taking a deep, refreshing breath.']
 		}),
-		new ReadInstruction({ prompt: '1', text: '1... Wide awake.', duration: 3000 }),
+		new ReadInstruction({ prompt: '1', text: '1... Wide awake.' }),
 		new SpeechInstruction({
-			targetValue: 'I am awake and refreshed'
+			targetValue: 'Feeling awake and relaxed'
 		}),
 		new ReadInstruction({
 			text: 'Thank you for practicing.'

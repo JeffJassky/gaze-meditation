@@ -16,18 +16,16 @@
 				YOU BLINKED
 			</h1>
 
-			<h1 v-else-if="instruction.status.value === 'SUCCESS'">GOOD</h1>
+			<h1 v-else-if="instruction.status.value === 'SUCCESS'">Good</h1>
 
 			<h1 v-else>Open your eyes wide</h1>
 		</div>
 
-		<div class="progress-container">
-			<ProgressBar
-				:progress="instruction.progress.value"
-				:fillColor="instruction.resolvedTheme.textColor"
-				:trackColor="instruction.resolvedTheme.secondaryTextColor + '33'"
-			/>
-		</div>
+		<ProgressBar
+			:progress="instruction.progress.value"
+			:fillColor="instruction.resolvedTheme.positiveColor"
+			:trackColor="instruction.resolvedTheme.secondaryTextColor + '00'"
+		/>
 
 		<div
 			class="debug-stats"
@@ -39,12 +37,12 @@
 </template>
 
 <script setup lang="ts">
-import type { BlinkInstruction } from '../BlinkInstruction'
+import type { NoBlinkInstruction } from '../NoBlinkInstruction'
 import EyeGraphic from '../../components/EyeGraphic.vue' // Correct path
 import ProgressBar from '../../components/ProgressBar.vue'
 
 const props = defineProps<{
-	instruction: BlinkInstruction
+	instruction: NoBlinkInstruction
 }>()
 </script>
 
@@ -55,6 +53,7 @@ const props = defineProps<{
 	align-items: center;
 	justify-content: center;
 	height: 100%;
+	position: relative;
 	/* color: white; is now set via inline style */
 }
 
@@ -64,11 +63,8 @@ const props = defineProps<{
 
 .message h1 {
 	font-size: 3rem;
+	margin: 0;
 	/* color: #ff3333; is now set via inline style for FAILED state */
-}
-
-.progress-container {
-	margin-top: 40px;
 }
 
 .debug-stats {

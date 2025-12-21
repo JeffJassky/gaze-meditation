@@ -6,6 +6,7 @@ import { faceMeshService } from '../services/faceMeshService'
 interface RelaxJawOptions extends InstructionOptions {
 	duration?: number // ms to hold open. If 0 or undefined, instant completion on open.
 	threshold?: number // Delta from baseline to consider "open". Default 0.2?
+	resetProgressOnFail?: boolean // If false (default), tracking is cumulative.
 }
 
 export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
@@ -20,6 +21,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 	private baselineOpenness = 0
 	private isInitialized = false
 	private holdStartTime = 0
+	private accumulatedTime = 0 // Track time across multiple "opens" if not resetting
 	private animationFrameId: number | null = null
 
 	// Constants
@@ -30,6 +32,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 	constructor(options: RelaxJawOptions) {
 		super({
 			duration: 0,
+			resetProgressOnFail: false,
 			...options,
 			capabilities: { faceMesh: true, ...options.capabilities }
 		})
@@ -40,6 +43,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		this.resolvedTheme = context.resolvedTheme
 		this.status.value = 'WAITING'
 		this.progress.value = 0
+		this.accumulatedTime = 0
 		this.isInitialized = false
 		this.baselineOpenness = 0
 
@@ -79,12 +83,6 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		this.isJawOpen.value = isOpen
 
 		// 3. Baseline Adaptation
-		// We only adapt if:
-		// a) The user is NOT currently triggering the "Open" state (prevent erasing progress)
-		// b) The deviation is within a small "resting jitter" range (prevent chasing large movements)
-
-		// Note: We check Math.abs(diff) to prevent adapting to large "pursed lips" (negative diff)
-		// which would artificially lower baseline and cause false positives upon relaxing.
 		const isStable = Math.abs(diff) < this.ADAPTATION_THRESHOLD
 
 		if (!isOpen && isStable) {
@@ -111,10 +109,11 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 				}
 			} else if (this.status.value === 'HOLDING') {
 				// Check timer
-				const elapsed = Date.now() - this.holdStartTime
-				this.progress.value = Math.min(100, (elapsed / duration) * 100)
+				const sessionElapsed = Date.now() - this.holdStartTime
+				const totalElapsed = this.accumulatedTime + sessionElapsed
+				this.progress.value = Math.min(100, (totalElapsed / duration) * 100)
 
-				if (elapsed >= duration) {
+				if (totalElapsed >= duration) {
 					this.complete()
 					return
 				}
@@ -122,9 +121,16 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		} else {
 			// Not Open
 			if (this.status.value === 'HOLDING') {
-				// User closed mouth early -> Reset
+				// User closed mouth -> Store progress
+				const sessionElapsed = Date.now() - this.holdStartTime
+				this.accumulatedTime += sessionElapsed
+				
 				this.status.value = 'WAITING'
-				this.progress.value = 0
+				
+				if (this.options.resetProgressOnFail) {
+					this.accumulatedTime = 0
+					this.progress.value = 0
+				}
 			}
 		}
 

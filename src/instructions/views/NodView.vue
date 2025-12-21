@@ -1,7 +1,20 @@
 <template>
-  <div class="nod-view" :style="{ color: instruction.resolvedTheme.textColor }">
-    <div class="counter" v-if="instruction.options.showDots">
+	<div
+		class="nod-view"
+		:style="{ color: instruction.resolvedTheme.textColor }"
+	>
+		<div
+			class="prompt-text leading-relaxed mb-8"
+			v-if="instruction.options.prompt"
+			:style="{ color: instruction.resolvedTheme.textColor }"
+		>
+			{{ instruction.options.prompt }}
+		</div>
 
+		<div
+			class="counter"
+			v-if="instruction.options.showDots"
+		>
 			<span
 				v-for="n in instruction.options.nodsRequired"
 				:key="n"
@@ -10,15 +23,20 @@
 			></span>
 		</div>
 
-		    <div class="guide">
+		<div class="guide">
+			<p
+				class="action-text mb-12"
+				:style="{ color: instruction.resolvedTheme.secondaryTextColor }"
+			>
+				{{
+					instruction.options.type === 'NO'
+						? 'Shake your head "no".'
+						: 'Nod your head "yes".'
+				}}
+			</p>
 
-		      <h1>{{ instruction.options.type === 'NO' ? 'SHAKE "NO"' : 'NOD "YES"' }}</h1>
+			<!-- Vertical Layout (YES) -->
 
-		      
-
-		      <!-- Vertical Layout (YES) -->
-
-		
 			<div
 				class="toggle-track vertical"
 				v-if="instruction.options.type !== 'NO' && instruction.options.showSwitch"
@@ -71,11 +89,10 @@ import type { NodInstruction } from '../NodInstruction'
 import { computed } from 'vue'
 
 const props = defineProps<{
-  instruction: NodInstruction;
-}>();
+	instruction: NodInstruction
+}>()
 
-const accentColor = computed(() => props.instruction.resolvedTheme.accentColor);
-
+const accentColor = computed(() => props.instruction.resolvedTheme.accentColor)
 
 // Clamping / Smoothing Logic
 const CLAMP_PX = 110 // Max pixels from center (track is ~300px total, so +/- 150px minus padding)
@@ -98,22 +115,21 @@ const horizontalOffset = computed(() => {
 	align-items: center;
 	justify-content: center;
 	height: 100%;
+	text-align: center;
+	padding: 2rem;
+}
+
+.prompt-text {
+	font-size: clamp(1.5rem, 4vw, 3rem);
+	font-weight: 300;
+}
+
+.action-text {
+	font-size: 1.2rem;
+	opacity: 0.8;
 }
 
 .counter {
-	/* Hidden now that we have progress bar? Or keep both? 
-     The user said "progress bar... instead of discrete milestones"? 
-     User said "progress bar shows it". 
-     The counter was discrete. I'll hide the counter if that was implied, 
-     but the prompt didn't explicitly say "remove counter". 
-     However, "progress bar... instead of discrete milestones" is common interpretation. 
-     I'll leave counter for now or hide it via CSS if needed. 
-     Wait, looking at template, I am keeping it in the template above but the new string replacement targets "guide v-else".
-     Ah, I need to check if I am replacing the counter section.
-     The replace block is inside "guide v-else".
-     The counter is outside "guide v-else".
-     So counter remains. I'll assume they can coexist unless told otherwise.
-  */
 	display: flex;
 	gap: 20px;
 	margin-bottom: 50px;
@@ -138,15 +154,6 @@ const horizontalOffset = computed(() => {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-}
-
-.guide h1 {
-	font-size: 3rem;
-	margin-bottom: 40px;
-}
-
-.guide p {
-	letter-spacing: 2px;
 }
 
 .blink {
@@ -198,11 +205,11 @@ const horizontalOffset = computed(() => {
 /* Progress Bar */
 .progress-container {
 	width: 450px;
-	height: 1.5em;
+	max-width: 90vw;
+	height: 8px;
 	border: none;
 	border-radius: 999px;
 	overflow: hidden;
-	margin-top: 0; /* Handled by flex gap/margins */
 }
 
 .progress-fill {

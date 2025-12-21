@@ -1,5 +1,9 @@
 import { createApp } from 'vue'
+import FloatingVue from 'floating-vue'
+import 'floating-vue/dist/style.css'
 import './style.css'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+const app = createApp(App)
+app.use(FloatingVue)
+app.mount('#app')

@@ -74,7 +74,7 @@ const targetWords = computed(() => {
 		</div>
 
 		<!-- Instructions -->
-		<div class="z-10 animate-in fade-in zoom-in duration-300 text-center px-8">
+		<div class="z-10 animate-in fade-in zoom-in duration-300 text-center px-8 relative">
 			<p
 				class="text-2xl font-medium mb-4"
 				:style="{ color: instruction.resolvedTheme.textColor }"
@@ -82,23 +82,32 @@ const targetWords = computed(() => {
 				{{ instruction.options.prompt }}
 			</p>
 
-			<div class="text-6xl font-bold tracking-tight drop-shadow-2xl">
+			<div class="text-6xl font-bold tracking-tight drop-shadow-2xl relative inline-block">
 				<span
 					v-for="(word, index) in targetWords"
 					:key="index"
-					class="transition-colors duration-150 mx-2 inline-block"
+					class="mx-2 inline-block"
 					:style="{
-						transition:
-							'color 0.2s ease-in-out, opacity 0.2s ease-in-out, text-decoration 0.2s ease-in-out',
+						transition: 'color 500ms ease-in-out, opacity 500ms ease-in-out',
 						color: word.isSpoken
 							? instruction.resolvedTheme.accentColor
 							: instruction.resolvedTheme.textColor,
-						opacity: word.isSpoken ? 1 : 0.8,
-						textDecoration: word.isSpoken ? 'underline' : 'none'
+						opacity: word.isSpoken ? 1 : 0.3,
 					}"
 				>
 					{{ word.text }}
 				</span>
+        
+        <!-- Completion Underline -->
+        <div 
+          class="absolute bottom-0 left-0 h-1 bg-current rounded-full w-full"
+          :style="{
+            opacity: targetWords.every(w => w.isSpoken) ? 1 : 0,
+            backgroundColor: instruction.resolvedTheme.accentColor || '#fff',
+            transform: 'translateY(10px)',
+            transition: 'opacity 1.4s ease-out'
+          }"
+        ></div>
 			</div>
 		</div>
 	</div>

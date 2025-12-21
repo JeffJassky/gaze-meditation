@@ -8,7 +8,7 @@ import { CalibrationInstruction } from '../instructions/CalibrationInstruction'
 import { DirectionalGazeInstruction } from '../instructions/DirectionalGazeInstruction'
 import { StillnessInstruction } from '../instructions/StillnessInstruction'
 import { FormInstruction } from '../instructions/FormInstruction'
-import { BlinkInstruction } from '../instructions/BlinkInstruction'
+import { NoBlinkInstruction } from '../instructions/NoBlinkInstruction'
 import { TypeInstruction } from '../instructions/TypeInstruction'
 import { NodInstruction } from '../instructions/NodInstruction'
 import { FractionationInstruction } from '../instructions/FractionationInstruction'
@@ -17,25 +17,42 @@ import { CloseEyesInstruction } from '../instructions/CloseEyesInstruction'
 import { OpenEyesInstruction } from '../instructions/OpenEyesInstruction'
 import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
 import { TongueOutInstruction } from '../instructions/TongueOutInstruction'
+import { BreatheInstruction } from '../instructions/BreatheInstruction'
 import { audioSession } from '../services/audio'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import Home from './Home.vue'
+import theBlueDoor from '../programs/the-blue-door'
+import councilOfFireLong from '../programs/council-of-fire'
 
 // Full Programs
-const FULL_PROGRAMS: Program[] = [somaticResetFull]
+const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
 
 // Test Programs
 const TEST_PROGRAMS: Program[] = [
+	// {
+	// 	id: 'test_tongue_out',
+	// 	title: 'Tongue Out',
+	// 	description: 'Experimental blendshape detection.',
+	// 	audio: { musicTrack: '/audio/music.mp3' },
+	// 	spiralBackground: '/img/spiral.png',
+	// 	instructions: [
+	// 		new TongueOutInstruction({
+	// 			prompt: 'Stick your tongue out!',
+	// 			duration: 20000
+	// 		})
+	// 	]
+	// },
 	{
-		id: 'test_tongue_out',
-		title: 'Tongue Out',
-		description: 'Experimental blendshape detection.',
+		id: 'test_breathe_instruction',
+		title: 'Breathe',
+		description: 'Adaptive breath tracking using head pitch.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
 		instructions: [
-			new TongueOutInstruction({
-				prompt: 'Stick your tongue out!',
-				duration: 20000
+			new BreatheInstruction({
+				prompt: 'Just breathe naturally.',
+				duration: 60000,
+				skipIntro: true
 			})
 		]
 	},
@@ -48,7 +65,8 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new CloseEyesInstruction({
 				prompt: 'Close Your Eyes',
-				text: 'Please close your eyes now. The instruction will complete when you do.'
+				text: 'Please close your eyes now. The instruction will complete when you do.',
+				skipIntro: true
 			})
 		]
 	},
@@ -62,19 +80,21 @@ const TEST_PROGRAMS: Program[] = [
 			new OpenEyesInstruction({
 				prompt: 'Open Your Eyes',
 				text: 'Please open your eyes now. I will chime until you do.',
-				repeatAfter: 3 // faster for testing
+				repeatAfter: 3, // faster for testing
+				skipIntro: true
 			})
 		]
 	},
 	{
 		id: 'test_manual_fractionation',
-		title: 'Manual Fractionation',
+		title: 'Fractionation',
 		description: 'Sequence: Close -> Open -> Close -> Open',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
-				text: "Now in a moment, I'll ask you to close your eyes."
+				text: "Now in a moment, I'll ask you to close your eyes.",
+				skipIntro: true
 			}),
 			new ReadInstruction({
 				text: "Each time you hear the bell, you'll open your eyes."
@@ -105,7 +125,8 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new RelaxJawInstruction({
 				prompt: 'Open your mouth and relax your jaw',
-				duration: 1000
+				duration: 1000,
+				skipIntro: true
 			})
 		]
 	},
@@ -116,20 +137,21 @@ const TEST_PROGRAMS: Program[] = [
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
 		instructions: [
-			new BlinkInstruction({
+			new NoBlinkInstruction({
 				prompt: 'Blink three times',
-				duration: 5000
+				duration: 5000,
+				skipIntro: true
 			})
 		]
 	},
-	{
-		id: 'test_calibration_instruction',
-		title: 'Calibration',
-		description: ' CalibrationInstruction.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		instructions: [new CalibrationInstruction({ prompt: 'Calibrate your eyes' })]
-	},
+	// {
+	// 	id: 'test_calibration_instruction',
+	// 	title: 'Calibration',
+	// 	description: ' CalibrationInstruction.',
+	// 	audio: { musicTrack: '/audio/music.mp3' },
+	// 	spiralBackground: '/img/spiral.png',
+	// 	instructions: [new CalibrationInstruction({ prompt: 'Calibrate your eyes' })]
+	// },
 	{
 		id: 'test_directional_gaze_instruction',
 		title: 'Direct Your Gaze',
@@ -139,7 +161,8 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new DirectionalGazeInstruction({
 				prompt: 'Gently turn your head to the left.',
-				direction: 'LEFT'
+				direction: 'LEFT',
+				skipIntro: true
 			}),
 			new DirectionalGazeInstruction({
 				prompt: 'Gently turn your head to the right.',
@@ -167,23 +190,24 @@ const TEST_PROGRAMS: Program[] = [
 				prompt: 'Please enter your name',
 				question: 'What is your name?',
 				fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
-				autoContinue: true
+				autoContinue: true,
+				skipIntro: true
 			})
 		]
 	},
-	{
-		id: 'test_fractionation_instruction',
-		title: 'Fractionation',
-		description: 'Open and close your eyes. Go deeper each time.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new FractionationInstruction({
-				prompt: 'Close your eyes.',
-				cycles: 1
-			})
-		]
-	},
+	// {
+	// 	id: 'test_fractionation_instruction',
+	// 	title: 'Fractionation',
+	// 	description: 'Open and close your eyes. Go deeper each time.',
+	// 	audio: { musicTrack: '/audio/music.mp3' },
+	// 	spiralBackground: '/img/spiral.png',
+	// 	instructions: [
+	// 		new FractionationInstruction({
+	// 			prompt: 'Close your eyes.',
+	// 			cycles: 1
+	// 		})
+	// 	]
+	// },
 	{
 		id: 'test_nod_instruction',
 		title: 'Nod & Shake your Head',
@@ -194,7 +218,8 @@ const TEST_PROGRAMS: Program[] = [
 			new NodInstruction({
 				prompt: 'Nod your head twice',
 				type: 'YES',
-				showProgress: true
+				showProgress: true,
+				skipIntro: true
 			}),
 			new NodInstruction({
 				prompt: 'Shake your head twice',
@@ -216,7 +241,8 @@ const TEST_PROGRAMS: Program[] = [
 				duration: 3000,
 				delay: 3000,
 				fadeInDuration: 1000,
-				fadeOutDuration: 1000
+				fadeOutDuration: 1000,
+				skipIntro: true
 			}),
 			new ReadInstruction({
 				prompt: 'This shows up instantly',
@@ -228,15 +254,16 @@ const TEST_PROGRAMS: Program[] = [
 	},
 	{
 		id: 'test_speech_instruction',
-		title: 'Compelled Speech',
-		description: "Speak the words you're told to.",
+		title: 'Verbal Affirmation',
+		description: 'Speak what you see.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new SpeechInstruction({
-				prompt: 'Speak these words',
-				targetValue: 'this is a speech test',
-				duration: 3000
+				prompt: 'Read this aloud',
+				targetValue: 'I am reading this.',
+				duration: 3000,
+				skipIntro: true
 			})
 		]
 	},
@@ -248,7 +275,8 @@ const TEST_PROGRAMS: Program[] = [
 		spiralBackground: '/img/spiral.png',
 		instructions: [
 			new ReadInstruction({
-				text: ['Prepare to be still.', 'Be still.']
+				text: ['Prepare to be still.', 'Be still.'],
+				skipIntro: true
 			}),
 			new StillnessInstruction({
 				prompt: 'keep the blue dot centered in the ring.',
@@ -262,7 +290,9 @@ const TEST_PROGRAMS: Program[] = [
 		description: 'Type the words you see them.',
 		audio: { musicTrack: 'silence.mp4' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [new TypeInstruction({ prompt: 'Type "test"', targetPhrase: 'test' })]
+		instructions: [
+			new TypeInstruction({ prompt: 'Type "test"', targetPhrase: 'test', skipIntro: true })
+		]
 	},
 	{
 		id: 'test_binaural_audio',
@@ -276,7 +306,8 @@ const TEST_PROGRAMS: Program[] = [
 			new ReadInstruction({
 				prompt: 'Audio Test (6Hz)',
 				text: '6hz binural beats are playing at 50% volume',
-				duration: 5000
+				duration: 5000,
+				skipIntro: true
 			}),
 			new ReadInstruction({
 				prompt: 'Audio Test (3Hz)',
@@ -305,6 +336,7 @@ const selectedUser = ref<string>('')
 const activeTab = ref<'home' | 'start' | 'history' | 'users'>('home')
 const newUserName = ref('')
 const isSidebarOpen = ref(false)
+const isTransitioning = ref(false)
 
 const refreshData = () => {
 	users.value = getUsers()
@@ -332,6 +364,9 @@ const handleCreateUser = () => {
 const handleStartSession = async (program: Program) => {
 	if (!selectedUser.value) return
 
+	// Start transition
+	isTransitioning.value = true
+
 	// Initialize audio on user gesture to unlock AudioContext (especially for Safari/Chrome autoplay policies)
 	try {
 		await audioSession.setup()
@@ -339,7 +374,12 @@ const handleStartSession = async (program: Program) => {
 		console.warn('Failed to pre-initialize audio context', e)
 	}
 
-	emit('startSession', program, selectedUser.value)
+	// Wait for fade to complete (1s) before switching view
+	setTimeout(() => {
+		emit('startSession', program, selectedUser.value)
+		// We don't reset isTransitioning here because the component will likely be unmounted/replaced.
+		// If the parent keeps it alive, we might need to reset it, but for now assuming unmount/view switch.
+	}, 1000)
 }
 
 const getSubjectName = (subjectId: string) => {
@@ -420,9 +460,7 @@ onMounted(() => {
 		>
 			<div class="hidden md:block">
 				<h1 class="text-2xl font-bold tracking-tighter text-white mb-1">GAZE</h1>
-				<p class="text-xs text-zinc-500 uppercase tracking-widest">
-					Interactive Meditation
-				</p>
+				<p class="text-xs text-zinc-500 uppercase tracking-widest">Interactive Hypnosis</p>
 			</div>
 
 			<!-- Subject Selection -->
@@ -524,13 +562,13 @@ onMounted(() => {
 				class="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
 				<header>
-					<h2 class="text-3xl font-light text-white mb-2">Select a Program</h2>
-					<p class="text-zinc-500">Select a conditioning protocol to begin.</p>
+					<h2 class="text-3xl font-light text-white mb-2">Select a Session</h2>
+					<p class="text-zinc-500">Explore these curated Hypnosis sessions.</p>
 				</header>
 
 				<div class="space-y-4">
 					<label class="text-xs uppercase font-bold text-zinc-500 tracking-wider"
-						>Full Protocols</label
+						>Full Sessions</label
 					>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						<div
@@ -554,10 +592,6 @@ onMounted(() => {
 										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
 										>{{ prog.instructions.length }} steps</span
 									>
-									<span
-										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>Audio: {{ prog.audio?.musicTrack }}</span
-									>
 								</div>
 								<div class="mt-auto pt-4">
 									<button
@@ -573,10 +607,15 @@ onMounted(() => {
 					</div>
 					<br />
 					<br />
+					<br />
+					<br />
 					<label class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider"
-						>Test Protocols</label
+						>Test Sessions</label
 					>
-					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div
+						class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+						style="opacity: 0.5"
+					>
 						<div
 							v-for="prog in TEST_PROGRAMS"
 							:key="prog.id"
@@ -719,6 +758,12 @@ onMounted(() => {
 				</div>
 			</div>
 		</main>
+
+		<!-- Transition Overlay -->
+		<div
+			class="fixed inset-0 bg-black z-[100] pointer-events-none transition-opacity duration-1000 ease-in-out"
+			:class="isTransitioning ? 'opacity-100' : 'opacity-0'"
+		></div>
 	</div>
 </template>
 
