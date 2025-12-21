@@ -15,7 +15,7 @@
 				Interactive Hypnosis
 			</span>
 			<p class="text-2xl font-light text-zinc-400 leading-relaxed max-w-2xl mt-4">
-				A hypnoticx app that uses
+				A hypnosis app that uses
 				<span class="text-cyan-400">biofeedback</span> to guide you deeper.
 			</p>
 		</header>

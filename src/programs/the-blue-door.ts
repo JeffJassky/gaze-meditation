@@ -143,15 +143,11 @@ export const theBlueDoor: Program = {
 			text: 'Reds. Golds. Violets.'
 		}),
 		new ReadInstruction({
-			text: 'The smell of jasmine and warm fill the air.'
-		}),
-		new ReadInstruction({
 			text: 'Too beautiful for words.',
 			duration: 3000
 		}),
-		new RelaxJawInstruction({
-			prompt: 'Let your mouth open in awe.',
-			duration: 15000
+		new ReadInstruction({
+			text: 'The smell of jasmine fills the warm air.'
 		}),
 		new ReadInstruction({
 			text: 'Feel the sun on your face.',
@@ -163,12 +159,6 @@ export const theBlueDoor: Program = {
 		new ReadInstruction({
 			text: 'The colors are vibrating.'
 		}),
-		new NodInstruction({
-			prompt: 'Is it beautiful?',
-			nodsRequired: 1,
-			type: 'YES'
-		}),
-
 		// --- Block 5: The Deep Appreciation (Immersion) ---
 		new ReadInstruction({
 			text: ['Soak it in.', 'Just watch the flowers.', 'Only color. Only light.']
@@ -197,15 +187,15 @@ export const theBlueDoor: Program = {
 		new ReadInstruction({
 			text: [
 				'It is time to step back through the door.',
-				'1... ',
+				'1',
 				'Bringing the sunlight with you.',
-				'2... ',
+				'2',
 				'The scent of flowers still in your nose.',
-				'3... ',
+				'3',
 				'Taking a deep, life-affirming breath.',
-				'4... ',
+				'4',
 				'Eyes ready to clear.',
-				'5... ',
+				'5',
 				'Wide awake.'
 			]
 		}),

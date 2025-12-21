@@ -24,8 +24,104 @@ import Home from './Home.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 
+const initialTrainingProgram: Program = {
+	id: 'initial_training',
+	title: 'Gaze Training',
+	description: 'Get started with Gaze in less than 5 minutes.',
+	audio: { musicTrack: '/audio/music.mp3' },
+	spiralBackground: '/img/spiral.png',
+	instructions: [
+		// 1. Eyes (Close/Open)
+		new ReadInstruction({
+			text: [
+				'Welcome to Gaze training.',
+				"First, let's practice closing your eyes.",
+				'When the instruction appears, close your eyes.',
+				'When you hear the chimes, open your eyes.'
+			],
+			cooldown: 0
+		}),
+		new CloseEyesInstruction({
+			text: 'Close your eyes.',
+			duration: 3000 // Short hold
+		}),
+		new ReadInstruction({
+			text: ['Good.', 'Now, you will hear a chime when it is time to open them.'],
+			cooldown: 0
+		}),
+		new OpenEyesInstruction({
+			text: 'Open your eyes.'
+		}),
+
+		// 2. Jaw Relaxation
+		new RelaxJawInstruction({
+			prompt: 'Relax your jaw completely so your mouth opens slightly.',
+			duration: 3000
+		}),
+
+		// 3. Stillness
+		new ReadInstruction({
+			text: ['Excellent.', 'Now, find a comfortable position and stay completely still.']
+		}),
+		new StillnessInstruction({
+			prompt: 'Keep the blue dot centered in the ring.',
+			duration: 5000
+		}),
+
+		// 4. No Blink
+		new ReadInstruction({
+			text: ['Sometimes, you will be asked to keep your eyes open.']
+		}),
+		new NoBlinkInstruction({
+			prompt: 'Do not blink.',
+			duration: 8000
+		}),
+
+		// 5. Gaze Direction
+		new ReadInstruction({
+			text: [
+				"Sometimes, you'll be asked questons.",
+				'You can answer by nodding ~ or shaking your head.'
+			]
+		}),
+		new NodInstruction({
+			prompt: 'Do you understand?',
+			type: 'YES'
+		}),
+		new ReadInstruction({
+			text: ['You may also be asked ~ to adjust your head and gaze.']
+		}),
+		new DirectionalGazeInstruction({
+			prompt: 'For example,  ~ drop your gaze and head gently now.',
+			direction: 'DOWN'
+		}),
+
+		// 7. Verbal
+		new ReadInstruction({
+			text: [
+				'Finally, your voice can guide the session.',
+				"We'll show you a phrase to speak aloud."
+			]
+		}),
+		new SpeechInstruction({
+			prompt: 'Say "I am ready"',
+			targetValue: 'I am ready',
+			duration: 5000
+		}),
+
+		new ReadInstruction({
+			text: ['Perfect.', 'You are ready to begin.']
+		})
+	]
+}
+
 // Full Programs
-const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+const FULL_PROGRAMS: Program[] = [
+	initialTrainingProgram,
+	somaticResetFull,
+	theBlueDoor,
+	councilOfFireLong
+]
 
 // Test Programs
 const TEST_PROGRAMS: Program[] = [

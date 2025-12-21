@@ -307,11 +307,9 @@ const initSession = async () => {
 	if (!shouldSkipIntro) {
 		if (needsFaceMesh && needsSpeech) {
 			reminderText.push('Find yourself in a quiet, well-lit space ~ for optimal biofeedback.')
-		}
-		if (needsSpeech) {
+		} else if (needsSpeech) {
 			reminderText.push('Find yourself in a quiet space ~ for optimal biofeedback.')
-		}
-		if (needsFaceMesh) {
+		} else if (needsFaceMesh) {
 			reminderText.push('Find yourself in a well-lit space ~ for optimal biofeedback.')
 		}
 
@@ -552,7 +550,8 @@ onMounted(() => {
 
 <template>
 	<div
-		class="relative w-full h-full bg-black overflow-hidden"
+		class="relative w-full h-full bg-black overflow-hidden transition-all duration-300"
+		:class="controlsVisible ? 'cursor-default' : 'cursor-none'"
 		@mousemove="showControls"
 		@click="handleScreenClick"
 	>
