@@ -23,8 +23,10 @@
 
 		<ProgressBar
 			:progress="instruction.progress.value"
+			:size="240"
+			:stroke-width="12"
 			:fillColor="instruction.resolvedTheme.positiveColor"
-			:trackColor="instruction.resolvedTheme.secondaryTextColor + '00'"
+			trackColor="transparent"
 		/>
 
 		<div

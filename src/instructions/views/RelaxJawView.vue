@@ -19,6 +19,8 @@
 		>
 			<ProgressBar
 				:progress="instruction.progress.value"
+				:size="240"
+				:stroke-width="12"
 				:track-color="instruction.resolvedTheme.positiveColor + '33'"
 				:fill-color="instruction.resolvedTheme.positiveColor"
 			/>
@@ -51,9 +53,19 @@ const props = defineProps<{
 	font-weight: 300;
 	text-align: center;
 	z-index: 10;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 100%;
 }
 
 .progress-container {
-	width: 300px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	/* Ensure container doesn't block text selection if needed, though prompt is above */
+	z-index: 0;
 }
 </style>

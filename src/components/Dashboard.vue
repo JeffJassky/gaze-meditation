@@ -36,8 +36,8 @@ const initialTrainingProgram: Program = {
 			text: [
 				'Welcome to Gaze training.',
 				"First, let's practice closing your eyes.",
-				'When the instruction appears, close your eyes.',
-				'When you hear the chimes, open your eyes.'
+				'You will hear a chime ~ when it is time to open them.',
+				'When the instruction appears, close your eyes.'
 			],
 			cooldown: 0
 		}),
@@ -46,13 +46,13 @@ const initialTrainingProgram: Program = {
 			text: 'Close your eyes.',
 			duration: 3000 // Short hold,
 		}),
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['Good.', 'Now, you will hear a chime when it is time to open them.']
-		}),
 		new OpenEyesInstruction({
 			cooldown: 0,
 			text: 'Open your eyes.'
+		}),
+		new ReadInstruction({
+			cooldown: 0,
+			text: ['Perfect.']
 		}),
 
 		// 2. Jaw Relaxation
@@ -429,6 +429,7 @@ const TEST_PROGRAMS: Program[] = [
 
 interface DashboardProps {
 	// onStartSession: (program: Program, subjectId: string) => void; // Will be an emit
+	initialTab?: 'home' | 'start' | 'history' | 'users'
 }
 
 const props = defineProps<DashboardProps>()
@@ -439,7 +440,7 @@ const emit = defineEmits<{
 const users = ref<User[]>([])
 const sessions = ref<SessionLog[]>([])
 const selectedUser = ref<string>('')
-const activeTab = ref<'home' | 'start' | 'history' | 'users'>('home')
+const activeTab = ref<'home' | 'start' | 'history' | 'users'>(props.initialTab || 'home')
 const newUserName = ref('')
 const isSidebarOpen = ref(false)
 const isTransitioning = ref(false)

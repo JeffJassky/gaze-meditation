@@ -20,6 +20,7 @@ interface ActiveSession {
 
 const view = ref<View>('dashboard')
 const activeSession = ref<ActiveSession | null>(null)
+const dashboardTab = ref<'home' | 'start' | 'history' | 'users'>('home')
 
 const startSession = (program: Program, subjectId: string) => {
 	activeSession.value = { program: markRaw(program), subjectId }
@@ -28,6 +29,7 @@ const startSession = (program: Program, subjectId: string) => {
 
 const endSession = () => {
 	activeSession.value = null
+	dashboardTab.value = 'start'
 	view.value = 'dashboard'
 }
 </script>
@@ -36,6 +38,7 @@ const endSession = () => {
 	<div class="w-full h-screen bg-black text-white overflow-hidden">
 		<Dashboard
 			v-if="view === 'dashboard'"
+			:initialTab="dashboardTab"
 			@startSession="startSession"
 		/>
 
