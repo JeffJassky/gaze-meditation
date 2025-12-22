@@ -6,6 +6,7 @@ import type { ThemeConfig } from '../types'
 
 interface BlinkOptions extends InstructionOptions {
 	duration: number
+	resetProgressOnFail?: boolean
 }
 
 export class NoBlinkInstruction extends Instruction<BlinkOptions> {
@@ -19,11 +20,13 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 
 	protected context: InstructionContext | null = null
 	private animationFrameId: number | null = null
-	private endTime = 0
 	private duration = 0
+	private accumulatedTime = 0
+	private currentOpenStart = 0
 
 	constructor(options: BlinkOptions) {
 		super({
+			resetProgressOnFail: false,
 			...options,
 			capabilities: { faceMesh: true, ...options.capabilities }
 		})
@@ -33,11 +36,12 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 		this.context = context
 		this.resolvedTheme = context.resolvedTheme // Store the resolved theme
 		this.status.value = 'RUNNING'
+		this.accumulatedTime = 0
+		this.currentOpenStart = 0
 
 		await faceMeshService.init()
 
 		this.duration = this.options.duration || 10000
-		this.endTime = Date.now() + this.duration
 		this.loop()
 	}
 
@@ -49,17 +53,38 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 		if (this.status.value !== 'RUNNING') return
 
 		const now = Date.now()
-		this.timeLeft.value = Math.max(0, this.endTime - now)
-		this.progress.value = ((this.duration - this.timeLeft.value) / this.duration) * 100
 
 		this.isBlinking.value = faceMeshService.debugData.blinkDetected
 		this.ear.value = faceMeshService.debugData.eyeOpenness
 		this.eyeOpennessNormalized.value = faceMeshService.debugData.eyeOpennessNormalized
 
 		if (this.isBlinking.value) {
-			this.fail()
-			return
+			if (this.options.resetProgressOnFail) {
+				this.fail()
+				return
+			} else {
+				// Paused: add to accumulated if we were open
+				if (this.currentOpenStart > 0) {
+					this.accumulatedTime += now - this.currentOpenStart
+					this.currentOpenStart = 0
+				}
+			}
+		} else {
+			// Not blinking: start segment if needed
+			if (this.currentOpenStart === 0) {
+				this.currentOpenStart = now
+			}
 		}
+
+		// Calculate total progress
+		let currentSegment = 0
+		if (this.currentOpenStart > 0) {
+			currentSegment = now - this.currentOpenStart
+		}
+
+		const totalTime = this.accumulatedTime + currentSegment
+		this.timeLeft.value = Math.max(0, this.duration - totalTime)
+		this.progress.value = Math.min(100, (totalTime / this.duration) * 100)
 
 		if (this.timeLeft.value <= 0) {
 			this.succeed()

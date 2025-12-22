@@ -150,7 +150,7 @@ watch(
 			currentResolvedTheme.value = newProgram?.theme || DEFAULT_THEME
 		}
 	},
-	{ immediate: true, deep: true }
+	{ immediate: true }
 ) // Immediate ensures theme is set on initial load
 
 // Provide the current resolved theme as a ref

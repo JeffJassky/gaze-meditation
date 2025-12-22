@@ -25,7 +25,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 	private animationFrameId: number | null = null
 
 	// Constants
-	private readonly DEFAULT_THRESHOLD = 0.04 // MAR increase to count as open
+	private readonly DEFAULT_THRESHOLD = 0.035 // MAR increase to count as open
 	private readonly ADAPTATION_RATE = 0.05 // Rate at which baseline adapts to resting face
 	private readonly ADAPTATION_THRESHOLD = 0.02 // Fixed range for what counts as "resting"
 
@@ -124,9 +124,9 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 				// User closed mouth -> Store progress
 				const sessionElapsed = Date.now() - this.holdStartTime
 				this.accumulatedTime += sessionElapsed
-				
+
 				this.status.value = 'WAITING'
-				
+
 				if (this.options.resetProgressOnFail) {
 					this.accumulatedTime = 0
 					this.progress.value = 0

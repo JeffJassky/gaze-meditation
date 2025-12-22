@@ -69,11 +69,11 @@ const eyeStyle = computed(() => {
 
 .lid.upper {
     top: 0;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
 }
 
 .lid.lower {
     bottom: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 1),rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9),rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
 }
 </style>
