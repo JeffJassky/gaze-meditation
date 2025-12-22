@@ -87,7 +87,7 @@ const metricsRef = ref<SessionMetric[]>([])
 const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME) // Reactive theme for providing
 
 // Loading State
-const loadingMessage = ref('Loading')
+const loadingMessage = ref('Preparing Session')
 const loadingProgress = ref(0)
 const showLoadingContent = ref(false)
 const showPermissionRequest = ref(false)
@@ -226,7 +226,7 @@ const initSession = async () => {
 					})
 				})
 
-				loadingMessage.value = 'Initializing...'
+				loadingMessage.value = 'Preparing Session'
 			}
 		} catch (e) {
 			console.warn('Permissions Query API not supported', e)

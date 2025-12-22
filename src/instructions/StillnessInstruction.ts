@@ -96,7 +96,7 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 
 		this.driftX.value = diffYaw
 		this.driftY.value = diffPitch
-		this.driftXPos.value = diffHeadX
+		this.driftXPos.value = -diffHeadX
 		this.driftYPos.value = diffHeadY
 
 		const totalDrift = Math.hypot(diffYaw, diffPitch, diffHeadX * 1.5, diffHeadY * 1.5)

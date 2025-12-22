@@ -30,7 +30,7 @@ const emit = defineEmits<{
 					@click="emit('startTutorial')"
 					class="bg-cyan-900 hover:bg-cyan-700 text-cyan-100 px-8 py-4 rounded-full font-bold text-lg tracking-wide transition-all shadow-lg shadow-cyan-900/20"
 				>
-					Start Tutorial
+					Begin Tutorial
 				</button>
 			</div>
 			<div class="p-8 md:p-12 bg-zinc-900/50 border border-zinc-800 rounded-3xl text-left">
