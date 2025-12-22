@@ -1,5 +1,6 @@
 import type { ThemeConfig, ProgramBinauralConfig } from '../types'
 import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
+import { playbackSpeed } from '../state/playback'
 
 export interface InstructionContext {
 	// Callbacks to report status to the engine
@@ -72,6 +73,14 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 
 	get id(): string {
 		return this.options.id!
+	}
+
+	get duration(): number {
+		return (this.options.duration ?? 5000) / playbackSpeed.value
+	}
+
+	get cooldown(): number {
+		return (this.options.cooldown ?? 2000) / playbackSpeed.value
 	}
 
 	// Lifecycle: Called when instruction becomes active

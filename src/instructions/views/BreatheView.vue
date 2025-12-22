@@ -160,7 +160,7 @@ defineProps<{
 }
 
 .breath-circle {
-	transition: transform 0.1s linear, background-color 0.5s ease;
+	transition: transform calc(0.1s / var(--speed-factor, 1)) linear, background-color calc(0.5s / var(--speed-factor, 1)) ease;
 	will-change: transform;
 }
 
@@ -170,7 +170,7 @@ defineProps<{
 	left: 50%;
 	transform: translate(-50%, -50%);
 	font-size: 1.5rem;
-	transition: opacity 0.3s ease;
+	transition: opacity calc(0.3s / var(--speed-factor, 1)) ease;
 	height: 1.5em; /* Prevent layout shift */
 	pointer-events: none;
 }

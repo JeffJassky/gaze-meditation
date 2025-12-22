@@ -1,6 +1,7 @@
 import { ref, markRaw } from 'vue'
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import TypeView from './views/TypeView.vue'
+import { playbackSpeed } from '../state/playback'
 
 interface TypeOptions extends InstructionOptions {
 	targetPhrase: string
@@ -60,7 +61,7 @@ export class TypeInstruction extends Instruction<TypeOptions> {
 			this.isComplete.value = true
 			this.completionTimer = window.setTimeout(() => {
 				this.context?.complete(true, { input: this.input.value })
-			}, 250)
+			}, 250 / playbackSpeed.value)
 		} else if (
 			normalizedInput.length >= this.normalizedTargetPhrase.length &&
 			normalizedInput !== this.normalizedTargetPhrase

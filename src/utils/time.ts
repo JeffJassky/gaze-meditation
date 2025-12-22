@@ -1,9 +1,9 @@
 // Customizable duration constants (in milliseconds)
 // You can tune these to change the "rhythm" of the reading time.
-const SENTENCE_DURATION = 800 // Pause at the end of a sentence
-const SEGMENT_DURATION = 300 // Pause for commas/clauses
-const WORD_DURATION = 150 // Base time per word
-const LETTER_DURATION = 20 // Slight addition for longer complex words
+const SENTENCE_DURATION = 500 // Pause at the end of a sentence
+const SEGMENT_DURATION = 200 // Pause for commas/clauses
+const WORD_DURATION = 100 // Base time per word
+const LETTER_DURATION = 10 // Slight addition for longer complex words
 
 export function calculateDuration(text: string): number {
 	if (!text || text.trim().length === 0) return 0

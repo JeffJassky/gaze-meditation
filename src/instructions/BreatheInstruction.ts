@@ -246,7 +246,6 @@ export class BreatheInstruction extends Instruction<BreatheOptions> {
         await faceMeshService.init()
         
         this.startTime = Date.now()
-        if (this.options.duration) this.endTime = this.startTime + this.options.duration
         
         this.loop()
     }
@@ -260,10 +259,10 @@ export class BreatheInstruction extends Instruction<BreatheOptions> {
         const now = Date.now()
 
         // 1. Check Duration
-        if (this.options.duration) {
+        if (this.duration) {
             const elapsed = now - this.startTime
-            this.progress.value = Math.min(100, (elapsed / this.options.duration) * 100)
-            if (now >= this.endTime) {
+            this.progress.value = Math.min(100, (elapsed / this.duration) * 100)
+            if (elapsed >= this.duration) {
                 this.complete(true)
                 this.status.value = 'SUCCESS'
                 return

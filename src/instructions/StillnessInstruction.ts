@@ -116,9 +116,9 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 				// Still holding
 				const sessionElapsed = Date.now() - this.startHoldTime
 				const totalElapsed = this.accumulatedTime + sessionElapsed
-				this.progress.value = Math.min(100, (totalElapsed / this.options.duration) * 100)
+				this.progress.value = Math.min(100, (totalElapsed / this.duration) * 100)
 
-				if (totalElapsed >= this.options.duration) {
+				if (totalElapsed >= this.duration) {
 					this.succeed()
 					return
 				}

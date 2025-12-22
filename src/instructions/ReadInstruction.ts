@@ -3,6 +3,7 @@ import { markRaw, ref } from 'vue'
 import ReadView from './views/ReadView.vue'
 import { calculateDuration } from '../utils/time'
 import type { ThemeConfig } from '../types'
+import { playbackSpeed } from '../state/playback'
 
 export interface ReadInstructionConfig extends InstructionOptions {
 	prompt?: string
@@ -45,7 +46,7 @@ export class ReadInstruction extends Instruction<ReadInstructionConfig> {
 		this.currentIndex.value = 0
 
 		const texts = Array.isArray(this.options.text) ? this.options.text : [this.options.text]
-		const delayMs = this.options.delay || 0
+		const delayMs = (this.options.delay || 0) / playbackSpeed.value
 
 		// Initial delay
 		this.activeTimer = window.setTimeout(() => {
@@ -62,18 +63,24 @@ export class ReadInstruction extends Instruction<ReadInstructionConfig> {
 		this.currentIndex.value = index
 		this.currentText.value = texts[index] || ''
 
-		const durationMs = this.options.duration ?? calculateDuration(this.currentText.value)
+		const baseDuration = this.options.duration ?? calculateDuration(this.currentText.value)
+		const durationMs = baseDuration === Infinity ? Infinity : baseDuration / playbackSpeed.value
 
 		// If duration is Infinity, we do not schedule the next step.
 		if (durationMs === Infinity) {
 			return
 		}
 
-		// Wait for Duration (Reading time) + Cooldown
-		const cooldown = this.options.cooldown ?? 2000
+		// Wait for Duration (Reading time). 
+		// We only add the internal cooldown if there are more segments to show.
+		// If it's the last segment, we complete immediately after the duration,
+		// allowing the Theater's global cooldown to handle the transition.
+		const isLast = index === texts.length - 1
+		const waitTime = isLast ? durationMs : durationMs + this.cooldown
+
 		this.activeTimer = window.setTimeout(() => {
 			this.showNext(index + 1, texts)
-		}, durationMs + cooldown)
+		}, waitTime)
 	}
 
 	stop(): void {

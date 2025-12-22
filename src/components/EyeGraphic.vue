@@ -63,7 +63,7 @@ const eyeStyle = computed(() => {
     left: 0;
     width: 100vw;
     height: 100vh;
-    transition: transform 0.2s;
+    transition: transform calc(0.2s / var(--speed-factor, 1));
     z-index: 20;
 }
 

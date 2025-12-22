@@ -20,7 +20,6 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 
 	protected context: InstructionContext | null = null
 	private animationFrameId: number | null = null
-	private duration = 0
 	private accumulatedTime = 0
 	private currentOpenStart = 0
 
@@ -41,7 +40,6 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 
 		await faceMeshService.init()
 
-		this.duration = this.options.duration || 10000
 		this.loop()
 	}
 

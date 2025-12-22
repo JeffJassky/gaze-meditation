@@ -57,7 +57,7 @@ const fillStyle = computed(() => ({
 	strokeDashoffset: dashOffset.value,
 	transform: 'rotate(-90deg)',
 	transformOrigin: '50% 50%',
-	transition: 'stroke-dashoffset 0.4s ease-out',
+	transition: 'stroke-dashoffset calc(0.4s / var(--speed-factor, 1)) ease-out',
 	filter: `drop-shadow(0 0 8px ${props.fillColor || 'rgba(255, 255, 255, 0.8)'})`
 }))
 </script>

@@ -57,7 +57,7 @@ export class TongueOutInstruction extends Instruction<TongueOutOptions> {
 		this.tongueScore.value = score
 		this.isTongueDetected.value = isDetected
 
-		const duration = this.options.duration || 2000
+		const duration = this.duration
 
 		// Use isDetected (pixel threshold) AND score (protrusion amount)
 		// Score is 0-1 (approx). Let's require > 0.1 protrusion.

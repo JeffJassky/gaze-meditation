@@ -94,7 +94,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		}
 
 		// 4. Progress / Completion Logic
-		const duration = this.options.duration || 0
+		const duration = this.duration
 
 		if (isOpen) {
 			if (this.status.value === 'WAITING') {

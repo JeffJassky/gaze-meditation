@@ -20,6 +20,7 @@ import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import 
 import { faceMeshService } from '../services/faceMeshService'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
+import { playbackSpeed } from '../state/playback'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
@@ -354,8 +355,8 @@ const initSession = async () => {
 		setTimeout(() => {
 			console.log('[Theater] Starting first instruction')
 			nextInstruction(0)
-		}, 1200)
-	}, 500)
+		}, 1200 / playbackSpeed.value)
+	}, 500 / playbackSpeed.value)
 }
 
 const handleGrantAccess = () => {
@@ -380,7 +381,7 @@ const nextInstruction = (index: number) => {
 
 		setTimeout(() => {
 			finishSession()
-		}, 3000)
+		}, 3000 / playbackSpeed.value)
 
 		return
 	}
@@ -425,7 +426,7 @@ const nextInstruction = (index: number) => {
 				resolvedTheme: currentResolvedTheme.value
 			})
 		}
-	}, 500)
+	}, 500 / playbackSpeed.value)
 }
 
 const findInstructionIndexById = (id: string): number => {
@@ -440,7 +441,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	// Stop instruction logic (stop listening/tracking)
 	currentInstr.value?.stop()
 
-	const cooldown = currentInstr.value?.options.cooldown ?? 2000
+	const cooldown = currentInstr.value?.cooldown ?? (2000 / playbackSpeed.value)
 
 	// Record Metric
 	if (currentInstr.value) {
@@ -478,7 +479,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	if (success) {
 		if (isPosEnabled) {
 			// Bonus Calc
-			const duration = currentInstr.value?.options.duration || 5000
+			const duration = currentInstr.value?.duration || 5000
 			const reaction = metrics?.reactionTime || 0
 			const remainingRatio = Math.max(0, (duration - reaction) / duration)
 			const points = Math.round(100 * remainingRatio)
@@ -546,7 +547,7 @@ const finishSession = () => {
 		metrics: metricsRef.value
 	}
 	saveSession(log)
-	setTimeout(() => emit('exit'), 3000)
+	setTimeout(() => emit('exit'), 3000 / playbackSpeed.value)
 }
 
 const handleSessionSelect = async (program: Program) => {
@@ -637,6 +638,7 @@ onMounted(() => {
 	<div
 		class="relative w-full h-full bg-black overflow-hidden transition-all duration-300"
 		:class="controlsVisible ? 'cursor-default' : 'cursor-none'"
+		:style="{ '--speed-factor': playbackSpeed }"
 		@mousemove="showControls"
 		@click="handleScreenClick"
 	>
@@ -875,7 +877,7 @@ onMounted(() => {
 /* Global styles if needed */
 .instruction-enter-active {
 	/* Define fallbacks just in case */
-	--duration-slow: 3s;
+	--duration-slow: calc(3s / var(--speed-factor, 1));
 	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
 
 	transition: opacity var(--duration-slow) var(--ease-glacial),
@@ -890,7 +892,7 @@ onMounted(() => {
 
 .instruction-leave-active {
 	/* Define fallbacks just in case */
-	--duration-slow: 3s;
+	--duration-slow: calc(3s / var(--speed-factor, 1));
 	--ease-in-glacial: cubic-bezier(0.75, 0, 1, 1);
 
 	transition: opacity var(--duration-slow) var(--ease-in-glacial),
@@ -932,7 +934,7 @@ onMounted(() => {
 }
 
 .fade-slow-leave-active {
-	transition: opacity 2s ease-in-out;
+	transition: opacity calc(2s / var(--speed-factor, 1)) ease-in-out;
 }
 
 .fade-slow-leave-to {

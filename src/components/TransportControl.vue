@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import InstructionSelector from './InstructionSelector.vue'
 import AudioDebugPanel from './AudioDebugPanel.vue'
 import type { Instruction } from '../core/Instruction'
+import { playbackSpeed } from '../state/playback'
 
 const props = defineProps<{
   instructions: Instruction<any>[]
@@ -75,6 +76,23 @@ const progress = computed(() => {
         @select="(i) => emit('select', i)"
         @toggle="(val) => emit('menu-toggle', val)"
       />
+
+      <div class="h-6 w-px bg-zinc-700"></div>
+
+      <!-- Speed Selector -->
+      <div class="relative flex items-center">
+        <select 
+          v-model.number="playbackSpeed" 
+          class="appearance-none bg-transparent text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer outline-none text-right pr-1"
+          title="Playback Speed"
+        >
+          <option :value="0.75">0.75x</option>
+          <option :value="1.0">1.0x</option>
+          <option :value="1.25">1.25x</option>
+          <option :value="1.5">1.5x</option>
+        </select>
+        <span class="text-[10px] text-zinc-600 pointer-events-none">spd</span>
+      </div>
 
       <div class="h-6 w-px bg-zinc-700"></div>
 

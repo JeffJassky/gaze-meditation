@@ -72,7 +72,7 @@ onMounted(() => {
 /* Internal transition for text segments */
 .read-segment-enter-active,
 .read-segment-leave-active {
-	transition: opacity 2s ease-in-out, transform 2s ease-in-out;
+	transition: opacity calc(2s / var(--speed-factor, 1)) ease-in-out, transform calc(2s / var(--speed-factor, 1)) ease-in-out;
 }
 
 .read-segment-enter-from {

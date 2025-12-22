@@ -4,6 +4,7 @@ import CalibrationView from './views/CalibrationView.vue'
 import { faceMeshService, type Point } from '../services/faceMeshService'
 import { speechService } from '../services/speechService'
 import type { ThemeConfig } from '../types'
+import { playbackSpeed } from '../state/playback'
 
 interface CalibrationOptions extends InstructionOptions {}
 
@@ -190,11 +191,11 @@ export class CalibrationInstruction extends Instruction<CalibrationOptions> {
 		// Train
 		for (let i = 0; i < 5; i++) {
 			faceMeshService.train(targetX, targetY)
-			await new Promise(r => setTimeout(r, 20))
+			await new Promise(r => setTimeout(r, 20 / playbackSpeed.value))
 		}
 
 		// Wait 1s for visual feedback
-		await new Promise(resolve => setTimeout(resolve, 1000))
+		await new Promise(resolve => setTimeout(resolve, 1000 / playbackSpeed.value))
 
 		// Move to next
 		this.stepIndex++

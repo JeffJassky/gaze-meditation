@@ -7,6 +7,7 @@ import {
 import SpeechView from "./views/SpeechView.vue";
 import { speechService } from "../services/speechService";
 import type { ThemeConfig } from '../types';
+import { playbackSpeed } from '../state/playback';
 
 interface SpeechOptions extends InstructionOptions {
   targetValue: string;
@@ -39,7 +40,7 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     if (this.options.timeout) {
       this.timeoutId = window.setTimeout(() => {
         this.handleTimeout();
-      }, this.options.timeout);
+      }, this.options.timeout / playbackSpeed.value);
     }
 
     // Initialize/Ensure Speech Service
@@ -100,7 +101,7 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
       // Small delay to let the UI reflect the final word before resolving
       setTimeout(() => {
         this.finish(true);
-      }, 150);
+      }, 150 / playbackSpeed.value);
     }
   }
 

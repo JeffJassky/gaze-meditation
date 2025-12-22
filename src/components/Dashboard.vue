@@ -21,6 +21,7 @@ import { BreatheInstruction } from '../instructions/BreatheInstruction'
 import { audioSession } from '../services/audio'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import Home from './Home.vue'
+import SessionCard from './SessionCard.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 import { initialTrainingProgram } from '../programs/initial-training'
@@ -650,54 +651,13 @@ onMounted(() => {
 						>Full Sessions</label
 					>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						<div
+						<SessionCard
 							v-for="prog in FULL_PROGRAMS"
 							:key="prog.id"
-							class="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-xl hover:border-zinc-600 transition-all"
-						>
-							<div class="flex flex-col h-full">
-								<div
-									v-if="prog.tags && prog.tags.length"
-									class="flex items-center gap-3 mb-2"
-								>
-									<span
-										v-for="tag in prog.tags"
-										:key="tag"
-										class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded uppercase tracking-widest font-bold border border-cyan-500/20"
-										>{{ tag }}</span
-									>
-								</div>
-								<div>
-									<h3
-										class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors text-left"
-									>
-										{{ prog.title }}
-									</h3>
-									<p class="text-sm text-zinc-400 mt-2 text-left">
-										{{ prog.description }}
-									</p>
-								</div>
-								<div class="flex gap-2 mt-4 flex-wrap">
-									<span
-										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-									>
-										{{ Math.ceil(prog.instructions.length / 6) }}-{{
-											Math.ceil(prog.instructions.length / 4)
-										}}
-										min
-									</span>
-								</div>
-								<div class="mt-auto pt-4">
-									<button
-										:disabled="!selectedUser"
-										@click="handleStartSession(prog)"
-										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
-									>
-										Begin Session
-									</button>
-								</div>
-							</div>
-						</div>
+							:program="prog"
+							:disabled="!selectedUser"
+							@start="handleStartSession"
+						/>
 					</div>
 					<br />
 					<br />
@@ -711,39 +671,13 @@ onMounted(() => {
 						class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
 						style="opacity: 0.5"
 					>
-						<div
+						<SessionCard
 							v-for="prog in TEST_PROGRAMS"
 							:key="prog.id"
-							class="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-xl hover:border-zinc-600 transition-all"
-						>
-							<div class="flex flex-col h-full">
-								<div>
-									<h3
-										class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors text-left"
-									>
-										{{ prog.title }}
-									</h3>
-									<p class="text-sm text-zinc-400 mt-2 text-left">
-										{{ prog.description }}
-									</p>
-								</div>
-								<div class="flex gap-2 mt-4 flex-wrap">
-									<span
-										class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500"
-										>{{ Math.ceil(prog.instructions.length / 6) }} mins</span
-									>
-								</div>
-								<div class="mt-auto pt-4">
-									<button
-										:disabled="!selectedUser"
-										@click="handleStartSession(prog)"
-										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
-									>
-										Begin Session
-									</button>
-								</div>
-							</div>
-						</div>
+							:program="prog"
+							:disabled="!selectedUser"
+							@start="handleStartSession"
+						/>
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,7 @@
 import { type InstructionContext } from '../core/Instruction'
 import { ReadInstruction, type ReadInstructionConfig } from './ReadInstruction'
 import { faceMeshService } from '../services/faceMeshService'
+import { playbackSpeed } from '../state/playback'
 
 export interface CloseEyesInstructionOptions extends ReadInstructionConfig {
 	fallbackThresholdMs?: number
@@ -49,8 +50,12 @@ export class CloseEyesInstruction extends ReadInstruction {
 		const now = Date.now()
 		const elapsed = now - this.startTime
 
+		// Scaled thresholds
+		const fallbackThreshold = this.FALLBACK_THRESHOLD_MS / playbackSpeed.value
+		const forceComplete = this.FORCE_COMPLETE_MS / playbackSpeed.value
+
 		// Fallback 2: Force complete after timeout
-		if (elapsed > this.FORCE_COMPLETE_MS) {
+		if (elapsed > forceComplete) {
 			this.finish()
 			return
 		}
@@ -86,7 +91,7 @@ export class CloseEyesInstruction extends ReadInstruction {
 		let isClosed = deviation < this.CLOSE_THRESHOLD
 
 		// Fallback 1: Conservative absolute threshold check
-		if (!isClosed && elapsed > this.FALLBACK_THRESHOLD_MS) {
+		if (!isClosed && elapsed > fallbackThreshold) {
 			// 0.2 is a conservative upper bound for "closed".
 			// If rawEAR is below this, they are likely closed even if adaptive logic fails.
 			if (rawEAR < 0.2) {
@@ -98,7 +103,7 @@ export class CloseEyesInstruction extends ReadInstruction {
 		if (this.isDetecting) {
 			if (isClosed) {
 				if (this.stableSince === 0) this.stableSince = now
-				else if (now - this.stableSince >= this.STABILITY_DURATION) {
+				else if (now - this.stableSince >= this.STABILITY_DURATION / playbackSpeed.value) {
 					this.finish()
 					return
 				}

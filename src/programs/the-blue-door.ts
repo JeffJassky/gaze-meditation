@@ -2,7 +2,6 @@ import type { Program } from '../types'
 import {
 	ReadInstruction,
 	StillnessInstruction,
-	NodInstruction,
 	NoBlinkInstruction,
 	DirectionalGazeInstruction,
 	RelaxJawInstruction,
@@ -17,10 +16,10 @@ export const theBlueDoor: Program = {
 		'A somatic journey through the subconscious to a place of inner peace and beauty. Uses fractionation to install a permanent anchor for peace.',
 	tags: ['peace', 'bliss'],
 	audio: {
-		musicTrack: 'audio/ambient-warm-pad.mp3',
+		musicTrack: 'audio/music.mp3',
 		binaural: { hertz: 4 } // Deep Theta for vivid visualization
 	},
-	spiralBackground: 'img/spiral-blue.png',
+	spiralBackground: 'img/spiral.png',
 	instructions: [
 		// --- Block 1: The Induction (The Heavy Gaze) ---
 		new ReadInstruction({

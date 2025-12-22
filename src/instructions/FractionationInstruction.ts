@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue'
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import FractionationView from './views/FractionationView.vue'
 import { faceMeshService } from '../services/faceMeshService'
+import { playbackSpeed } from '../state/playback'
 
 interface FractionationOptions extends InstructionOptions {
 	cycles: number
@@ -68,7 +69,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
     // "already open" eyes as the baseline.
     setTimeout(() => {
         this.moveToWaitingForClosed();
-    }, 800);
+    }, 800 / playbackSpeed.value);
   }
 
   private loop() {
@@ -110,7 +111,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
       if (this.status.value === "WAITING_FOR_OPEN") {
         if (isOpen) {
           if (this.stableSince === 0) this.stableSince = now;
-          else if (now - this.stableSince >= this.STABILITY_DURATION) {
+          else if (now - this.stableSince >= this.STABILITY_DURATION / playbackSpeed.value) {
             this.status.value = "OPEN";
             this.stateStartTime = now;
             this.stableSince = 0;
@@ -124,7 +125,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
       // Logic: COLLECTING OPEN DATA
       else if (this.status.value === "OPEN") {
         this.openSamples.push(rawEAR);
-        if (now - this.stateStartTime > this.HOLD_DURATION) {
+        if (now - this.stateStartTime > this.HOLD_DURATION / playbackSpeed.value) {
           this.isDetecting = false;
           this.switchState("CLOSED");
         }
@@ -134,7 +135,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
       else if (this.status.value === "WAITING_FOR_CLOSED") {
         if (isClosed) {
           if (this.stableSince === 0) this.stableSince = now;
-          else if (now - this.stableSince >= this.STABILITY_DURATION) {
+          else if (now - this.stableSince >= this.STABILITY_DURATION / playbackSpeed.value) {
             this.status.value = "CLOSED";
             this.stateStartTime = now;
             this.stableSince = 0;
@@ -148,7 +149,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
       // Logic: COLLECTING CLOSED DATA
       else if (this.status.value === "CLOSED") {
         this.closedSamples.push(rawEAR);
-        if (now - this.stateStartTime > this.HOLD_DURATION) {
+        if (now - this.stateStartTime > this.HOLD_DURATION / playbackSpeed.value) {
           this.isDetecting = false;
           this.currentCycle.value++;
 
@@ -190,7 +191,7 @@ export class FractionationInstruction extends Instruction<FractionationOptions> 
 			this.isSpeaking = true
 
 			const u = new SpeechSynthesisUtterance(text)
-			u.rate = 1.0
+			u.rate = playbackSpeed.value
 			u.pitch = 1.0
 
 			u.onend = () => {

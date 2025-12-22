@@ -93,7 +93,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 			if (correct) {
 				this.correctFrames++
 				// If no duration is set, complete immediately on success
-				if (!this.options.duration || this.options.duration <= 0) {
+				if (!this.duration || this.duration <= 0) {
 					this.complete(true)
 					return
 				}
@@ -110,8 +110,8 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 		}
 
 		// Check duration only if it exists
-		if (this.options.duration && this.options.duration > 0) {
-			if (Date.now() - this.startTime > this.options.duration) {
+		if (this.duration && this.duration > 0) {
+			if (Date.now() - this.startTime > this.duration) {
 				this.complete(this.score.value > 50)
 				return
 			}

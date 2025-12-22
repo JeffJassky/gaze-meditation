@@ -4,6 +4,7 @@ import { faceMeshService } from '../services/faceMeshService'
 import { audioSession } from '../services/audio/audioSession'
 import { playOneShot } from '../services/audio/oneShot'
 import { calculateDuration } from '../utils/time'
+import { playbackSpeed } from '../state/playback'
 
 export interface OpenEyesInstructionOptions extends ReadInstructionConfig {
 	repeatAfter?: number // seconds, default 5
@@ -63,8 +64,13 @@ export class OpenEyesInstruction extends ReadInstruction {
 		const now = Date.now()
 		const elapsed = now - this.startTime
 
+		// Scaled thresholds
+		const repeatInterval = this.REPEAT_INTERVAL_MS / playbackSpeed.value
+		const fallbackThreshold = this.FALLBACK_THRESHOLD_MS / playbackSpeed.value
+		const forceComplete = this.FORCE_COMPLETE_MS / playbackSpeed.value
+
 		// Fallback 2: Force complete after timeout
-		if (elapsed > this.FORCE_COMPLETE_MS) {
+		if (elapsed > forceComplete) {
 			this.handleSuccess()
 			return
 		}
@@ -91,20 +97,21 @@ export class OpenEyesInstruction extends ReadInstruction {
 		let seemOpen = deviation > this.OPEN_THRESHOLD
 
 		// Fallback 1: Conservative absolute threshold check
-		if (!seemOpen && elapsed > this.FALLBACK_THRESHOLD_MS) {
+		if (!seemOpen && elapsed > fallbackThreshold) {
 			if (rawEAR > 0.18) {
 				seemOpen = true
 			}
 		}
 
 		// Calculate required display time
-		const readingTime = calculateDuration(this.currentText.value)
-		const minDisplayTime = (this.options.fadeInDuration || 0) + readingTime
+		const baseReadingTime = calculateDuration(this.currentText.value)
+		const readingTime = baseReadingTime / playbackSpeed.value
+		const minDisplayTime = ((this.options.fadeInDuration || 0) / playbackSpeed.value) + readingTime
 
 		if (this.isDetecting && elapsed >= minDisplayTime) {
 			if (seemOpen) {
 				if (this.stableSince === 0) this.stableSince = now
-				else if (now - this.stableSince >= this.STABILITY_DURATION) {
+				else if (now - this.stableSince >= this.STABILITY_DURATION / playbackSpeed.value) {
 					this.handleSuccess()
 					return
 				}
@@ -112,7 +119,7 @@ export class OpenEyesInstruction extends ReadInstruction {
 				this.stableSince = 0
 
 				// Audio Trigger Logic
-				if (now - this.lastTriggerTime > this.REPEAT_INTERVAL_MS) {
+				if (now - this.lastTriggerTime > repeatInterval) {
 					playOneShot(audioSession, this.TRIGGER_SOUND, 'fx', 2)
 					this.lastTriggerTime = now
 				}
@@ -127,7 +134,7 @@ export class OpenEyesInstruction extends ReadInstruction {
 	}
 
 	private handleSuccess() {
-		const fadeOutMs = this.options.fadeOutDuration || 0
+		const fadeOutMs = (this.options.fadeOutDuration || 0) / playbackSpeed.value
 		if (fadeOutMs > 0) {
 			this.isFadingOut.value = true
 			setTimeout(() => {

@@ -195,7 +195,7 @@ const cursorStyle = computed(() => {
 }
 
 .progress-ring-fill {
-	transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease-in-out;
+	transition: stroke-dashoffset calc(0.5s / var(--speed-factor, 1)) linear, stroke calc(0.5s / var(--speed-factor, 1)) ease-in-out;
 }
 
 .cursor {
@@ -203,6 +203,6 @@ const cursorStyle = computed(() => {
 	top: 50%;
 	left: 50%;
 	border-radius: 50%;
-	transition: transform 0.5s ease-out, background-color 0.2s ease-out;
+	transition: transform calc(0.5s / var(--speed-factor, 1)) ease-out, background-color calc(0.2s / var(--speed-factor, 1)) ease-out;
 }
 </style>
