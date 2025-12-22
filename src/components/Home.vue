@@ -28,7 +28,7 @@ const emit = defineEmits<{
 			<div class="flex justify-center">
 				<button
 					@click="emit('startTutorial')"
-					class="bg-cyan-900 hover:bg-cyan-700 text-cyan-100 px-8 py-4 rounded-full font-bold text-lg tracking-wide transition-all shadow-lg shadow-cyan-900/20"
+					class="bg-cyan-950 hover:bg-cyan-900 text-white border border-cyan-800 px-8 py-4 rounded-full font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(6,182,212,0.2),inset_0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4),inset_0_0_20px_rgba(6,182,212,0.2)]"
 				>
 					Begin Tutorial
 				</button>

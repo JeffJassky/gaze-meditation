@@ -27,7 +27,6 @@ const incorrectFeedbackBorder = computed(() => {
 })
 </script>
 
-
 <template>
 	<div class="absolute inset-0 pointer-events-none">
 		<!-- Split Screen Content -->
@@ -85,7 +84,8 @@ const incorrectFeedbackBorder = computed(() => {
 					v-for="(segment, index) in instruction.options.prompt.split('~')"
 					:key="index"
 					class="inline-block"
-				>{{ segment }}&nbsp;</span>
+					>{{ segment.trim() }}&nbsp;</span
+				>
 			</div>
 
 			<ProgressBar

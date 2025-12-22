@@ -21,14 +21,13 @@ export const initialTrainingProgram: Program = {
 			text: [
 				'Welcome to the Gaze tutorial.',
 				"First, let's practice closing your eyes.",
-				'You will hear a chime ~ when it is time to open them.',
-				'When the instruction appears, close your eyes.'
+				'You will hear a chime ~ when it is time to open them.'
 			],
 			cooldown: 0
 		}),
 		new CloseEyesInstruction({
 			cooldown: 0,
-			text: 'Close your eyes.',
+			text: 'Try closing your eyes.',
 			duration: 3000 // Short hold,
 		}),
 		new OpenEyesInstruction({
@@ -50,7 +49,7 @@ export const initialTrainingProgram: Program = {
 		// 3. Stillness
 		new ReadInstruction({
 			cooldown: 0,
-			text: ['Excellent.', 'Now, find a comfortable position  ~ and stay completely still.']
+			text: ['Excellent.', 'Now, find a comfortable position  ~ and prepare to be still.']
 		}),
 		new StillnessInstruction({
 			cooldown: 0,

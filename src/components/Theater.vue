@@ -318,7 +318,7 @@ const initSession = async () => {
 				id: 'reminder-dnd',
 				text: [
 					...reminderText,
-					'For best results, use headphones.',
+					'Use headphones for best results.',
 					'To avoid interruptions,',
 					'consider putting your device ~ into do not disturb mode.'
 				]

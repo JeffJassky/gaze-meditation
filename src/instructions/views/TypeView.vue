@@ -10,10 +10,13 @@
 		<div class="prompt">
 			<p :style="{ color: instruction.resolvedTheme.secondaryTextColor }">
 				<span
-					v-for="(segment, index) in (instruction.options.prompt || 'Type the following:').split('~')"
+					v-for="(segment, index) in (
+						instruction.options.prompt || 'Type the following:'
+					).split('~')"
 					:key="index"
 					class="inline-block"
-				>{{ segment }}&nbsp;</span>
+					>{{ segment.trim() }}&nbsp;</span
+				>
 			</p>
 			<h1
 				:style="{

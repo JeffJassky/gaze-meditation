@@ -212,6 +212,7 @@ export class BreatheInstruction extends Instruction<BreatheOptions> {
     // Visual Outputs
     public breathSignal = ref(0) // -1 to 1 (Smoothed for UI)
     public breathDepth = ref(0)  // 0 to 1
+    public breathVelocity = ref(0) // Change in signal per frame
     public respirationRate = ref(0)
     public breathsDetected = ref(0)
     public debugGain = ref(1.0) // Dummy for UI compatibility
@@ -223,6 +224,7 @@ export class BreatheInstruction extends Instruction<BreatheOptions> {
     private animationFrameId: number | null = null
     private startTime = 0
     private endTime = 0
+    private lastBreathSignal = 0
     
     // Rate Logic (Schmitt Trigger)
     private crossingState: 'INHALE' | 'EXHALE' = 'EXHALE'
@@ -293,6 +295,13 @@ export class BreatheInstruction extends Instruction<BreatheOptions> {
         
         this.breathSignal.value = uiSignal
         this.breathDepth.value = Math.min(1, Math.abs(uiSignal))
+        
+        // Calculate Velocity (Delta)
+        const delta = uiSignal - this.lastBreathSignal
+        this.lastBreathSignal = uiSignal
+        // Smooth velocity (Low pass filter)
+        // Using a very small alpha (0.02) for heavy smoothing
+        this.breathVelocity.value = this.breathVelocity.value * 0.98 + delta * 0.02
         
         if (this.controller.state.value === 'LOCKED') {
             this.status.value = 'RUNNING'

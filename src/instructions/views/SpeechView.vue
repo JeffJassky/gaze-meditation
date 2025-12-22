@@ -28,14 +28,14 @@ const targetWords = computed(() => {
 	const text = props.instruction.options.targetValue
 	const transcript = props.instruction.currentTranscript.value.toLowerCase()
 	const words = text.split(' ')
-	
+
 	let searchIndex = 0
 	let sequenceBroken = false
 
-	return words.map((word) => {
+	return words.map(word => {
 		// Clean word for matching (remove punctuation)
-		const cleanWord = word.toLowerCase().replace(/[^\w\s]|_/g, "")
-		
+		const cleanWord = word.toLowerCase().replace(/[^\w\s]|_/g, '')
+
 		if (!cleanWord) return { text: word, isSpoken: true }
 
 		if (sequenceBroken) {
@@ -83,7 +83,8 @@ const targetWords = computed(() => {
 					v-for="(segment, index) in instruction.options.prompt.split('~')"
 					:key="index"
 					class="inline-block"
-				>{{ segment }}&nbsp;</span>
+					>{{ segment.trim() }}&nbsp;</span
+				>
 			</p>
 
 			<div class="text-6xl font-bold tracking-tight drop-shadow-2xl relative inline-block">
@@ -96,22 +97,22 @@ const targetWords = computed(() => {
 						color: word.isSpoken
 							? instruction.resolvedTheme.accentColor
 							: instruction.resolvedTheme.textColor,
-						opacity: word.isSpoken ? 1 : 0.3,
+						opacity: word.isSpoken ? 1 : 0.3
 					}"
 				>
 					{{ word.text }}
 				</span>
-        
-        <!-- Completion Underline -->
-        <div 
-          class="absolute bottom-0 left-0 h-1 bg-current rounded-full w-full"
-          :style="{
-            opacity: targetWords.every(w => w.isSpoken) ? 1 : 0,
-            backgroundColor: instruction.resolvedTheme.accentColor || '#fff',
-            transform: 'translateY(10px)',
-            transition: 'opacity 1.4s ease-out'
-          }"
-        ></div>
+
+				<!-- Completion Underline -->
+				<div
+					class="absolute bottom-0 left-0 h-1 bg-current rounded-full w-full"
+					:style="{
+						opacity: targetWords.every(w => w.isSpoken) ? 1 : 0,
+						backgroundColor: instruction.resolvedTheme.accentColor || '#fff',
+						transform: 'translateY(10px)',
+						transition: 'opacity 1.4s ease-out'
+					}"
+				></div>
 			</div>
 		</div>
 	</div>

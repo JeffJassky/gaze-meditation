@@ -21,9 +21,9 @@
 				}"
 			></div>
 
-			<div class="guide-text" :style="{ opacity: Math.abs(instruction.breathSignal.value) > 0.2 ? 0.8 : 0.3 }">
-				<span v-if="instruction.breathSignal.value > 0.1">INHALE</span>
-				<span v-else-if="instruction.breathSignal.value < -0.1">EXHALE</span>
+			<div class="guide-text" :style="{ opacity: Math.abs(instruction.breathVelocity.value) > 0.005 ? 0.8 : 0.3 }">
+				<span v-if="instruction.breathVelocity.value > 0.005">INHALE</span>
+				<span v-else-if="instruction.breathVelocity.value < -0.005">EXHALE</span>
 				<span v-else>...</span>
 			</div>
 		</div>
@@ -74,8 +74,8 @@
 
       <div class="stat-row">
 				<span class="label">Direction:</span>
-				<span class="value" :style="{ color: instruction.breathSignal.value > 0.1 ? '#4ade80' : instruction.breathSignal.value < -0.1 ? '#60a5fa' : 'inherit' }">
-          {{ instruction.breathSignal.value > 0.1 ? 'Inhaling' : instruction.breathSignal.value < -0.1 ? 'Exhaling' : 'Neutral' }}
+				<span class="value" :style="{ color: instruction.breathVelocity.value > 0.005 ? '#4ade80' : instruction.breathVelocity.value < -0.005 ? '#60a5fa' : 'inherit' }">
+          {{ instruction.breathVelocity.value > 0.005 ? 'Inhaling' : instruction.breathVelocity.value < -0.005 ? 'Exhaling' : 'Hold' }}
         </span>
 			</div>
 
@@ -136,12 +136,16 @@ defineProps<{
 }
 
 .guide-text {
-	margin-top: 40px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 	font-size: 1.2rem;
 	letter-spacing: 0.2em;
 	font-weight: 300;
 	transition: opacity 0.3s ease;
-  height: 1.5em; /* Prevent layout shift */
+	height: 1.5em; /* Prevent layout shift */
+	pointer-events: none;
 }
 
 .debug-stats {
