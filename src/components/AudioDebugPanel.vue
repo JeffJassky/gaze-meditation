@@ -9,7 +9,7 @@ const isMixerOpen = ref(false)
 const audioDebugRoot = ref<HTMLElement | null>(null)
 
 // State to display
-const masterVolume = ref(0.25)
+const masterVolume = ref(1.0)
 const busVolumes = ref<Record<AudioBusName, number>>({
 	binaural: 0.25,
 	music: 0.25,
@@ -111,7 +111,7 @@ onUnmounted(() => {
 					<!-- Vertical Master Volume -->
 					<div class="h-24 w-6 flex items-center justify-center py-2">
 						<input 
-							type="range" min="0" max="2" step="0.1" 
+							type="range" min="0" max="1" step="0.1" 
 							:value="masterVolume" @input="updateMaster"
 							class="vertical-slider w-2 h-full accent-cyan-500 rounded-full appearance-none bg-zinc-700 cursor-pointer"
 						>
@@ -128,7 +128,7 @@ onUnmounted(() => {
 								<span>{{ vol.toFixed(2) }}</span>
 							</div>
 							<input 
-								type="range" min="0" max="2" step="0.1" 
+								type="range" min="0" max="1" step="0.1" 
 								:value="vol" @input="e => updateBus(bus as AudioBusName, e)"
 								class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-zinc-500 hover:accent-zinc-400"
 							>

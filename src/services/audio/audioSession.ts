@@ -26,7 +26,7 @@ export class AudioSession {
 		this.ctx = new AudioContext({ latencyHint: 'balanced' })
 
 		this.masterGain = this.ctx.createGain()
-		this.masterGain.gain.value = 0.25
+		this.masterGain.gain.value = 1.0
 		this.masterGain.connect(this.ctx.destination)
 
 		this.buses = {
