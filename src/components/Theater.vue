@@ -14,11 +14,15 @@ import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
 import TransportControl from './TransportControl.vue'
 import ProgressBar from './ProgressBar.vue'
+import SessionCard from './SessionCard.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
+import somaticResetFull from '../programs/somatic-relaxaton'
+import theBlueDoor from '../programs/the-blue-door'
+import councilOfFireLong from '../programs/council-of-fire'
 
 interface TheaterProps {
 	program: Program
@@ -30,6 +34,9 @@ const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
 
+const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+
+const activeProgram = shallowRef<Program>(props.program)
 const state = ref<SessionState>(SessionState.INITIALIZING)
 const sessionInstructions = shallowRef<Instruction[]>([]) // Use shallowRef to avoid deep reactivity/unwrapping
 const instrIndex = ref(0)
@@ -97,6 +104,9 @@ const handleScreenClick = (e: MouseEvent) => {
 	// If permission request is visible, ignore screen clicks for controls
 	if (showPermissionRequest.value) return
 
+	// Ignore clicks if in selection mode
+	if (state.value === SessionState.SELECTION) return
+
 	showControls()
 
 	// If it's a tap on the left/right side, navigate
@@ -127,7 +137,7 @@ const currentInstr = computed(() => {
 
 // Watch for changes in currentInstr and program to update the theme
 watch(
-	[currentInstr, () => props.program],
+	[currentInstr, activeProgram],
 	([newInstr, newProgram]) => {
 		console.log('[Theater] currentInstr changed:', newInstr?.options?.id)
 		if (newInstr) {
@@ -163,20 +173,20 @@ const initSession = async () => {
 	let needsSpeech = false
 
 	// Check if any instruction needs faceMesh
-	if (props.program.instructions.some(i => i.options.capabilities?.faceMesh)) {
+	if (activeProgram.value.instructions.some(i => i.options.capabilities?.faceMesh)) {
 		needsFaceMesh = true
 	}
 
-	if (props.program.instructions.some(i => i.options.capabilities?.speech)) {
+	if (activeProgram.value.instructions.some(i => i.options.capabilities?.speech)) {
 		needsSpeech = true
 	}
 
 	// Check if we need audio (program track or instructions)
 	// Default to needing audio for binaural beats unless explicitly 'none'
 	if (
-		props.program.audio?.musicTrack !== 'none' ||
-		props.program.audio?.binaural ||
-		props.program.instructions.some(i => i.options.capabilities?.audioInput)
+		activeProgram.value.audio?.musicTrack !== 'none' ||
+		activeProgram.value.audio?.binaural ||
+		activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput)
 	) {
 		needsAudio = true
 	}
@@ -187,7 +197,8 @@ const initSession = async () => {
 	if (
 		needsFaceMesh ||
 		needsSpeech ||
-		(needsAudio && props.program.instructions.some(i => i.options.capabilities?.audioInput))
+		(needsAudio &&
+			activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput))
 	) {
 		try {
 			// Determine what we need
@@ -197,7 +208,7 @@ const initSession = async () => {
 			const micQuery =
 				needsSpeech ||
 				(needsAudio &&
-					props.program.instructions.some(i => i.options.capabilities?.audioInput))
+					activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput))
 					? navigator.permissions.query({ name: 'microphone' as any })
 					: Promise.resolve(null)
 
@@ -241,22 +252,25 @@ const initSession = async () => {
 		try {
 			await audioSession.setup()
 			// Start Program Audio Track if exists
-			if (props.program.audio?.musicTrack && props.program.audio.musicTrack !== 'none') {
+			if (
+				activeProgram.value.audio?.musicTrack &&
+				activeProgram.value.audio.musicTrack !== 'none'
+			) {
 				try {
 					await audioSession.musicLooper.start({
-						track: props.program.audio.musicTrack,
+						track: activeProgram.value.audio.musicTrack,
 						volume: 0.8
 					})
 				} catch (e) {
 					console.warn(
-						`[Theater] Failed to start music track: ${props.program.audio.musicTrack}`,
+						`[Theater] Failed to start music track: ${activeProgram.value.audio.musicTrack}`,
 						e
 					)
 				}
 			}
 
 			// Start Binaural Beats
-			const bConfig = props.program.audio?.binaural
+			const bConfig = activeProgram.value.audio?.binaural
 			audioSession.binaural.start({
 				carrierFreq: 100,
 				beatFreq: bConfig?.hertz ?? 6,
@@ -301,7 +315,7 @@ const initSession = async () => {
 	// Prepend Reminders
 	const reminders: Instruction[] = []
 	const reminderText: string[] = []
-	const firstInstruction = props.program.instructions[0]
+	const firstInstruction = activeProgram.value.instructions[0]
 	const shouldSkipIntro = firstInstruction?.options.skipIntro === true
 
 	if (!shouldSkipIntro) {
@@ -326,7 +340,7 @@ const initSession = async () => {
 		)
 	}
 
-	sessionInstructions.value = [...reminders, ...props.program.instructions]
+	sessionInstructions.value = [...reminders, ...activeProgram.value.instructions]
 	console.log('[Theater] Instructions Prepared:', sessionInstructions.value.length)
 
 	loadingProgress.value = 100
@@ -502,13 +516,30 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 }
 
 const finishSession = () => {
+	// Check if we should show the session selector
+	if (activeProgram.value.id === 'initial_training') {
+		state.value = SessionState.SELECTION
+		const log: SessionLog = {
+			id: `SES_${Date.now()}`,
+			subjectId: props.subjectId,
+			programId: activeProgram.value.id,
+			startTime: new Date(startTimeRef.value).toISOString(),
+			endTime: new Date().toISOString(),
+			totalScore: score.value,
+			metrics: metricsRef.value
+		}
+		saveSession(log)
+		// Do not emit exit
+		return
+	}
+
 	state.value = SessionState.FINISHED
 	audioSession.binaural.stop(3)
 	audioSession.musicLooper.stop(3)
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
-		programId: props.program.id,
+		programId: activeProgram.value.id,
 		startTime: new Date(startTimeRef.value).toISOString(),
 		endTime: new Date().toISOString(),
 		totalScore: score.value,
@@ -516,6 +547,59 @@ const finishSession = () => {
 	}
 	saveSession(log)
 	setTimeout(() => emit('exit'), 3000)
+}
+
+const handleSessionSelect = async (program: Program) => {
+	console.log('[Theater] Transitioning to session:', program.title)
+
+	// 1. Swap Program
+	activeProgram.value = program
+
+	// 2. Reset Data
+	score.value = 0
+	metricsRef.value = []
+	startTimeRef.value = Date.now()
+
+	// 3. Update Audio (Music)
+	if (activeProgram.value.audio?.musicTrack && activeProgram.value.audio.musicTrack !== 'none') {
+		try {
+			// Smoothly switch track
+			await audioSession.musicLooper.start({
+				track: activeProgram.value.audio.musicTrack,
+				volume: 0.8
+			})
+		} catch (e) {
+			console.warn(`[Theater] Failed to update music track`, e)
+		}
+	} else {
+		// If no music in new program, fade out
+		audioSession.musicLooper.stop(2)
+	}
+
+	// 4. Update Audio (Binaural)
+	const bConfig = activeProgram.value.audio?.binaural
+	if (bConfig) {
+		if (audioSession.binaural.isActive) {
+			audioSession.binaural.setBeatFrequency(bConfig.hertz ?? 6)
+			audioSession.binaural.setVolume(bConfig.volume ?? 0.5)
+		} else {
+			audioSession.binaural.start({
+				carrierFreq: 100,
+				beatFreq: bConfig.hertz ?? 6,
+				volume: bConfig.volume ?? 0.5
+			})
+		}
+	}
+
+	// 5. Setup Instructions
+	// Load program instructions directly, skipping the initialization reminders
+	// since the user has already completed the tutorial/setup.
+	sessionInstructions.value = [...activeProgram.value.instructions]
+
+	// 6. Start
+	// Trigger first instruction. This will switch state to INSTRUCTING,
+	// causing the Selection overlay to fade out and the new instruction to fade in.
+	nextInstruction(0)
 }
 
 // Initialize Session on mount
@@ -558,7 +642,7 @@ onMounted(() => {
 	>
 		<!-- Video Background -->
 		<video
-			v-if="program.videoBackground"
+			v-if="activeProgram.videoBackground"
 			autoplay
 			loop
 			muted
@@ -567,17 +651,17 @@ onMounted(() => {
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		>
 			<source
-				:src="program.videoBackground"
+				:src="activeProgram.videoBackground"
 				type="video/mp4"
 			/>
 		</video>
 
 		<!-- Spiral Background (Blurred Base) -->
 		<div
-			v-if="program.spiralBackground"
+			v-if="activeProgram.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${program.spiralBackground})`,
+				backgroundImage: `url(${activeProgram.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -589,10 +673,10 @@ onMounted(() => {
 
 		<!-- Spiral Background (Sharp Center Mask) -->
 		<div
-			v-if="program.spiralBackground"
+			v-if="activeProgram.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${program.spiralBackground})`,
+				backgroundImage: `url(${activeProgram.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -677,6 +761,39 @@ onMounted(() => {
 			</div>
 		</Transition>
 
+		<!-- Selection Overlay -->
+		<Transition name="selector">
+			<div
+				v-if="state === SessionState.SELECTION"
+				class="absolute inset-0 z-[60] flex flex-col items-center justify-center p-8 overflow-y-auto"
+			>
+				<div class="max-w-6xl w-full">
+					<h2 class="text-3xl font-light text-white mb-2 text-center">
+						Select a Session
+					</h2>
+					<p class="text-zinc-400 text-center mb-12">Choose your journey.</p>
+
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+						<SessionCard
+							v-for="prog in FULL_PROGRAMS"
+							:key="prog.id"
+							:program="prog"
+							@start="handleSessionSelect"
+						/>
+					</div>
+
+					<div class="mt-12 text-center">
+						<button
+							@click="$emit('exit')"
+							class="text-zinc-500 hover:text-white transition-colors text-sm uppercase tracking-widest"
+						>
+							Return to Dashboard
+						</button>
+					</div>
+				</div>
+			</div>
+		</Transition>
+
 		<!-- Active Instruction View -->
 		<div class="absolute inset-0 z-10 pointer-events-none">
 			<Transition
@@ -707,7 +824,7 @@ onMounted(() => {
 
 		<Transition name="fade">
 			<TransportControl
-				v-show="controlsVisible"
+				v-show="controlsVisible && state !== SessionState.SELECTION"
 				:instructions="sessionInstructions"
 				:currentIndex="instrIndex"
 				:isPlaying="
@@ -735,6 +852,24 @@ onMounted(() => {
 .fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
+}
+
+.selector-enter-active {
+	transition: opacity 2s cubic-bezier(0.25, 1, 0.5, 1), transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.selector-leave-active {
+	transition: opacity 1s ease-in, transform 1s ease-in;
+}
+
+.selector-enter-from {
+	opacity: 0;
+	transform: scale(1.08);
+}
+
+.selector-leave-to {
+	opacity: 0;
+	transform: scale(0.95);
 }
 
 /* Global styles if needed */

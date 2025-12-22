@@ -8,7 +8,8 @@ export enum SessionState {
 	VALIDATING = 'VALIDATING', // User is performing task, system checking
 	REINFORCING_POS = 'REINFORCING_POS', // Success state
 	REINFORCING_NEG = 'REINFORCING_NEG', // Failure state
-	FINISHED = 'FINISHED'
+	FINISHED = 'FINISHED',
+	SELECTION = 'SELECTION'
 }
 
 export enum FormFieldType {

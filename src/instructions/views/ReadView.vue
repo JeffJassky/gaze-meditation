@@ -34,7 +34,7 @@ onMounted(() => {
 				:style="{ color: instruction.resolvedTheme.secondaryTextColor }"
 			>
 				<span
-					v-for="(segment, index) in instruction.currentText.value.split('~')"
+					v-for="(segment, index) in (instruction.currentText?.value || '').split('~')"
 					:key="index"
 					class="inline-block"
 					>{{ segment.trim() }}&nbsp;</span
