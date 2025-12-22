@@ -23,111 +23,7 @@ import somaticResetFull from '../programs/somatic-relaxaton'
 import Home from './Home.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
-
-const initialTrainingProgram: Program = {
-	id: 'initial_training',
-	title: 'Gaze Training',
-	description: 'Get started with Gaze in less than 5 minutes.',
-	audio: { musicTrack: '/audio/music.mp3' },
-	spiralBackground: '/img/spiral.png',
-	instructions: [
-		// 1. Eyes (Close/Open)
-		new ReadInstruction({
-			text: [
-				'Welcome to Gaze training.',
-				"First, let's practice closing your eyes.",
-				'You will hear a chime ~ when it is time to open them.',
-				'When the instruction appears, close your eyes.'
-			],
-			cooldown: 0
-		}),
-		new CloseEyesInstruction({
-			cooldown: 0,
-			text: 'Close your eyes.',
-			duration: 3000 // Short hold,
-		}),
-		new OpenEyesInstruction({
-			cooldown: 0,
-			text: 'Open your eyes.'
-		}),
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['Perfect.']
-		}),
-
-		// 2. Jaw Relaxation
-		new RelaxJawInstruction({
-			cooldown: 0,
-			prompt: 'Relax your jaw completely ~ so your mouth opens slightly.',
-			duration: 3000
-		}),
-
-		// 3. Stillness
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['Excellent.', 'Now, find a comfortable position  ~ and stay completely still.']
-		}),
-		new StillnessInstruction({
-			cooldown: 0,
-			prompt: 'Keep the blue dot centered in the ring.',
-			duration: 15000
-		}),
-
-		// 4. No Blink
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['Sometimes, you will be asked ~ to keep your eyes open.']
-		}),
-		new NoBlinkInstruction({
-			cooldown: 0,
-			prompt: 'Do not blink.',
-			duration: 10000
-		}),
-
-		// 5. Gaze Direction
-		new ReadInstruction({
-			cooldown: 0,
-			text: [
-				"Sometimes, you'll be asked questons.",
-				'You can answer by nodding ~ or shaking your head.'
-			]
-		}),
-		new NodInstruction({
-			cooldown: 0,
-			prompt: 'Do you understand?',
-			type: 'YES'
-		}),
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['You may also be asked ~ to adjust your head and gaze.']
-		}),
-		new DirectionalGazeInstruction({
-			cooldown: 0,
-			prompt: 'For example, ~ lower your gaze and head gently now.',
-			direction: 'DOWN'
-		}),
-
-		// 7. Verbal
-		new ReadInstruction({
-			cooldown: 0,
-			text: [
-				'Finally, your voice can be used ~ for verbal affirmations.',
-				"We'll show you a phrase to affirm aloud."
-			]
-		}),
-		new SpeechInstruction({
-			cooldown: 0,
-			prompt: 'Say "I am ready"',
-			targetValue: 'I am ready',
-			duration: 5000
-		}),
-
-		new ReadInstruction({
-			cooldown: 0,
-			text: ['Perfect.', 'You are ready to begin.']
-		})
-	]
-}
+import { initialTrainingProgram } from '../programs/initial-training'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
@@ -489,6 +385,27 @@ const handleStartSession = async (program: Program) => {
 	}, 1000)
 }
 
+const handleStartTutorial = () => {
+	// Ensure a user is selected
+	if (!selectedUser.value) {
+		if (users.value.length > 0) {
+			selectedUser.value = users.value[0].id
+		} else {
+			// Fallback if no users exist (should be covered by seedDatabase, but good for safety)
+			const newUser: User = {
+				id: `SUB_${Math.floor(Math.random() * 1000)}`,
+				name: 'Guest',
+				totalScore: 0,
+				history: []
+			}
+			saveUser(newUser)
+			refreshData()
+			selectedUser.value = newUser.id
+		}
+	}
+	handleStartSession(initialTrainingProgram)
+}
+
 const getSubjectName = (subjectId: string) => {
 	return users.value.find(u => u.id === subjectId)?.name || subjectId
 }
@@ -662,19 +579,22 @@ onMounted(() => {
 
 		<!-- Main Content -->
 		<main class="flex-1 p-6 md:p-12 overflow-y-auto">
-			<Home v-if="activeTab === 'home'" />
+			<Home
+				v-if="activeTab === 'home'"
+				@startTutorial="handleStartTutorial"
+			/>
 
 			<div
 				v-if="activeTab === 'start'"
-				class="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+				class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
-				<header>
+				<header class="text-center">
 					<h2 class="text-3xl font-light text-white mb-2">Select a Session</h2>
 					<p class="text-zinc-500">Explore these curated Hypnosis sessions.</p>
 				</header>
 
 				<div class="space-y-4">
-					<label class="text-xs uppercase font-bold text-zinc-500 tracking-wider"
+					<label class="text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center"
 						>Full Sessions</label
 					>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -716,7 +636,7 @@ onMounted(() => {
 					<br />
 					<br />
 					<br />
-					<label class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider"
+					<label class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center"
 						>Test Sessions</label
 					>
 					<div
@@ -766,9 +686,9 @@ onMounted(() => {
 
 			<div
 				v-else-if="activeTab === 'history'"
-				class="max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500"
+				class="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
-				<h2 class="text-3xl font-light text-white mb-6">Session Logs</h2>
+				<h2 class="text-3xl font-light text-white mb-6 text-center">Session Logs</h2>
 				<div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
 					<table class="w-full text-left text-sm">
 						<thead class="bg-zinc-800/50 text-zinc-400 uppercase text-xs font-medium">
@@ -813,16 +733,16 @@ onMounted(() => {
 
 			<div
 				v-else-if="activeTab === 'users'"
-				class="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500"
+				class="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
-				<h2 class="text-3xl font-light text-white mb-6">Subject Management</h2>
+				<h2 class="text-3xl font-light text-white mb-6 text-center">Subject Management</h2>
 
 				<div
-					class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl mb-8 flex gap-4 items-end"
+					class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl mb-8 flex flex-col md:flex-row gap-4 items-center md:items-end"
 				>
-					<div class="flex-1">
+					<div class="w-full flex-1">
 						<label
-							class="text-xs uppercase font-bold text-zinc-500 tracking-wider block mb-2"
+							class="text-xs uppercase font-bold text-zinc-500 tracking-wider block mb-2 text-center"
 							>New Subject Name</label
 						>
 						<input
@@ -847,14 +767,14 @@ onMounted(() => {
 						class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl flex flex-col justify-between"
 					>
 						<div>
-							<h3 class="text-lg font-bold text-white">{{ u.name }}</h3>
-							<p class="text-xs text-zinc-500 font-mono mt-1">{{ u.id }}</p>
+							<h3 class="text-lg font-bold text-white text-left">{{ u.name }}</h3>
+							<p class="text-xs text-zinc-500 font-mono mt-1 text-left">{{ u.id }}</p>
 						</div>
 						<div
 							class="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-end"
 						>
 							<div>
-								<div class="text-xs text-zinc-500 uppercase">Total Score</div>
+								<div class="text-xs text-zinc-500 uppercase text-left">Total Score</div>
 								<div class="text-2xl font-mono text-cyan-400">
 									{{ u.totalScore }}
 								</div>

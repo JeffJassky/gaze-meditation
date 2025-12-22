@@ -37,7 +37,7 @@ onMounted(() => {
 					v-for="(segment, index) in instruction.currentText.value.split('~')"
 					:key="index"
 					class="inline-block"
-					>{{ segment }}</span
+					>{{ segment }}&nbsp;</span
 				>
 			</div>
 		</Transition>

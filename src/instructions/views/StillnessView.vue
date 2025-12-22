@@ -9,8 +9,8 @@
 			<span
 				v-for="(segment, index) in instruction.options.prompt.split('~')"
 				:key="index"
-				class="block"
-			>{{ segment }}</span>
+				class="inline-block"
+			>{{ segment }}&nbsp;</span>
 		</div>
 		<div
 			v-else-if="instruction.status.value === 'FAILED'"

@@ -12,8 +12,8 @@
 				<span
 					v-for="(segment, index) in (instruction.options.prompt || 'Type the following:').split('~')"
 					:key="index"
-					class="block"
-				>{{ segment }}</span>
+					class="inline-block"
+				>{{ segment }}&nbsp;</span>
 			</p>
 			<h1
 				:style="{

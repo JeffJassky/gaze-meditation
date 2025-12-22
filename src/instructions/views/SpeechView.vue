@@ -82,8 +82,8 @@ const targetWords = computed(() => {
 				<span
 					v-for="(segment, index) in instruction.options.prompt.split('~')"
 					:key="index"
-					class="block"
-				>{{ segment }}</span>
+					class="inline-block"
+				>{{ segment }}&nbsp;</span>
 			</p>
 
 			<div class="text-6xl font-bold tracking-tight drop-shadow-2xl relative inline-block">

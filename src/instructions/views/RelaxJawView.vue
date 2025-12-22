@@ -7,8 +7,8 @@
 			<span
 				v-for="(segment, index) in instruction.options.prompt.split('~')"
 				:key="index"
-				class="block"
-			>{{ segment }}</span>
+				class="inline-block"
+			>{{ segment }}&nbsp;</span>
 		</h1>
 
 		<!-- Visualizer hidden for now per user request -->

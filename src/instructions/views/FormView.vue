@@ -51,8 +51,8 @@ const submitForm = () => {
       <span
         v-for="(segment, index) in instruction.question.split('~')"
         :key="index"
-        class="block"
-      >{{ segment }}</span>
+        class="inline-block"
+      >{{ segment }}&nbsp;</span>
     </h2>
 
     <form @submit.prevent="submitForm" class="space-y-6">

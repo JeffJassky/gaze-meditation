@@ -211,7 +211,7 @@ const initSession = async () => {
 
 			if (missingCam || missingMic) {
 				// Pause init and show UI
-				loadingMessage.value = 'Waiting for Access'
+				loadingMessage.value = 'Enable Biofeedback'
 				permissionType.value =
 					missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
 				showPermissionRequest.value = true
@@ -318,6 +318,7 @@ const initSession = async () => {
 				id: 'reminder-dnd',
 				text: [
 					...reminderText,
+					'For best results, use headphones.',
 					'To avoid interruptions,',
 					'consider putting your device ~ into do not disturb mode.'
 				]
