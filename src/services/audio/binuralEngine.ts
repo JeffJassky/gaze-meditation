@@ -63,7 +63,8 @@ export class BinauralEngine {
 		const now = this.session.ctx.currentTime + 0.1
 
 		this.right.frequency.cancelScheduledValues(now)
-		this.right.frequency.setTargetAtTime(this.left.frequency.value + freq, now, 0.5)
+		// TimeConstant 3.33s ~= reach 95% in ~10s
+		this.right.frequency.setTargetAtTime(this.left.frequency.value + freq, now, 3.33)
 		if (this.currentConfig) {
 			this.currentConfig.beatFreq = freq
 		}

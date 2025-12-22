@@ -6,7 +6,6 @@ import {
 	NoBlinkInstruction,
 	DirectionalGazeInstruction,
 	RelaxJawInstruction,
-	SpeechInstruction,
 	OpenEyesInstruction,
 	CloseEyesInstruction
 } from '../instructions'
@@ -14,300 +13,379 @@ import {
 export const councilOfFireLong: Program = {
 	id: 'prog_council_fire_long',
 	title: 'The Council of Fire',
-	description: 'Connect with deep ancestral wisedom, power and guidance.',
+	description:
+		'A deep hypnotic journey of ancestral recognition, calm authority, and steadiness.',
 	tags: ['confidence'],
 	audio: {
-		musicTrack: 'audio/shamanic_deep_drums.mp3',
+		musicTrack: 'audio/music.mp3',
 		binaural: { hertz: 12 }
 	},
-	spiralBackground: 'img/ember_darkness.png', // A dark background with slow, rising orange sparks
+	spiralBackground: 'img/spiral.png',
 	instructions: [
 		// ============================================================
-		// PHASE 1: THE UN-TETHERING (Disconnecting from the Modern)
+		// PHASE 1: THE UN-TETHERING
 		// ============================================================
+
 		new ReadInstruction({
 			text: [
 				'Welcome.',
 				'This is a long journey.',
 				'There is nowhere else you need to be.',
-				'There is nothing else you need to do.'
-			]
-		}),
-		new ReadInstruction({
-			text: 'Adjust your body now for comfort.'
-		}),
-		new ReadInstruction({
-			text: 'Uncross your legs. Rest your hands.'
-		}),
-		new NodInstruction({
-			prompt: 'Are you ready to leave this time?',
-			nodsRequired: 1,
-			type: 'YES'
+				'There is nothing you need to force.'
+			],
+			cooldown: 3000
 		}),
 
-		// --- The Visual Fixation ---
 		new ReadInstruction({
-			text: 'Fix your eyes on the center of the darkness.'
+			text: 'Take a moment to adjust your body for comfort.',
+			cooldown: 2000
 		}),
+
 		new ReadInstruction({
-			text: 'Imagine the room around you is fading to grey.',
-			audio: {
-				binaural: { hertz: 8 } // Low Theta/Delta boundary for deep trance
-			}
+			text: ['Uncross your legs if needed.', 'Let your hands rest easily.'],
+			cooldown: 2000
 		}),
+
+		new ReadInstruction({
+			text: 'Fix your eyes on a single point in front of you.'
+		}),
+
+		new ReadInstruction({
+			text: [
+				'Notice how naturally attention gathers…',
+				'when it isn’t being pulled elsewhere.'
+			],
+			audio: { binaural: { hertz: 10 } },
+			cooldown: 4000
+		}),
+
+		new ReadInstruction({
+			text: [
+				'The space around you ~ begins to fade toward grey.',
+				'Not disappearing.',
+				'Just losing importance.',
+				'The world softens into quiet static.',
+				'awareness remains clear and steady.'
+			],
+			audio: { binaural: { hertz: 8 } },
+			cooldown: 5000
+		}),
+
 		new StillnessInstruction({
-			prompt: 'Watch the grey static.',
+			prompt: 'Blink slowly now. Heavy, unhurried blinks.',
 			duration: 20000
 		}),
+
 		new ReadInstruction({
-			text: 'The emails. The texts. The noise.'
+			text: ['Your eyelids feel comfortable…']
 		}),
+
+		new CloseEyesInstruction({
+			text: 'You may close your eyes for a moment and rest.'
+		}),
+
 		new ReadInstruction({
-			text: 'It is all dissolving.'
+			text: 'Relax, keeping your eyes closed.',
+			cooldown: 3000
 		}),
-		new NoBlinkInstruction({ prompt: 'Blink heavy, slow blinks', duration: 30000 }),
-		new ReadInstruction({
-			text: 'Your eyelids are heavy curtains.'
+
+		new OpenEyesInstruction({
+			text: 'And when it feels natural… open your eyes again.'
 		}),
-		new ReadInstruction({
-			text: 'Close them for a moment and rest.'
-		}),
-		new CloseEyesInstruction({ text: 'Close eyes.' }),
-		new StillnessInstruction({ prompt: 'Disconnecting...', duration: 15000 }),
-		new OpenEyesInstruction({ text: 'Open eyes.' }),
 
 		// ============================================================
-		// PHASE 2: THE PRIMAL RHYTHM (The Regression)
+		// PHASE 2: THE PRIMAL RHYTHM
 		// ============================================================
+
 		new ReadInstruction({
-			text: 'You are now standing at the edge of a forest.'
+			text: 'You are standing at the edge of a forest.',
+			audio: { binaural: { hertz: 10 } },
+			cooldown: 3000
 		}),
+
 		new ReadInstruction({
-			text: 'It is night. The air is cold and clean.'
+			text: [
+				'It is night.',
+				'The air is cold and clean.',
+				'It feels light against your skin.'
+			],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'We are going to walk backwards through time.'
+			text: ['Time loosens here.', 'Not by effort…', 'but by irrelevance.'],
+			cooldown: 4000
 		}),
+
 		new DirectionalGazeInstruction({
-			prompt: 'Look down at your feet.',
+			prompt: 'Let your head tilt slightly downward.',
 			direction: 'DOWN'
 		}),
+
 		new ReadInstruction({
-			text: '2020... fading away.'
+			text: ['Walkng through the forest ~ time winds backwards.'],
+			cooldown: 4000
 		}),
+
+		new ReadInstruction({ text: '2020… fading away.', cooldown: 2000 }),
+		new ReadInstruction({ text: '2000… growing quieter.', cooldown: 2000 }),
+
+		new RelaxJawInstruction({
+			prompt: 'Jaw loosens. Breath deepens.',
+			duration: 15000
+		}),
+
+		new ReadInstruction({ text: '1900… softer.', cooldown: 2000 }),
+		new ReadInstruction({ text: '1800… fewer edges.', cooldown: 2000 }),
 		new ReadInstruction({
-			text: '2000... fading away.'
+			text: ['1500…', 'No electricity.', 'Only fire.'],
+			cooldown: 3000
 		}),
-		new RelaxJawInstruction({ prompt: 'Jaw loose, breathing deep', duration: 15000 }),
+
+		new StillnessInstruction({
+			prompt: 'You walk in silence.',
+			duration: 25000
+		}),
+
 		new ReadInstruction({
-			text: '1900... The world is getting quieter.'
+			text: ['A thousand years ago.', 'You are simply a traveler.'],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: '1800... The trees are getting larger.'
+			text: ['In the distance, you hear a drum.', 'Slow.', 'Rhythmic.'],
+			cooldown: 5000
 		}),
+
 		new ReadInstruction({
-			text: '1500... No electricity. Only fire.'
+			text: [
+				'Your breath begins to sync with it…',
+				'as if your body remembers something older than thought.'
+			],
+			cooldown: 6000
 		}),
-		new StillnessInstruction({ prompt: 'Walk in the silence.', duration: 25000 }),
+
+		// ============================================================
+		// PHASE 3: THE THRESHOLD
+		// ============================================================
+
 		new ReadInstruction({
-			text: '1000 years ago.'
+			text: ['Ahead, through the trees, ~ there is warmth.', 'An orange glow.'],
+			audio: { binaural: { hertz: 5.5 } },
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'You are simply a traveler.'
+			text: ['As you approach, ~ it grows into a circle of firelight.', 'A clearing.'],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'Do you hear the drum?'
+			text: [
+				'You stop at the edge ~ of the light.',
+				'This circle does not accept ~ what is carried heavily.'
+			],
+			cooldown: 4000
 		}),
+
+		new ReadInstruction({
+			text: [
+				'If it feels right,',
+				'imagine setting down ~ what you’ve been carrying.',
+				'Like setting down a heavy backpack.',
+				'You can always pick it up later.'
+			],
+			cooldown: 5000
+		}),
+
+		new ReadInstruction({
+			text: ['You remove one strap.', 'Then the other'],
+			duration: 10000
+		}),
+
+		new ReadInstruction({
+			text: ['Notice how your body stands', 'when nothing needs proving.'],
+			cooldown: 4000
+		}),
+
 		new NodInstruction({
-			prompt: 'Listen to the audio. Do you hear it?',
+			prompt: 'When you are ready, ~ step into the circle.',
 			nodsRequired: 1,
 			type: 'YES'
 		}),
-		new ReadInstruction({
-			text: 'Sync your breathing to that beat.'
-		}),
-		new StillnessInstruction({
-			prompt: 'Breathe... Beat... Breathe... Beat...',
-			duration: 30000
-		}),
 
 		// ============================================================
-		// PHASE 3: THE THRESHOLD (The Permission)
+		// PHASE 4: THE COUNCIL
 		// ============================================================
-		new ReadInstruction({
-			text: 'Up ahead, through the trees.',
-			audio: {
-				binaural: { hertz: 5.5 } // Low Theta/Delta boundary for deep trance
-			}
-		}),
-		new ReadInstruction({
-			text: 'An orange glow.'
-		}),
-		new ReadInstruction({
-			text: 'You walk towards the warmth.'
-		}),
-		new ReadInstruction({
-			text: 'But you stop at the edge of the light.'
-		}),
-		new ReadInstruction({
-			text: 'You cannot bring your modern worries into this circle.'
-		}),
-		new ReadInstruction({
-			text: 'They are too heavy.'
-		}),
-		new ReadInstruction({
-			text: 'Visualize taking off a heavy backpack.'
-		}),
-		new ReadInstruction({
-			text: 'Drop it on the ground outside the light.'
-		}),
-		new RelaxJawInstruction({
-			prompt: 'Feel your shoulders rise and lighten',
-			duration: 10000
-		}),
-		new ReadInstruction({
-			text: 'Leave it there. You can pick it up later if you want.'
-		}),
-		new ReadInstruction({
-			text: "(You won't want to.)"
-		}),
-		new NodInstruction({ prompt: 'Are you ready to enter?', nodsRequired: 1, type: 'YES' }),
 
-		// ============================================================
-		// PHASE 4: THE COUNCIL (The Deep Communion)
-		// ============================================================
 		new ReadInstruction({
-			text: 'Step into the clearing.'
+			text: 'The fire burns at the center.',
+			audio: { binaural: { hertz: 4 } },
+			cooldown: 3000
 		}),
+
+		new NoBlinkInstruction({
+			prompt: 'Its warmth reaches your face.',
+			duration: 15000
+		}),
+
 		new ReadInstruction({
-			text: 'The fire is roaring. It warms your face.'
+			text: 'Around it sit the Elders.',
+			cooldown: 3000
 		}),
-		new NoBlinkInstruction({ prompt: 'Stare at the fire (Screen)', duration: 20000 }),
+
 		new ReadInstruction({
-			text: 'Look around the fire.'
+			text: ['Their eyes are calm.', 'They have seen centuries pass ~ like seasons.'],
+			cooldown: 4000
 		}),
+
 		new DirectionalGazeInstruction({
-			prompt: 'Look Left to the Elders.',
+			prompt: 'Turn your head gently left ~ toward the Elders.',
 			direction: 'LEFT'
 		}),
+
 		new DirectionalGazeInstruction({
-			prompt: 'Look Right to the Warriors.',
+			prompt: 'Now gently right — toward the Warriors.',
 			direction: 'RIGHT'
 		}),
-		new ReadInstruction({
-			text: 'You do not know their names.'
-		}),
-		new ReadInstruction({
-			text: 'But you know their blood.'
-		}),
-		new ReadInstruction({
-			text: 'It flows in your veins right now.'
-		}),
-		new ReadInstruction({
-			text: 'Sit down in the empty spot waiting for you.'
-		}),
-		new StillnessInstruction({ prompt: 'Sitting in the Council.', duration: 20000 }),
 
-		// --- The "Backing" Visualization ---
 		new ReadInstruction({
-			text: 'Close your eyes to feel them better.',
-			audio: {
-				binaural: { hertz: 3.5 } // Low Theta/Delta boundary for deep trance
-			}
+			text: ['Still.', 'Grounded.', 'Present.'],
+			cooldown: 4000
 		}),
-		new CloseEyesInstruction({ text: 'Close eyes.' }),
+
 		new ReadInstruction({
-			text: 'Imagine thousands of them standing behind you.' // Note: Spoken by internal voice since eyes are closed
+			text: [
+				'You do not know their names.',
+				'But you know their blood.',
+				'It moves through you now.'
+			],
+			cooldown: 5000
 		}),
-		// Note: Since eyes are closed, we rely on the user holding the state.
-		// We will open eyes shortly to give the next instruction.
+
+		new ReadInstruction({
+			text: ['They do not judge.', 'They do not instruct.', 'They recognize.'],
+			cooldown: 4000
+		}),
+
+		new ReadInstruction({
+			text: ['You notice an empty place by the fire.', 'Already waiting.'],
+			cooldown: 3000
+		}),
+
 		new StillnessInstruction({
-			prompt: 'Feel the wall of protection behind your back.',
-			duration: 30000
+			prompt: 'You sit. Your posture settles naturally.',
+			duration: 20000
 		}),
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
 
-		// --- The Ritual of the Ember ---
 		new ReadInstruction({
-			text: 'An Elder approaches the fire.'
+			text: ['Behind you…', 'thousands more.', 'Generations standing quietly at your back.'],
+			cooldown: 5000
 		}),
+
+		// --- PRESSURE MOMENT ---
+
 		new ReadInstruction({
-			text: 'They reach in and pull out a burning coal.'
+			text: ['The fire suddenly flares.', 'Heat rises.']
 		}),
+
 		new ReadInstruction({
-			text: 'It glows with golden power.'
+			text: ['Some would shift away.', 'You notice… you do not.']
 		}),
+
+		// --- THE EMBER ---
+
 		new ReadInstruction({
-			text: 'This is the Spark of Survival.'
+			text: ['An Elder stands.', 'They draw a glowing ember from the fire.']
 		}),
+
 		new ReadInstruction({
-			text: 'They place it gently into your chest.'
+			text: ['It is not forced toward you.', 'It is offered.']
 		}),
+
 		new ReadInstruction({
-			text: 'It does not burn. It strengthens.'
+			text: ['If it feels right, you lean in.', 'The warmth settles near your chest.']
 		}),
-		new CloseEyesInstruction({ text: 'Close eyes and feel the heat enter your heart.' }),
-		new StillnessInstruction({ prompt: 'Absorbing the Ember...', duration: 60000 }), // Long deepener
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
+
+		new ReadInstruction({
+			text: ['Not burning.', 'Not overwhelming.', 'Steady.'],
+			cooldown: 4000
+		}),
+
+		new ReadInstruction({
+			text: [
+				'Later — when you are challenged —',
+				'this same warmth steadies your breath',
+				'before words form.'
+			]
+		}),
+
+		new StillnessInstruction({
+			prompt: 'Let this steadiness register as familiar.',
+			duration: 25000
+		}),
 
 		// ============================================================
-		// PHASE 5: THE INTEGRATION (The Return)
+		// PHASE 5: RETURN & INTEGRATION
 		// ============================================================
+
 		new ReadInstruction({
-			text: 'The fire is inside you now.'
+			text: 'The Elder returns to their place.'
 		}),
+
 		new ReadInstruction({
-			text: 'You are the Carrier of the Flame.'
+			text: ['A Warrior meets your eyes', 'and inclines their head once.'],
+			cooldown: 3000
 		}),
+
 		new ReadInstruction({
-			text: 'Look at the fire on the screen one last time.'
+			text: ['Not approval.', 'Recognition.'],
+			cooldown: 3000
 		}),
-		new SpeechInstruction({
-			prompt: 'Whisper to the Council:',
-			targetValue: 'I will not forget',
-			duration: 10000
-		}),
+
 		new ReadInstruction({
-			text: 'Stand up.'
+			text: ['You stand from the fire.', 'The circle remains behind you.'],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'Turn away from the clearing.'
+			text: ['You walk back into the forest.', 'Time begins to return.'],
+			audio: { binaural: { hertz: 10 } },
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'Walk back into the forest.'
+			text: ['1900…', '2000…', '2020…'],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: 'Moving faster now.',
-			audio: {
-				binaural: { hertz: 12 } // Low Theta/Delta boundary for deep trance
-			}
+			text: ['You feel the chair beneath you.', 'The room around you.'],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: '1000 AD... 1500 AD...'
+			text: 'Take a deep breath in.',
+			cooldown: 2000
 		}),
+
 		new ReadInstruction({
-			text: '1800... 1900...'
+			text: 'And let it go.',
+			cooldown: 3000
 		}),
+
 		new ReadInstruction({
-			text: 'Feeling the chair beneath you again.'
+			text: [
+				'When you are ready, return fully awake.',
+				'Carrying less noise.',
+				'Standing with more weight.'
+			],
+			cooldown: 4000
 		}),
+
 		new ReadInstruction({
-			text: '2000... 2020...'
-		}),
-		new ReadInstruction({
-			text: 'Today.'
-		}),
-		new ReadInstruction({
-			text: 'Take a deep breath.'
-		}),
-		new RelaxJawInstruction({ prompt: 'Exhale the old air', duration: 5000 }),
-		new ReadInstruction({
-			text: 'When you are ready...'
-		}),
-		new ReadInstruction({
-			text: 'Wake up. Powerful. Ancient. New.'
-		}),
-		new NodInstruction({ prompt: 'Are you back?', nodsRequired: 1, type: 'YES' })
+			text: ['Nothing dramatic changes.', 'Something essential already has.']
+		})
 	]
 }
 
