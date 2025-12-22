@@ -59,6 +59,7 @@ export interface Program {
 	id: string
 	title: string
 	description: string
+	tags?: string[]
 	audio?: {
 		musicTrack?: string // Simulated audio track name
 		binaural?: ProgramBinauralConfig

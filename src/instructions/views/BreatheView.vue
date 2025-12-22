@@ -8,75 +8,108 @@
         Base Size: 200px
         Scale: 0.8 (Exhale) to 1.2 (Inhale)
       -->
-			<div
-				class="breath-circle"
-				:style="{
-					transform: `scale(${1 + instruction.breathSignal.value * 0.3})`,
-					backgroundColor: (instruction.resolvedTheme.accentColor || '#00ffff') + '20', // Low opacity fill
-					boxShadow: `
-            0 0 40px ${(instruction.resolvedTheme.accentColor || '#00ffff')}40, 
-            inset 0 0 60px ${(instruction.resolvedTheme.accentColor || '#00ffff')}40
-          `,
-					border: `2px solid ${(instruction.resolvedTheme.accentColor || '#00ffff')}60`
-				}"
-			></div>
 
-			<div class="guide-text" :style="{ opacity: Math.abs(instruction.breathVelocity.value) > 0.005 ? 0.8 : 0.3 }">
-				<span v-if="instruction.breathVelocity.value > 0.005">INHALE</span>
-				<span v-else-if="instruction.breathVelocity.value < -0.005">EXHALE</span>
-				<span v-else>...</span>
+			<div class="guide-text">
+				<span v-if="instruction.breathVelocity.value > 0.005">Breathe.</span>
+				<span v-else-if="instruction.breathVelocity.value < -0.005">Breathe.</span>
+				<span v-else>Breathe.</span>
 			</div>
 		</div>
 
 		<ProgressBar
+			class="breath-circle"
 			v-if="instruction.options.duration"
+			:style="{
+				transform: `translate(-50%, -50%) scale(${
+					1 + instruction.breathSignal.value * 0.3
+				})`,
+				backgroundColor: (instruction.resolvedTheme.positiveColor || '#00ffff') + '20', // Low opacity fill
+				boxShadow: `
+            0 0 40px ${instruction.resolvedTheme.positiveColor || '#00ffff'}ff, 
+            inset 0 0 60px ${instruction.resolvedTheme.positiveColor || '#00ffff'}ff
+          `,
+				borderRadius: '50%'
+			}"
+			:size="300"
 			:progress="instruction.progress.value"
 			:fillColor="instruction.resolvedTheme.positiveColor"
-			:trackColor="instruction.resolvedTheme.secondaryTextColor + '20'"
+			:trackColor="instruction.resolvedTheme.secondaryTextColor + '00'"
 		/>
 
 		<div
 			class="debug-stats"
 			:style="{ color: instruction.resolvedTheme.secondaryTextColor }"
 		>
-      <h3 class="debug-title">Statistical Observer</h3>
-      
+			<h3 class="debug-title">Statistical Observer</h3>
+
 			<div class="stat-row">
 				<span class="label">State:</span>
-				<span class="value" :class="{ 'text-green-400': instruction.controller.state.value === 'LOCKED', 'text-yellow-400': instruction.controller.state.value === 'CALIBRATING', 'text-red-400': instruction.controller.state.value === 'DISTURBED' }">
-          {{ instruction.controller.state.value }}
-        </span>
+				<span
+					class="value"
+					:class="{
+						'text-green-400': instruction.controller.state.value === 'LOCKED',
+						'text-yellow-400': instruction.controller.state.value === 'CALIBRATING',
+						'text-red-400': instruction.controller.state.value === 'DISTURBED'
+					}"
+				>
+					{{ instruction.controller.state.value }}
+				</span>
 			</div>
-      
-      <div class="stat-row">
+
+			<div class="stat-row">
 				<span class="label">Winner:</span>
 				<span class="value">{{ instruction.controller.activeAxis.value }}</span>
 			</div>
-      
-      <div class="stat-divider"></div>
 
-      <!-- Channels -->
-      <div v-for="(ch, key) in instruction.controller.channels" :key="key" class="stat-row text-xs">
-        <span class="label capitalize w-12">{{ key }}:</span>
-        
-        <!-- Reliability Bar -->
-        <div class="flex-1 h-1.5 bg-white/10 rounded-full mx-2 mt-1 relative overflow-hidden">
-          <div 
-            class="absolute top-0 left-0 h-full rounded-full transition-all duration-300"
-            :style="{ width: (ch.reliability * 100) + '%', backgroundColor: ch.reliability > 0.5 ? '#4ade80' : '#f87171' }"
-          ></div>
-        </div>
-        
-        <span class="value w-8 text-right">{{ ch.reliability.toFixed(2) }}</span>
-      </div>
+			<div class="stat-divider"></div>
 
-      <div class="stat-divider"></div>
+			<!-- Channels -->
+			<div
+				v-for="(ch, key) in instruction.controller.channels"
+				:key="key"
+				class="stat-row text-xs"
+			>
+				<span class="label capitalize w-12">{{ key }}:</span>
 
-      <div class="stat-row">
+				<!-- Reliability Bar -->
+				<div
+					class="flex-1 h-1.5 bg-white/10 rounded-full mx-2 mt-1 relative overflow-hidden"
+				>
+					<div
+						class="absolute top-0 left-0 h-full rounded-full transition-all duration-300"
+						:style="{
+							width: ch.reliability * 100 + '%',
+							backgroundColor: ch.reliability > 0.5 ? '#4ade80' : '#f87171'
+						}"
+					></div>
+				</div>
+
+				<span class="value w-8 text-right">{{ ch.reliability.toFixed(2) }}</span>
+			</div>
+
+			<div class="stat-divider"></div>
+
+			<div class="stat-row">
 				<span class="label">Direction:</span>
-				<span class="value" :style="{ color: instruction.breathVelocity.value > 0.005 ? '#4ade80' : instruction.breathVelocity.value < -0.005 ? '#60a5fa' : 'inherit' }">
-          {{ instruction.breathVelocity.value > 0.005 ? 'Inhaling' : instruction.breathVelocity.value < -0.005 ? 'Exhaling' : 'Hold' }}
-        </span>
+				<span
+					class="value"
+					:style="{
+						color:
+							instruction.breathVelocity.value > 0.005
+								? '#4ade80'
+								: instruction.breathVelocity.value < -0.005
+								? '#60a5fa'
+								: 'inherit'
+					}"
+				>
+					{{
+						instruction.breathVelocity.value > 0.005
+							? 'Inhaling'
+							: instruction.breathVelocity.value < -0.005
+							? 'Exhaling'
+							: 'Hold'
+					}}
+				</span>
 			</div>
 
 			<div class="stat-row">
@@ -84,16 +117,15 @@
 				<span class="value">{{ instruction.respirationRate.value.toFixed(1) }} BPM</span>
 			</div>
 
-      <div class="stat-row">
-        <span class="label">Count:</span>
-        <span class="value">{{ instruction.breathsDetected.value }}</span>
-      </div>
+			<div class="stat-row">
+				<span class="label">Count:</span>
+				<span class="value">{{ instruction.breathsDetected.value }}</span>
+			</div>
 
 			<div class="stat-row">
 				<span class="label">Signal:</span>
 				<span class="value">{{ instruction.breathSignal.value.toFixed(2) }}</span>
 			</div>
-
 		</div>
 	</div>
 </template>
@@ -128,11 +160,8 @@ defineProps<{
 }
 
 .breath-circle {
-	width: 200px;
-	height: 200px;
-	border-radius: 50%;
 	transition: transform 0.1s linear, background-color 0.5s ease;
-  will-change: transform;
+	will-change: transform;
 }
 
 .guide-text {
@@ -140,9 +169,7 @@ defineProps<{
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	font-size: 1.2rem;
-	letter-spacing: 0.2em;
-	font-weight: 300;
+	font-size: 1.5rem;
 	transition: opacity 0.3s ease;
 	height: 1.5em; /* Prevent layout shift */
 	pointer-events: none;
@@ -155,51 +182,57 @@ defineProps<{
 	font-family: monospace;
 	font-size: 0.75rem;
 	text-align: left;
-  background: rgba(0,0,0,0.7);
-  padding: 15px;
-  border-radius: 8px;
-  backdrop-filter: blur(8px);
-  width: 240px;
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+	background: rgba(0, 0, 0, 0.7);
+	padding: 15px;
+	border-radius: 8px;
+	backdrop-filter: blur(8px);
+	width: 240px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .debug-title {
-  font-size: 0.85rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 8px;
+	font-size: 0.85rem;
+	font-weight: bold;
+	margin-bottom: 10px;
+	color: #fff;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	text-align: center;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	padding-bottom: 8px;
 }
 
 .stat-row {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-  margin-top: 6px;
+	margin-top: 6px;
 }
 
 .label {
-  color: rgba(255,255,255,0.6);
+	color: rgba(255, 255, 255, 0.6);
 }
 
 .value {
-  color: #fff;
-  font-weight: bold;
+	color: #fff;
+	font-weight: bold;
 }
 
 .stat-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.1);
-  margin: 10px 0;
+	height: 1px;
+	background: rgba(255, 255, 255, 0.1);
+	margin: 10px 0;
 }
 
 /* Utility classes for colors (Tailwind approximations) */
-.text-green-400 { color: #4ade80; }
-.text-yellow-400 { color: #facc15; }
-.text-red-400 { color: #f87171; }
+.text-green-400 {
+	color: #4ade80;
+}
+.text-yellow-400 {
+	color: #facc15;
+}
+.text-red-400 {
+	color: #f87171;
+}
 </style>

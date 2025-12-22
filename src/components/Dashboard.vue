@@ -52,7 +52,7 @@ const TEST_PROGRAMS: Program[] = [
 		instructions: [
 			new BreatheInstruction({
 				prompt: 'Just breathe naturally.',
-				duration: 60000,
+				duration: 20000,
 				skipIntro: true
 			})
 		]
@@ -577,6 +577,7 @@ onMounted(() => {
 			<Home
 				v-if="activeTab === 'home'"
 				@startTutorial="handleStartTutorial"
+				@browseSessions="activeTab = 'start'"
 			/>
 
 			<div
@@ -655,6 +656,17 @@ onMounted(() => {
 							class="group relative bg-zinc-900 border border-zinc-800 p-6 rounded-xl hover:border-zinc-600 transition-all"
 						>
 							<div class="flex flex-col h-full">
+								<div
+									v-if="prog.tags && prog.tags.length"
+									class="flex items-center gap-3 mb-2"
+								>
+									<span
+										v-for="tag in prog.tags"
+										:key="tag"
+										class="text-[10px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded uppercase tracking-widest font-bold border border-cyan-500/20"
+										>{{ tag }}</span
+									>
+								</div>
 								<div>
 									<h3
 										class="text-xl font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors text-left"
@@ -681,7 +693,7 @@ onMounted(() => {
 										@click="handleStartSession(prog)"
 										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
 									>
-										Start
+										Begin Session
 									</button>
 								</div>
 							</div>
@@ -727,7 +739,7 @@ onMounted(() => {
 										@click="handleStartSession(prog)"
 										class="bg-cyan-900 w-full hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-cyan-100 px-6 py-3 rounded-lg font-bold text-sm tracking-wide transition-all"
 									>
-										Start
+										Begin Session
 									</button>
 								</div>
 							</div>

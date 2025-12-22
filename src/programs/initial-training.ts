@@ -42,14 +42,18 @@ export const initialTrainingProgram: Program = {
 		// 2. Jaw Relaxation
 		new RelaxJawInstruction({
 			cooldown: 0,
-			prompt: 'Relax your jaw completely ~ so your mouth opens slightly.',
+			prompt: 'Relax your jaw completely ~ so your mouth gently falls open.',
 			duration: 3000
 		}),
 
 		// 3. Stillness
 		new ReadInstruction({
 			cooldown: 0,
-			text: ['Excellent.', 'Now, find a comfortable position  ~ and prepare to be still.']
+			text: [
+				'Excellent.',
+				'Notice how when the jaw relaxes, ~ your face follows.',
+				'Now, find a comfortable position  ~ and prepare to be still.'
+			]
 		}),
 		new StillnessInstruction({
 			cooldown: 0,

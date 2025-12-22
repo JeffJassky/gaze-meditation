@@ -15,7 +15,8 @@ import {
 export const somaticResetFull: Program = {
 	id: 'prog_somatic_reset_full',
 	title: 'The Somatic Reset',
-	description: 'A 20-minute, high-density flow for total physical release.',
+	description: 'A 20-minute flow for total mental and physical relaxation.',
+	tags: ['relaxation'],
 	audio: {
 		musicTrack: 'audio/music.mp3',
 		binaural: { hertz: 6, volume: 0.5 }

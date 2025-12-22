@@ -14,6 +14,7 @@ export const theBlueDoor: Program = {
 	id: 'prog_blue_door_journey',
 	title: 'The Blue Door',
 	description: 'A deep narrative journey through the subconscious to a place of inner beauty.',
+	tags: ['bliss'],
 	audio: {
 		musicTrack: 'audio/music.mp3', // Suggested track name
 		binaural: { hertz: 4 } // Theta waves for deep imagery

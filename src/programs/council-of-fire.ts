@@ -14,8 +14,8 @@ import {
 export const councilOfFireLong: Program = {
 	id: 'prog_council_fire_long',
 	title: 'The Council of Fire',
-	description:
-		'Immerse yourself in nature and connect with deep ancestral wisedom, power and guidance.',
+	description: 'Connect with deep ancestral wisedom, power and guidance.',
+	tags: ['confidence'],
 	audio: {
 		musicTrack: 'audio/shamanic_deep_drums.mp3',
 		binaural: { hertz: 12 }

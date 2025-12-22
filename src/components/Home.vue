@@ -2,6 +2,7 @@
 // Home component for introducing Gaze
 const emit = defineEmits<{
 	(e: 'startTutorial'): void
+	(e: 'browseSessions'): void
 }>()
 </script>
 
@@ -25,12 +26,18 @@ const emit = defineEmits<{
 
 		<!-- Introduction Section -->
 		<section class="space-y-8">
-			<div class="flex justify-center">
+			<div class="flex justify-center items-center gap-8">
 				<button
 					@click="emit('startTutorial')"
 					class="bg-cyan-950 hover:bg-cyan-900 text-white border border-cyan-800 px-8 py-4 rounded-full font-bold text-lg tracking-wide transition-all shadow-[0_0_20px_rgba(6,182,212,0.2),inset_0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4),inset_0_0_20px_rgba(6,182,212,0.2)]"
 				>
 					Begin Tutorial
+				</button>
+				<button
+					@click="emit('browseSessions')"
+					class="text-zinc-500 hover:text-zinc-300 font-bold tracking-wide transition-colors"
+				>
+					Browse Sessions
 				</button>
 			</div>
 			<div class="p-8 md:p-12 bg-zinc-900/50 border border-zinc-800 rounded-3xl text-left">
@@ -52,30 +59,6 @@ const emit = defineEmits<{
 				Somatic Triggers & Features
 			</h3>
 			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-				<!-- Pacing -->
-				<div class="p-6 border border-zinc-800 rounded-2xl bg-zinc-900/30 text-left">
-					<div class="text-cyan-400 mb-4">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-6 w-6"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="1.5"
-								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-					</div>
-					<h4 class="font-bold text-zinc-100">Dynamic Pacing</h4>
-					<p class="text-xs text-zinc-500 mt-2 leading-relaxed">
-						Rhythm is algorithmically calculated based on sentence structure.
-					</p>
-				</div>
-
 				<!-- Breath -->
 				<div class="p-6 border border-zinc-800 rounded-2xl bg-zinc-900/30 text-left">
 					<div class="text-cyan-400 mb-4">
@@ -112,6 +95,29 @@ const emit = defineEmits<{
 					</p>
 				</div>
 
+				<!-- Pacing -->
+				<div class="p-6 border border-zinc-800 rounded-2xl bg-zinc-900/30 text-left">
+					<div class="text-cyan-400 mb-4">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-6 w-6"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="1.5"
+								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+					</div>
+					<h4 class="font-bold text-zinc-100">Dynamic Pacing</h4>
+					<p class="text-xs text-zinc-500 mt-2 leading-relaxed">
+						The rhythm meets you where you are.
+					</p>
+				</div>
 				<!-- Verbal -->
 				<div class="p-6 border border-zinc-800 rounded-2xl bg-zinc-900/30 text-left">
 					<div class="text-cyan-400 mb-4">
