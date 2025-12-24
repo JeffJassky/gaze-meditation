@@ -20,7 +20,7 @@ defineEmits<{
 		<div class="flex flex-col h-full">
 			<div
 				v-if="program.tags && program.tags.length"
-				class="flex items-center gap-3 mb-2"
+				class="flex items-center gap-2 mb-2"
 			>
 				<span
 					v-for="tag in program.tags"
@@ -42,8 +42,8 @@ defineEmits<{
 			</div>
 			<div class="flex gap-2 mt-4 flex-wrap">
 				<span class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500">
-					{{ Math.ceil(program.instructions.length / 6) }}-{{
-						Math.ceil(program.instructions.length / 4)
+					{{ Math.ceil(program.instructions.length / 3) }}-{{
+						Math.ceil(program.instructions.length / 2)
 					}}
 					min
 				</span>

@@ -2,290 +2,222 @@ import type { Program } from '../types'
 import {
 	ReadInstruction,
 	StillnessInstruction,
-	NodInstruction,
 	NoBlinkInstruction,
-	DirectionalGazeInstruction,
-	RelaxJawInstruction,
-	// TypeInstruction,
-	SpeechInstruction,
-	OpenEyesInstruction,
-	CloseEyesInstruction
+	OpenEyesInstruction
+	// We only need visual instructions for a Read-Only script
 } from '../instructions'
 
-export const somaticResetFull: Program = {
-	id: 'prog_somatic_reset_full',
-	title: 'The Somatic Reset',
-	description: 'A 20-minute flow for total mental and physical relaxation.',
-	tags: ['relaxation'],
+export const somaticResetReadOnly: Program = {
+	id: 'prog_somatic_reset_extended',
+	title: 'The Somatic Reset (Extended)',
+	description: 'A 20-minute guide to total physical and mental relaxation.',
+	tags: ['Deep Rest'],
 	audio: {
 		musicTrack: 'audio/music.mp3',
-		binaural: { hertz: 6, volume: 0.5 }
+		binaural: { hertz: 5 } // Mid-Theta for trance logic
 	},
-	// videoBackground: '/loop2.mov',
 	spiralBackground: 'img/spiral.png',
 	instructions: [
-		// --- Block 1: The Mental "Handshake" (Pacing) ---
+		// --- Phase 1: The Disconnect (Minutes 0-3) ---
 		new ReadInstruction({
 			text: [
 				'Welcome.',
-				'This 20-minute flow will help you relax.',
-				'It will help you release stress',
-				'and relax your mind.'
+				'This is a space of silence.',
+				'A space to stop doing.',
+				'And start being.'
 			]
 		}),
 		new ReadInstruction({
-			text: 'Before we begin'
+			text: [
+				'Take a minute to arrange your body.',
+				'Uncross your legs.',
+				'Let your hands find a home in your lap.'
+			]
 		}),
-		new ReadInstruction({
-			text: 'Rest your eyes at the center of the screen.'
-		}),
-		new ReadInstruction({
-			text: ['Prepare to be still.', 'Be still.']
-		}),
+		// Wait 15s for them to settle
 		new StillnessInstruction({
-			prompt: 'keep the blue dot centered in the ring.',
+			prompt: 'Settle in.',
 			duration: 15000
 		}),
 		new ReadInstruction({
-			text: 'Notice the way your body feels against the chair.'
+			text: [
+				'Look at the center of the screen.',
+				'Do not stare hard. Stare softly.',
+				'Imagine you are looking *through* the screen.'
+			]
 		}),
 		new ReadInstruction({
-			text: 'Notice the weight of your hands.'
+			text: 'Hold that soft gaze.'
+		}),
+		// The long stare (45s)
+		new NoBlinkInstruction({
+			prompt: 'Do not blink. Let the edges blur.',
+			duration: 45000
 		}),
 		new ReadInstruction({
-			text: 'Do you want to release the stress you’ve been carrying?'
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new ReadInstruction({
-			text: 'Excellent.'
-		}),
-		new ReadInstruction({
-			text: 'Are you ready to let the screen guide your relaxation?'
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new ReadInstruction({
-			text: "Then let's begin."
+			text: ['And blink.', 'Clear your eyes.', 'Notice how heavy your eyelids feel.']
 		}),
 
-		// --- Block 2: The Physiological Capture (Induction) ---
-		new ReadInstruction({
-			text: 'Keep your eyes fixed on the center.'
-		}),
-		new NoBlinkInstruction({ prompt: "Don't Blink", duration: 30000 }),
-		new ReadInstruction({
-			text: 'Your eyes are starting to feel dry.'
-		}),
-		new ReadInstruction({
-			text: 'That is the feeling of your brain shifting focus.'
-		}),
-		new DirectionalGazeInstruction({
-			prompt: 'Now... turn your head gently to the left.',
-			direction: 'LEFT'
-		}),
-		new DirectionalGazeInstruction({
-			prompt: 'Now to the right',
-			direction: 'RIGHT'
-		}),
-		new ReadInstruction({ text: 'Back to center.' }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw' }),
-		new ReadInstruction({
-			text: 'Notice how the rest of your face follows the jaw.'
-		}),
-		new ReadInstruction({
-			text: 'The tension is starting to fall away.'
-		}),
-		// new TypeInstruction({
-		// 	prompt: 'Type "i am present"',
-		// 	targetPhrase: 'i am present'
-		// }),
+		// --- Phase 2: The Breathing Loop (Minutes 3-8) ---
+		// LOGIC FIX: Read the pattern first, THEN close eyes.
 
-		// --- Block 3: Establishing the "Stillness" (The Deepening) ---
+		// Loop 1 Setup
 		new ReadInstruction({
-			text: 'True relaxation starts with stillness.'
-		}),
-		new StillnessInstruction({ prompt: 'Be still.', duration: 30000 }),
-		new ReadInstruction({ text: 'Perfect.' }),
-		new ReadInstruction({
-			text: ['Eyes softening...', 'Now, relax that jaw again...']
-		}),
-		new RelaxJawInstruction({ prompt: 'as your eyes soften on the center', duration: 30000 }),
-		new ReadInstruction({
-			text: 'Look at the swirling light on the screen.'
+			text: [
+				'We will sync your body to the screen.',
+				'Read this pattern first:',
+				'Inhale for 4 seconds.',
+				'Exhale for 6 seconds.',
+				'Do this 3 times.'
+			]
 		}),
 		new ReadInstruction({
-			text: 'Does it feel like you are sinking into the floor?'
+			text: 'Ready? Close your eyes now.'
 		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new ReadInstruction({
-			text: 'Speak these words out loud.'
-		}),
-		new SpeechInstruction({
-			prompt: 'Say:',
-			targetValue: 'Deeper and deeper',
-			duration: 10000
-		}),
-		new ReadInstruction({
-			text: 'Each time you say it, you are 10 times more relaxed.',
-			duration: 5000
-		}),
-		new SpeechInstruction({
-			prompt: 'Again, say:',
-			targetValue: 'Deeper and deeper'
-		}),
-		new ReadInstruction({
-			text: 'So relaxed.'
-		}),
-		new ReadInstruction({
-			text: "Now in a moment, I'll ask you to close your eyes."
-		}),
-		new ReadInstruction({
-			text: "Each time you hear the bell, you'll open your eyes."
-		}),
-		new CloseEyesInstruction({ text: 'Close your eyes.' }),
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
-		new ReadInstruction({
-			text: ['Good.', 'Each time the swirling light returns, you are 10 times more relaxed.']
-		}),
-		new CloseEyesInstruction({ text: 'Close those eyes again.' }),
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
-		new ReadInstruction({
-			text: ['Deeper and deeper.']
-		}),
-		new CloseEyesInstruction({ text: 'Close those eyes again.' }),
-		new OpenEyesInstruction({ text: 'And open your eyes.' }),
-
-		// --- Block 4: The Somatic Unlocking (Upper Body) ---
-		new ReadInstruction({
-			text: 'Think about your shoulders.',
-			duration: 3000
-		}),
-		new ReadInstruction({
-			text: 'They have been working so hard for you.',
-			duration: 4000
-		}),
-		new ReadInstruction({
-			text: 'Is it okay to let them rest now?',
-			duration: 4000
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new ReadInstruction({
-			text: 'Breathe into the space between your shoulder blades.',
-			duration: 5000
-		}),
-		new StillnessInstruction({ prompt: 'Stillness', duration: 20000 }),
-		new DirectionalGazeInstruction({
-			prompt: 'Turn your head gently left',
-			direction: 'LEFT'
-		}),
-		new DirectionalGazeInstruction({
-			prompt: 'Now right.',
-			direction: 'RIGHT'
-		}),
-		new ReadInstruction({ text: 'Center.', duration: 2000 }),
-		new RelaxJawInstruction({ prompt: 'Relax your jaw', duration: 20000 }),
-		new ReadInstruction({
-			text: ['As the jaw hangs,', 'allow your shoulders to feel heavy.'],
-			duration: 4000
-		}),
-		new NodInstruction({
-			prompt: 'Do your shoulders feel heavy? Nod.',
-			nodsRequired: 1,
-			type: 'YES'
+		// The Action (60s) - Screen holds static while they breathe
+		new StillnessInstruction({
+			prompt: 'Breathing... (In 4, Out 6)',
+			duration: 60000
 		}),
 
-		// --- Block 5: The Cognitive Bypass (Confusion/Engagement) ---
-		new ReadInstruction({
-			text: 'I am going to show you words.',
-			duration: 3000
+		new OpenEyesInstruction({
+			text: ['Welcome back.']
 		}),
-		new ReadInstruction({
-			text: 'Type them as quickly or as slowly as you feel.',
-			duration: 4000
-		}),
-		// new TypeInstruction({
-		// 	prompt: 'Type phrase',
-		// 	targetPhrase: 'soft... quiet... heavy... drifting... floating'
-		// }),
-		new ReadInstruction({
-			text: 'Is your mind becoming quiet?',
-			duration: 3000
-		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
-		new ReadInstruction({
-			text: 'Do you hear anything other than the music?',
-			duration: 4000
-		}),
-		new NodInstruction({ prompt: 'Shake No', nodsRequired: 1, type: 'NO' }),
-		new ReadInstruction({
-			text: 'Good. Just the music. Just the words.',
-			duration: 4000
-		}),
-		new StillnessInstruction({ prompt: 'Deep stillness', duration: 60000 }),
-		new CloseEyesInstruction({ text: 'Close your eyes.' }),
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
-		new CloseEyesInstruction({ text: 'And closed again.' }),
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
 
-		// --- Block 6: The Total Dissolve (Full Body) ---
+		// Loop 2 Setup
 		new ReadInstruction({
-			text: 'Feel the relaxation moving down your arms.'
+			text: [
+				'Notice your shoulders dropping.',
+				"Let's go deeper.",
+				'New Pattern:',
+				'Inhale 4... Hold 2... Exhale 8.'
+			]
 		}),
 		new ReadInstruction({
-			text: 'Into your elbows.'
+			text: 'Close your eyes. Do this 5 times.'
 		}),
-		new ReadInstruction({
-			text: 'Into your wrists.'
+		// The Action (90s)
+		new StillnessInstruction({
+			prompt: 'Breathing... (In 4, Hold 2, Out 8)',
+			duration: 90000
 		}),
-		new ReadInstruction({
-			text: 'Into your fingertips.'
-		}),
-		new NodInstruction({ prompt: 'Are your hands heavy?', nodsRequired: 1, type: 'YES' }),
-		new RelaxJawInstruction({ prompt: 'Jaw relaxing even more' }),
-		new ReadInstruction({
-			text: 'Close your eyes.'
-		}),
-		new StillnessInstruction({ prompt: 'Blind stillness', duration: 30000 }),
 
-		new OpenEyesInstruction({ text: 'Open your eyes.' }),
+		// Loop 3 Setup
+		new ReadInstruction({
+			text: [
+				'Deeper still.',
+				'One last time.',
+				'The deepest loop.',
+				'Simply count 10 slow, natural breaths.'
+			]
+		}),
+		new ReadInstruction({
+			text: 'Close your eyes now.'
+		}),
+		// The Action (120s)
+		new StillnessInstruction({
+			prompt: 'Counting 10 breaths...',
+			duration: 120000
+		}),
+		new OpenEyesInstruction({
+			text: ['Your eyes are open.']
+		}),
 
-		// --- Block 7: Subconscious Anchoring ---
-		new ReadInstruction({
-			text: ['Completely relaxed', 'This feeling is always available to you.']
-		}),
-		new ReadInstruction({
-			text: 'You will take this feeling with you today.'
-		}),
-		new ReadInstruction({
-			text: 'Whenever you feel stress, you will remember this looseness.'
-		}),
-		new StillnessInstruction({ prompt: 'Absorb', duration: 40000 }),
-		new RelaxJawInstruction({ prompt: 'Final Release', duration: 20000 }),
+		// --- Phase 3: The Semantic Boredom (Minutes 8-12) ---
 
-		// --- Block 8: The Re-Emergence (Wake Up) ---
-		new ReadInstruction({
-			text: 'It is almost time to return.'
+		new OpenEyesInstruction({
+			text: ['Your eyes are open.']
 		}),
 		new ReadInstruction({
-			text: 'Keep this feeling of physical ease.'
+			text: [
+				'Your eyes are open.',
+				'But your mind is drifting.',
+				'Look at the words below.',
+				"Don't read them. Just look at the shapes."
+			]
+		}),
+		// Each word holds screen for 30s
+		new StillnessInstruction({ prompt: 'D  R  I  F  T  I  N  G', duration: 30000 }),
+		new StillnessInstruction({ prompt: 'S  I  N  K  I  N  G', duration: 30000 }),
+		new StillnessInstruction({ prompt: 'S  I  L  E  N  C  E', duration: 30000 }),
+		new StillnessInstruction({ prompt: 'S  P  A  C  E', duration: 30000 }),
+
+		new ReadInstruction({
+			text: ['Notice the white space around the words.', 'The nothingness.']
+		}),
+		new StillnessInstruction({
+			prompt: 'Rest your mind in that white space.',
+			duration: 60000
+		}),
+
+		// --- Phase 4: The Granular Body Scan (Minutes 12-16) ---
+		// Using StillnessInstruction to hold the prompt while they "feel" it
+
+		new ReadInstruction({ text: 'Bring your attention to your feet.' }),
+		new StillnessInstruction({
+			prompt: 'Feel the warmth in your toes.',
+			duration: 20000
+		}),
+
+		new ReadInstruction({ text: 'Move the attention up to your knees.' }),
+		new StillnessInstruction({
+			prompt: 'Legs are heavy wood. Solid.',
+			duration: 20000
+		}),
+
+		new ReadInstruction({ text: 'Now to your hips and lower back.' }),
+		new StillnessInstruction({
+			prompt: 'Unwinding the spine.',
+			duration: 30000
+		}),
+
+		new ReadInstruction({ text: 'Now the shoulders.' }),
+		new StillnessInstruction({
+			prompt: 'Like a heavy, warm blanket.',
+			duration: 20000
+		}),
+
+		new ReadInstruction({ text: 'Finally, the face.' }),
+		new StillnessInstruction({
+			prompt: 'Smooth forehead. Loose jaw.',
+			duration: 60000
+		}),
+
+		// --- Phase 5: The Anchor & Integration (Minutes 16-18) ---
+		new ReadInstruction({
+			text: [
+				'Stay in this heavy state.',
+				'Lift your right hand slowly.',
+				'Press your thumb against your forefinger.'
+			]
+		}),
+		new StillnessInstruction({
+			prompt: 'Squeeze and Memorize this feeling.',
+			duration: 15000
 		}),
 		new ReadInstruction({
-			text: 'Ready to wake up?'
+			text: [
+				'The calm is stored in that squeeze.',
+				'Release the fingers.',
+				'Release the hand.'
+			]
 		}),
-		new NodInstruction({ prompt: 'Nod Yes', nodsRequired: 1, type: 'YES' }),
+
+		// --- Phase 6: The Return (Minutes 18-20) ---
 		new ReadInstruction({
-			text: ['5...', '4...', 'feeling energy returning to your limbs.']
+			text: [
+				'Slowly, we begin the return.',
+				'1... Taking a deep breath.',
+				'2... Wiggling your toes and fingers.',
+				'3... Stretching your arms.',
+				'4... Energy rising up the spine.',
+				'5... Eyes clear.'
+			]
 		}),
 		new ReadInstruction({
-			text: ['3', '2...', 'taking a deep, refreshing breath.']
-		}),
-		new ReadInstruction({ prompt: '1', text: '1... Wide awake.' }),
-		new SpeechInstruction({
-			targetValue: 'Feeling awake and relaxed'
-		}),
-		new ReadInstruction({
-			text: 'Thank you for practicing.'
+			text: ['You are fully awake.', 'You are fully reset.', 'Have a wonderful day.']
 		})
 	]
 }
 
-export default somaticResetFull
+export default somaticResetReadOnly

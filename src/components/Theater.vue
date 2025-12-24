@@ -441,7 +441,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	// Stop instruction logic (stop listening/tracking)
 	currentInstr.value?.stop()
 
-	const cooldown = currentInstr.value?.cooldown ?? (2000 / playbackSpeed.value)
+	const cooldown = currentInstr.value?.cooldown ?? 2000 / playbackSpeed.value
 
 	// Record Metric
 	if (currentInstr.value) {
@@ -767,15 +767,15 @@ onMounted(() => {
 		<Transition name="selector">
 			<div
 				v-if="state === SessionState.SELECTION"
+				style="zoom: 0.85"
 				class="absolute inset-0 z-[60] flex flex-col items-center justify-center p-8 overflow-y-auto"
 			>
 				<div class="max-w-6xl w-full">
-					<h2 class="text-3xl font-light text-white mb-2 text-center">
+					<h2 class="text-3xl font-light text-white mb-12 text-center">
 						Select a Session
 					</h2>
-					<p class="text-zinc-400 text-center mb-12">Choose your journey.</p>
 
-					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 						<SessionCard
 							v-for="prog in FULL_PROGRAMS"
 							:key="prog.id"
@@ -784,7 +784,7 @@ onMounted(() => {
 						/>
 					</div>
 
-					<div class="mt-12 text-center">
+					<div class="mt-8 text-center">
 						<button
 							@click="$emit('exit')"
 							class="text-zinc-500 hover:text-white transition-colors text-sm uppercase tracking-widest"

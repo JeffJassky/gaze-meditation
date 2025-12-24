@@ -25,9 +25,15 @@ import SessionCard from './SessionCard.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 import { initialTrainingProgram } from '../programs/initial-training'
+import somaticResetActive from '../programs/kinetic-reset'
 
 // Full Programs
-const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+const FULL_PROGRAMS: Program[] = [
+	somaticResetFull,
+	theBlueDoor,
+	councilOfFireLong,
+	somaticResetActive
+]
 
 // Test Programs
 const TEST_PROGRAMS: Program[] = [
