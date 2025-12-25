@@ -88,7 +88,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Good. You are following something deeper than instruction. You are remembering something older than thought.`,
+			voice: `Good. You're doing well.`,
 			text: ''
 		}),
 
@@ -97,17 +97,22 @@ export const councilOfFireLong: Program = {
 		// ============================================================
 
 		new ReadInstruction({
-			voice: `Imagine now that you are standing at the edge of a forest. Not imagining hard. Just allowing the image to arrive.`,
+			voice: `Now, imagine now that you are standing at the edge of a forest.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `It is night. The air against your skin is cold and clean. You can almost taste it. Sharp and ancient. Like water from deep stone.`,
+			voice: `Not imagining hard. Just allowing the image to arrive.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `Above you, stars are beginning to appear. So many you could never count them. They've been watching for longer than cities have existed.`,
+			voice: `It's night time. The air against your skin is cold and clean. You can almost taste it. Sharp and ancient. Like water from deep stone.`,
+			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `Above you, stars are beginning to appear. So many you could never count them. They've been here for longer than cities have existed.`,
 			text: ''
 		}),
 
@@ -123,7 +128,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `You take a step forward. Then another. The forest closes around you like a living cathedral.`,
+			voice: `You take a step forward. Then another. The vast forest around you like a living cathedral.`,
 			text: ''
 		}),
 
@@ -159,12 +164,12 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `You pass a tree so wide it would take five people to circle it. This tree was ancient before engines were imagined.`,
+			voice: `You pass a tree so wide it would take five people to circle it. This tree was ancient before machines were imagined.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `Millennia pass by. The silence becomes more complete. Not empty. But full of older sounds. Wind through branches. The shift of an animal. Your own footsteps.`,
+			voice: `Millennia pass by. The silence becomes more complete. Not empty. But full of older sounds. Wind through branches. The shift of an animal. The fall of your feet on the ground.`,
 			text: ''
 		}),
 
@@ -174,7 +179,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `The darkness is complete now. But your eyes have adjusted. You can see by starlight. By some inner compass. Your body remembers this.`,
+			voice: `The darkness is complete now. But your eyes have adjusted. You can see by starlight. By some inner compass.`,
 			text: ''
 		}),
 
@@ -209,17 +214,17 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Your breath begins to sync with it. Not deliberately. But the way breath always finds rhythm with drums. As if your body remembers something your mind forgot.`,
+			voice: `Your breath begins to sync with it. Not deliberately. But the way breath always finds rhythm with drums.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `Each beat pulls you forward gently. Not commanding. Inviting. The drum is saying: this way. This way. This way.`,
+			voice: `Each beat pulls you forward gently. Not commanding. Welcoming, like the drum is saying: Come this way.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `And as you walk, you begin to smell something. Woodsmoke. Not the acrid burn of treated lumber. But the sweet, resinous smoke of pine and oak.`,
+			voice: `And as you walk, you begin to smell something. Woodsmoke. A sweet, resinous smoke of pine and oak.`,
 			text: ''
 		}),
 
@@ -228,13 +233,17 @@ export const councilOfFireLong: Program = {
 		// ============================================================
 
 		new ReadInstruction({
-			voice: `Ahead, through the trees, you see light. Not harsh. Not electric. The deep orange of flame.`,
+			voice: `Ahead, through the trees, you see light. A glow, the deep orange color of flame.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `It flickers between the trunks as you approach. Growing brighter with each step. You can feel the warmth beginning to reach your face.`,
+			voice: `It flickers between the trunks as you approach. Growing brighter with each step.`,
 			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `The faint sound of wood crackling reverberates off the tree trunks and forest canopy.`
 		}),
 
 		new ReadInstruction({
@@ -243,7 +252,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `At the center burns a fire. It does not flicker wildly. It burns steady. Purposeful. As if it has been burning for centuries.`,
+			voice: `At the center burns a fire. It does not flicker wildly. It burns Steady. As if it has been burning for centuries.`,
 			text: 'The fire'
 		}),
 
@@ -253,34 +262,49 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `You become aware of weight. You don't need to name it. Your body knows what it's been carrying. It also knows how to set things down.`,
+			voice: `You become aware of a weight you've been carrying. `,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `If it feels right, imagine setting this weight down. Like removing a heavy pack after a long journey. You can always retrieve it later if you choose. But here. Now. It serves no purpose.`,
-			text: ''
-		}),
-
-		new StillnessInstruction({
-			voice: `You reach back. One strap slides from your shoulder. Then the other. The weight settles to the ground behind you.`,
-			prompt: 'Set down the weight',
-			duration: 15000
+			voice: `You don't need to name it. Your body knows what it is instinctively.`
 		}),
 
 		new ReadInstruction({
-			voice: `Notice how your spine straightens. How your chest opens. How breath moves more freely when nothing needs defending.`,
+			voice: `The body also knows how to set things down.`
+		}),
+
+		new ReadInstruction({
+			voice: `If it feels right, imagine setting this weight down. Like removing a heavy pack after a long journey.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `This is how your body stands when it trusts itself completely.`,
+			voice: `You can always retrieve it later if you choose. But here. Now. It serves no purpose.`,
+			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `You reach back. One strap slides from your shoulder. Then the other.`
+		}),
+
+		new ReadInstruction({
+			voice: `You gently set the weight down, as it settles on the ground behind you.`
+		}),
+
+		new ReadInstruction({
+			voice: `Notice the release in your body. How your chest opens. How the breaths move more deeply, with less effort.`,
+			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `This is how your body stands when it's allowed to fully rest.`,
 			text: ''
 		}),
 
 		new NodInstruction({
-			voice: `When you are ready, step into the circle.`,
-			prompt: 'Step into the circle',
+			voice: `When you feel ready, step into the circle.`,
+			prompt: 'Are you ready?',
 			nodsRequired: 1,
 			type: 'YES'
 		}),
@@ -290,7 +314,7 @@ export const councilOfFireLong: Program = {
 		// ============================================================
 
 		new ReadInstruction({
-			voice: `The fire burns at the center. Its heat reaches your face. Your chest. Your hands. Not scorching. Welcoming.`,
+			voice: `The fire burns at the center. You can feel the warmth beginning to reach your face. Your chest. Your hands. Warm. Welcoming.`,
 			text: '',
 			audio: { binaural: { hertz: 5 } }
 		}),
@@ -307,12 +331,15 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Around the fire, seated in a circle, are the Elders. Their faces are weathered like canyon stone. Their eyes are calm. Depthless. Patient.`,
-			text: 'The Elders'
+			voice: `Around the fire, seated in a circle, are the Elders.`
+		}),
+
+		new ReadInstruction({
+			voice: `Their faces are weathered like canyon stone. Their eyes are calm. Patient.`
 		}),
 
 		new DirectionalGazeInstruction({
-			voice: `Turn your head slowly to the left. Observing them.`,
+			voice: `Turn your head gently to the left. Observing them.`,
 			prompt: 'Look left',
 			direction: 'LEFT'
 		}),
@@ -323,13 +350,13 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new DirectionalGazeInstruction({
-			voice: `Turn slowly to the right. Meeting more eyes.`,
+			voice: `Turn gently to the right. Meeting more eyes.`,
 			prompt: 'Look right',
 			direction: 'RIGHT'
 		}),
 
 		new ReadInstruction({
-			voice: `Some are Warriors. Scars visible even in firelight. They have known conflict. But their hands rest easy now. Still when stillness serves. Ready when readiness matters.`,
+			voice: `Some are Warriors, their scars visible even in firelight. They have known conflict but their hands rest easy now. They are still when stillness serves, and ready when readiness matters.`,
 			text: ''
 		}),
 
@@ -354,7 +381,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `One of the Elders gestures toward an empty place by the fire. Not commanding. Offering. The space has been waiting.`,
+			voice: `One of the Elders gestures toward an empty place by the fire. Not commanding, but offering. The space has been waiting for you.`,
 			text: ''
 		}),
 
@@ -365,14 +392,21 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `As you settle, you become aware of something behind you. A presence. Many presences. Thousands. Stretching back into the darkness beyond the firelight.`,
+			voice: `As you settle, you become aware of a presence. Many presences. Thousands. Stretching back into the darkness beyond the firelight.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `They are not ghosts. They are your lineage. Every person who survived long enough to have children. Every ancestor who faced their own fires. Their own councils. Their own nights. They stand at your back now. Silent. Steady. Witnessing.`,
-			text: 'Your lineage',
+			voice: `These are your ancestors. Your lineage. Some share your blood. Others share your path. Teachers. Survivors. People whose names you'll never know, but whose strength still echoes in you.`,
 			cooldown: 8000
+		}),
+
+		new ReadInstruction({
+			voice: `Every person who faced their own fires. Their own nights. They walked this same forest path.`
+		}),
+
+		new ReadInstruction({
+			voice: `They stand behind you now. At your back. Recognizing. Witnessing.`
 		}),
 
 		// ============================================================
@@ -390,12 +424,12 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `The heat is not your enemy. Pressure is not a threat. You have been tempered by older fires than this.`,
+			voice: `The heat is not your enemy. You have been tempered by older fires than this.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `The flames settle again. And in that moment, you understand something without words. Steadiness is not the absence of heat. It is presence within it.`,
+			voice: `The flames settle again. And in that moment, you understand something without words. Strength is not the absence of heat. It is presence within it.`,
 			text: ''
 		}),
 
@@ -409,7 +443,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `They lift out a single ember. It glows deep orange. Almost white at its core. It does not burn them. It recognizes them.`,
+			voice: `They lift out a single ember. It glows a deep orange. White hot at its core, but it does not burn.`,
 			text: 'The ember'
 		}),
 
@@ -429,15 +463,13 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `The ember does not enter you. It reveals what was always there. A core that does not panic. A center that does not collapse. A fire that has been burning quietly. Waiting to be noticed.`,
+			voice: `The ember does not enter you. It reveals what was always there. A fire that has been burning quietly deep within you. Waiting to be discovered.`,
 			text: '',
 			cooldown: 7000
 		}),
 
-		new StillnessInstruction({
-			voice: `Let this warmth register as familiar. As if you are remembering rather than learning. As if this steadiness has always lived in you.`,
-			prompt: 'Feel the warmth',
-			duration: 25000
+		new ReadInstruction({
+			voice: `Let this warmth register as familiar. As if you are remembering rather than learning. As if this steadiness has always lived in you.`
 		}),
 
 		new ReadInstruction({
@@ -450,18 +482,14 @@ export const councilOfFireLong: Program = {
 		// ============================================================
 
 		new ReadInstruction({
-			voice: `A Warrior across the fire meets your eyes. Holds your gaze for a long moment. Then inclines their head once.`,
+			voice: `A warrior across the fire meets your eyes. Holds your gaze for a long moment. Then gently inclines their head once. Not with approval, or permission, but recognition. `,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `Not approval. Not permission. Recognition. You are not a visitor here. You are one of them.`,
-			text: ''
-		}),
-
-		new ReadInstruction({
-			voice: `This seat was never given to you. It was always yours. You are simply sitting in it now.`,
-			text: ''
+			voice: `You are not a visitor here. You are one of them. This seat was never given to you. It was always yours. You are simply sitting in it now.`,
+			text: '',
+			cooldown: 8000
 		}),
 
 		// ============================================================
@@ -474,28 +502,39 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `A voice raises. A deadline looms. A decision presses. Tension rises in your chest. Your jaw begins to tighten. The old reflex activates.`,
+			voice: `A difficult conversation, or a challenging moment. Tension rises in your chest. Your jaw begins to tighten. Old reflexes activate.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `But in that moment. Before words form. Before action happens. You feel it. The warmth. The ember. The steadiness.`,
+			voice: `But in that moment. Before words form. Before action happens. You feel it - The warmth, the ember, the steadiness.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `Your breath deepens. Your shoulders lower. Your voice comes from a different place. Not reactive. Not defensive. Rooted.`,
+			voice: `Your breath deepens.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `And in that space, you make a different choice than you would have before. Not because you forced yourself. But because something deeper than thought is now guiding you.`,
+			voice: `Your shoulders lower.`,
 			text: ''
 		}),
 
 		new ReadInstruction({
-			voice: `This will not happen every time. But it will happen more often. The pathway is carved now. The memory is set.`,
+			voice: `You act from a new place. A place of presence. A place of strength.`,
 			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `This will not happen every time. But now, the pathway is set. The memory is there. And it will lead you where you want to go.`,
+			text: ''
+		}),
+
+		new ReadInstruction({
+			voice: `All you need to do now is remember.`,
+			text: '',
+			cooldown: 8000
 		}),
 
 		// ============================================================
@@ -508,7 +547,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `The Elders do not say goodbye. They simply hold your gaze. One by one. A silent acknowledgment that you will return. That you have always been welcome here.`,
+			voice: `The Elders do not say goodbye. They simply hold your gaze. One by one. A silent acknowledgment that you will return. That you have always been welcome here. That this place is your home. This is inside of you.`,
 			text: ''
 		}),
 
@@ -608,7 +647,7 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Ten. Eyes opening when you're ready. Take your time. There's no rush.`,
+			voice: `Ten. Looking around the room. Noticing your surroundings. Take your time. There's no rush.`,
 			text: '10'
 		}),
 
@@ -628,13 +667,15 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `When you're ready, you might want to stretch your hands. Roll your shoulders. Feel your feet against the floor. And get a glass of water.`,
-			text: ''
+			voice: `When you're ready, you might want to stretch your hands. Roll your shoulders. Feel your feet against the floor.`,
+			text: '',
+			cooldown: 5000
 		}),
 
 		new ReadInstruction({
 			voice: `Until next time.`,
-			text: ''
+			text: '',
+			cooldown: 20000
 		})
 	]
 }

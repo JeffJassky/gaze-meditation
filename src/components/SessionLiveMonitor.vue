@@ -32,7 +32,7 @@ const formatTime = (ms: number) => {
 	return `${m}:${rs.toString().padStart(2, '0')}`
 }
 
-const createPath = (key: 'stillness' | 'breathRate' | 'blinkRate' | 'blinkSpeed' | 'eyeOpenness' | 'mouthOpenness' | 'headRoll' | 'headPitch' | 'browRaise', scaleMax: number) => {
+const createPath = (key: 'stillness' | 'breathRate' | 'blinkRate' | 'blinkSpeed' | 'eyeOpenness' | 'mouthOpenness' | 'headRoll' | 'headPitch' | 'browRaise', max: number, min?: number) => {
 	const history = sessionTracker.history
 	if (history.length < 2) return ''
 
@@ -42,20 +42,25 @@ const createPath = (key: 'stillness' | 'breathRate' | 'blinkRate' | 'blinkSpeed'
 		const x = (h.timestamp / (endTime || 1)) * width
 		let val = h[key]
 		
-		// Normalize
-		if (key === 'headRoll' || key === 'headPitch') {
+		let normalized = 0
+		if (min !== undefined) {
+			normalized = (val - min) / (max - min)
+		} else if (key === 'headRoll' || key === 'headPitch') {
 			// Center-based normalization for bipolar signals [-scale, +scale]
 			// Clamp to range
-			val = Math.max(-scaleMax, Math.min(scaleMax, val))
+			val = Math.max(-max, Math.min(max, val))
 			// Map to 0-1 (where 0.5 is center)
-			val = (val + scaleMax) / (2 * scaleMax)
+			normalized = (val + max) / (2 * max)
 		} else {
 			// Standard 0-based normalization [0, scale]
-			val = Math.max(0, Math.min(scaleMax, val)) / scaleMax
+			normalized = Math.max(0, Math.min(max, val)) / max
 		}
 
+		// Final clamp
+		normalized = Math.max(0, Math.min(1, normalized))
+
 		// Invert Y (SVG coordinates: 0 is top, height is bottom)
-		const y = height - (val * (height - 2 * padding) + padding)
+		const y = height - (normalized * (height - 2 * padding) + padding)
 		return `${x},${y}`
 	})
 	
@@ -169,8 +174,8 @@ const eyeOpenness = computed(() => faceMeshService.debugData.eyeOpennessNormaliz
 					<span class="text-sm font-mono text-indigo-400">{{ (metrics.headPitch * 57.29).toFixed(1) }}°</span>
 				</div>
 				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
-					<!-- Scale max 0.8 covers typical nod range -->
-					<path :d="createPath('headPitch', 0.8)" fill="none" stroke="#818cf8" stroke-width="1.5" />
+					<!-- Range [0.15, 0.6] rad (~8-34 deg) covers the user's typical 12-30 deg range -->
+					<path :d="createPath('headPitch', 0.6, 0.15)" fill="none" stroke="#818cf8" stroke-width="1.5" />
 				</svg>
 			</div>
 

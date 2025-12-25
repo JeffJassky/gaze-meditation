@@ -36,6 +36,11 @@ export class SpeechInstruction extends Instruction<SpeechOptions> {
     this.startTime = Date.now();
     this.currentTranscript.value = "";
 
+    if (this.options.voice) {
+        const voiceText = Array.isArray(this.options.voice) ? this.options.voice.join(' ') : this.options.voice
+        this.playVoice(voiceText, { previousText: context.previousVoiceText })
+    }
+
     // Start Timeout Logic
     if (this.options.timeout) {
       this.timeoutId = window.setTimeout(() => {

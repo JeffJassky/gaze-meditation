@@ -38,6 +38,11 @@ export class NoBlinkInstruction extends Instruction<BlinkOptions> {
 		this.accumulatedTime = 0
 		this.currentOpenStart = 0
 
+		if (this.options.voice) {
+			const voiceText = Array.isArray(this.options.voice) ? this.options.voice.join(' ') : this.options.voice
+			this.playVoice(voiceText, { previousText: context.previousVoiceText })
+		}
+
 		await faceMeshService.init()
 
 		this.loop()

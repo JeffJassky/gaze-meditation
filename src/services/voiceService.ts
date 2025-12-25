@@ -5,6 +5,11 @@ class VoiceService {
 	private currentSource: AudioBufferSourceNode | null = null
 	private currentGenerationId = 0
 	private generatingPromise: Promise<void> | null = null
+	private _isSpeaking = false
+
+	get isSpeaking(): boolean {
+		return this._isSpeaking
+	}
 
 	async preloadVoice(text: string | string[], programId: string = 'default', context?: { previousText?: string, nextText?: string }): Promise<void> {
 		const fullText = Array.isArray(text) ? text.join(' ') : text
@@ -60,88 +65,93 @@ class VoiceService {
 	}
 
 	async playVoice(text: string | string[], programId: string = 'default', context?: { previousText?: string, nextText?: string }): Promise<void> {
-		const fullText = Array.isArray(text) ? text.join(' ') : text
-		if (!fullText.trim()) return
-
-		// Increment ID to invalidate any previous pending operations
-		const myId = ++this.currentGenerationId
-		
-		// Stop any currently playing voice
-		this.stop()
-
-		const hash = await textToHash(fullText)
-		
-		// Check cancellation
-		if (this.currentGenerationId !== myId) return
-
-		const filename = `${hash}.mp3`
-		const relativeUrl = `/sessions/${programId}/audio/voice/${filename}`
-
+		this._isSpeaking = true
 		try {
-			// Check if file exists via HEAD
-			const check = await fetch(relativeUrl, { method: 'HEAD' })
+			const fullText = Array.isArray(text) ? text.join(' ') : text
+			if (!fullText.trim()) return
+
+			// Increment ID to invalidate any previous pending operations
+			const myId = ++this.currentGenerationId
+			
+			// Stop any currently playing voice
+			this.stop()
+
+			const hash = await textToHash(fullText)
 			
 			// Check cancellation
 			if (this.currentGenerationId !== myId) return
 
-			const cType = check.headers.get('content-type')
-			const isAudio = cType && (cType.includes('audio') || cType.includes('octet-stream'))
+			const filename = `${hash}.mp3`
+			const relativeUrl = `/sessions/${programId}/audio/voice/${filename}`
 
-			if (check.ok && isAudio) {
-				this.generatingPromise = null
-				await this.playAudio(relativeUrl, myId)
-				return
+			try {
+				// Check if file exists via HEAD
+				const check = await fetch(relativeUrl, { method: 'HEAD' })
+				
+				// Check cancellation
+				if (this.currentGenerationId !== myId) return
+
+				const cType = check.headers.get('content-type')
+				const isAudio = cType && (cType.includes('audio') || cType.includes('octet-stream'))
+
+				if (check.ok && isAudio) {
+					this.generatingPromise = null
+					await this.playAudio(relativeUrl, myId)
+					return
+				}
+			} catch (e) {
+				// Proceed to generation
 			}
-		} catch (e) {
-			// Proceed to generation
-		}
 
-		// Generate if not found
-		console.log('[VoiceService] Generating voice for:', hash)
-		
-		// Create a promise for this generation task
-		let resolveGen: () => void
-		let rejectGen: (err: any) => void
-		this.generatingPromise = new Promise<void>((resolve, reject) => {
-			resolveGen = resolve
-			rejectGen = reject
-		})
-
-		try {
-			const res = await fetch('/api/voice/generate', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ 
-					text: fullText, 
-					programId,
-					previousText: context?.previousText,
-					nextText: context?.nextText
-				})
+			// Generate if not found
+			console.log('[VoiceService] Generating voice for:', hash)
+			
+			// Create a promise for this generation task
+			let resolveGen: () => void
+			let rejectGen: (err: any) => void
+			this.generatingPromise = new Promise<void>((resolve, reject) => {
+				resolveGen = resolve
+				rejectGen = reject
 			})
 
-			// Check cancellation
-			if (this.currentGenerationId !== myId) {
+			try {
+				const res = await fetch('/api/voice/generate', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						text: fullText, 
+						programId,
+						previousText: context?.previousText,
+						nextText: context?.nextText
+					})
+				})
+
+				// Check cancellation
+				if (this.currentGenerationId !== myId) {
+					resolveGen!()
+					return
+				}
+
+				if (!res.ok) {
+					const err = await res.text()
+					console.error('[VoiceService] Generation failed:', err)
+					rejectGen!(new Error(err))
+					return
+				}
+
+				const blob = await res.blob()
+				const blobUrl = URL.createObjectURL(blob)
+				
+				// Generation complete
 				resolveGen!()
-				return
+				
+				await this.playAudio(blobUrl, myId)
+			} catch (e) {
+				console.error('[VoiceService] Error:', e)
+				if (rejectGen!) rejectGen!(e)
 			}
-
-			if (!res.ok) {
-				const err = await res.text()
-				console.error('[VoiceService] Generation failed:', err)
-				rejectGen!(new Error(err))
-				return
-			}
-
-			const blob = await res.blob()
-			const blobUrl = URL.createObjectURL(blob)
-			
-			// Generation complete
-			resolveGen!()
-			
-			await this.playAudio(blobUrl, myId)
-		} catch (e) {
-			console.error('[VoiceService] Error:', e)
-			if (rejectGen!) rejectGen!(e)
+		} finally {
+			this._isSpeaking = false
 		}
 	}
 

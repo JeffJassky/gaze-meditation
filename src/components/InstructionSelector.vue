@@ -54,8 +54,11 @@ const filteredInstructions = computed(() => {
 			const text = Array.isArray(instr.options.text)
 				? instr.options.text.join(' ').toLowerCase()
 				: instr.options.text?.toLowerCase() || ''
+			const voice = Array.isArray(instr.options.voice)
+				? instr.options.voice.join(' ').toLowerCase()
+				: instr.options.voice?.toLowerCase() || ''
 
-			return type.includes(query) || prompt.includes(query) || text.includes(query)
+			return type.includes(query) || prompt.includes(query) || text.includes(query) || voice.includes(query)
 		})
 })
 </script>
@@ -110,18 +113,18 @@ const filteredInstructions = computed(() => {
 						<span class="text-zinc-400">#{{ item.originalIndex + 1 }}</span>
 					</div>
 					<div
-						v-if="item.instr.options.text || item.instr.options.prompt"
+						v-if="item.instr.options.voice || item.instr.options.text || item.instr.options.prompt"
 						class="text-white truncate text-left"
 						:title="
-							Array.isArray(item.instr.options.text)
-								? item.instr.options.text.join(' ')
-								: item.instr.options.text || item.instr.options.prompt
+							(Array.isArray(item.instr.options.voice) ? item.instr.options.voice.join(' ') : item.instr.options.voice) ||
+							(Array.isArray(item.instr.options.text) ? item.instr.options.text.join(' ') : item.instr.options.text) ||
+							item.instr.options.prompt
 						"
 					>
 						{{
-							Array.isArray(item.instr.options.text)
-								? item.instr.options.text.join(' ')
-								: item.instr.options.text || item.instr.options.prompt
+							(Array.isArray(item.instr.options.voice) ? item.instr.options.voice.join(' ') : item.instr.options.voice) ||
+							(Array.isArray(item.instr.options.text) ? item.instr.options.text.join(' ') : item.instr.options.text) ||
+							item.instr.options.prompt
 						}}
 					</div>
 					<div

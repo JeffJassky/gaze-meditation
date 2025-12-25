@@ -2,6 +2,7 @@ import { type InstructionContext } from '../core/Instruction'
 import { ReadInstruction, type ReadInstructionConfig } from './ReadInstruction'
 import { faceMeshService } from '../services/faceMeshService'
 import { audioSession } from '../services/audio/audioSession'
+import { voiceService } from '../services/voiceService'
 import { playOneShot } from '../services/audio/oneShot'
 import { calculateDuration } from '../utils/time'
 import { playbackSpeed } from '../state/playback'
@@ -108,7 +109,7 @@ export class OpenEyesInstruction extends ReadInstruction {
 		const readingTime = baseReadingTime / playbackSpeed.value
 		const minDisplayTime = ((this.options.fadeInDuration || 0) / playbackSpeed.value) + readingTime
 
-		if (this.isDetecting && elapsed >= minDisplayTime) {
+		if (this.isDetecting && elapsed >= minDisplayTime && !voiceService.isSpeaking) {
 			if (seemOpen) {
 				if (this.stableSince === 0) this.stableSince = now
 				else if (now - this.stableSince >= this.STABILITY_DURATION / playbackSpeed.value) {

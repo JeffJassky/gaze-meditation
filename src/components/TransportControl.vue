@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import InstructionSelector from './InstructionSelector.vue'
 import AudioDebugPanel from './AudioDebugPanel.vue'
 import SessionLiveMonitor from './SessionLiveMonitor.vue'
@@ -21,6 +21,31 @@ const emit = defineEmits<{
 }>()
 
 const showMonitor = ref(false)
+const isFullscreen = ref(!!document.fullscreenElement)
+
+const updateFullscreenStatus = () => {
+  isFullscreen.value = !!document.fullscreenElement
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', updateFullscreenStatus)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', updateFullscreenStatus)
+})
+
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(e => {
+      console.warn(`Error attempting to enable full-screen mode: ${e.message}`)
+    })
+  } else {
+    document.exitFullscreen().catch(e => {
+      console.warn(`Error attempting to exit full-screen mode: ${e.message}`)
+    })
+  }
+}
 
 const progress = computed(() => {
   if (props.instructions.length === 0) return 0
@@ -50,7 +75,7 @@ const progress = computed(() => {
         <button 
           @click="emit('restart')"
           class="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors"
-          title="Restart Session"
+          v-tooltip="'Restart Session'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
@@ -59,7 +84,7 @@ const progress = computed(() => {
           @click="emit('select', Math.max(0, props.currentIndex - 1))"
           :disabled="props.currentIndex === 0"
           class="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-          title="Previous"
+          v-tooltip="'Previous'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
         </button>
@@ -67,7 +92,7 @@ const progress = computed(() => {
         <button 
           @click="props.isPlaying ? emit('pause') : emit('play')"
           class="p-2 bg-zinc-700 hover:bg-zinc-600 rounded text-white transition-colors min-w-[40px] flex justify-center"
-          :title="props.isPlaying ? 'Pause' : 'Play'"
+          v-tooltip="props.isPlaying ? 'Pause' : 'Play'"
         >
           <svg v-if="props.isPlaying" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -77,7 +102,7 @@ const progress = computed(() => {
           @click="emit('select', Math.min(props.instructions.length - 1, props.currentIndex + 1))"
           :disabled="props.currentIndex === props.instructions.length - 1"
           class="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-          title="Next"
+          v-tooltip="'Next'"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
         </button>
@@ -101,7 +126,7 @@ const progress = computed(() => {
         <select 
           v-model.number="playbackSpeed" 
           class="appearance-none bg-transparent text-xs font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer outline-none text-right pr-1"
-          title="Playback Speed"
+          v-tooltip="'Playback Speed'"
         >
           <option :value="0.75">0.75x</option>
           <option :value="1.0">1.0x</option>
@@ -118,9 +143,21 @@ const progress = computed(() => {
         @click="showMonitor = !showMonitor"
         class="p-2 rounded hover:bg-zinc-700 transition-colors"
         :class="showMonitor ? 'text-cyan-400' : 'text-zinc-500 hover:text-white'"
-        title="Toggle Bio-Monitor"
+        v-tooltip="'Toggle Bio-Monitor'"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </button>
+
+      <div class="h-6 w-px bg-zinc-700"></div>
+
+      <!-- Fullscreen Toggle -->
+      <button 
+        @click="toggleFullscreen"
+        class="p-2 rounded hover:bg-zinc-700 transition-colors text-zinc-500 hover:text-white"
+        v-tooltip="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+      >
+        <svg v-if="!isFullscreen" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
       </button>
 
       <div class="h-6 w-px bg-zinc-700"></div>
@@ -159,7 +196,7 @@ const progress = computed(() => {
                     <div class='p-1'>
                       <div class='text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1'>${instr.constructor.name.replace('Instruction', '')} #${index + 1}</div>
                       <div class='text-xs text-white max-w-[200px] line-clamp-3'>
-                        ${Array.isArray(instr.options.text) ? instr.options.text.join(' ') : (instr.options.text || instr.options.prompt || 'No description')}
+                        ${(Array.isArray(instr.options.voice) ? instr.options.voice.join(' ') : instr.options.voice) || (Array.isArray(instr.options.text) ? instr.options.text.join(' ') : instr.options.text) || instr.options.prompt || 'No description'}
                       </div>
                     </div>
                   `,

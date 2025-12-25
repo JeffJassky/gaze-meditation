@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue'
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import RelaxJawView from './views/RelaxJawView.vue'
 import { faceMeshService } from '../services/faceMeshService'
+import { voiceService } from '../services/voiceService'
 
 interface RelaxJawOptions extends InstructionOptions {
 	duration?: number // ms to hold open. If 0 or undefined, instant completion on open.
@@ -25,9 +26,9 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 	private animationFrameId: number | null = null
 
 	// Constants
-	private readonly DEFAULT_THRESHOLD = 0.035 // MAR increase to count as open
+	private readonly DEFAULT_THRESHOLD = 0.03 // MAR increase to count as open
 	private readonly ADAPTATION_RATE = 0.05 // Rate at which baseline adapts to resting face
-	private readonly ADAPTATION_THRESHOLD = 0.02 // Fixed range for what counts as "resting"
+	private readonly ADAPTATION_THRESHOLD = 0.01 // Fixed range for what counts as "resting"
 
 	constructor(options: RelaxJawOptions) {
 		super({
@@ -46,6 +47,13 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		this.accumulatedTime = 0
 		this.isInitialized = false
 		this.baselineOpenness = 0
+
+		if (this.options.voice) {
+			const voiceText = Array.isArray(this.options.voice)
+				? this.options.voice.join(' ')
+				: this.options.voice
+			this.playVoice(voiceText, { previousText: context.previousVoiceText })
+		}
 
 		await faceMeshService.init()
 		this.loop()
@@ -83,14 +91,14 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 		this.isJawOpen.value = isOpen
 
 		// 3. Baseline Adaptation
-		const isStable = Math.abs(diff) < this.ADAPTATION_THRESHOLD
-
-		if (!isOpen && isStable) {
-			this.baselineOpenness = this.lerp(
-				this.baselineOpenness,
-				rawOpenness,
-				this.ADAPTATION_RATE
-			)
+		if (!isOpen) {
+			if (diff < 0) {
+				// Mouth is more closed than baseline: Adapt baseline down immediately.
+				this.baselineOpenness = this.lerp(this.baselineOpenness, rawOpenness, this.ADAPTATION_RATE)
+			} else if (diff < this.ADAPTATION_THRESHOLD) {
+				// Mouth is very slightly open (noise): Adapt baseline up slowly.
+				this.baselineOpenness = this.lerp(this.baselineOpenness, rawOpenness, this.ADAPTATION_RATE)
+			}
 		}
 
 		// 4. Progress / Completion Logic
@@ -103,7 +111,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 				this.holdStartTime = Date.now()
 
 				// If no duration, we are done immediately
-				if (duration <= 0) {
+				if (duration <= 0 && !voiceService.isSpeaking) {
 					this.complete()
 					return
 				}
@@ -113,7 +121,7 @@ export class RelaxJawInstruction extends Instruction<RelaxJawOptions> {
 				const totalElapsed = this.accumulatedTime + sessionElapsed
 				this.progress.value = Math.min(100, (totalElapsed / duration) * 100)
 
-				if (totalElapsed >= duration) {
+				if (totalElapsed >= duration && !voiceService.isSpeaking) {
 					this.complete()
 					return
 				}

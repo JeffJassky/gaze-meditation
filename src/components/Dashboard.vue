@@ -25,7 +25,7 @@ import SessionCard from './SessionCard.vue'
 import SessionDetail from './SessionDetail.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
-import { initialTrainingProgram } from '../programs/initial-training'
+import { initialTrainingProgram } from '../programs/tutorial'
 import somaticResetActive from '../programs/kinetic-reset'
 
 // Full Programs
@@ -38,19 +38,6 @@ const FULL_PROGRAMS: Program[] = [
 
 // Test Programs
 const TEST_PROGRAMS: Program[] = [
-	// {
-	// 	id: 'test_tongue_out',
-	// 	title: 'Tongue Out',
-	// 	description: 'Experimental blendshape detection.',
-	// 	audio: { musicTrack: '/audio/music.mp3' },
-	// 	spiralBackground: '/img/spiral.png',
-	// 	instructions: [
-	// 		new TongueOutInstruction({
-	// 			prompt: 'Stick your tongue out!',
-	// 			duration: 20000
-	// 		})
-	// 	]
-	// },
 	{
 		id: 'test_breathe_instruction',
 		title: 'Breathe',
@@ -711,7 +698,10 @@ onMounted(() => {
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-zinc-800">
-							<template v-for="s in sessions" :key="s.id">
+							<template
+								v-for="s in sessions"
+								:key="s.id"
+							>
 								<tr
 									@click="toggleExpand(s.id)"
 									class="hover:bg-zinc-800/30 cursor-pointer transition-colors"
@@ -731,8 +721,14 @@ onMounted(() => {
 										{{ getSessionAccuracy(s) }}%
 									</td>
 								</tr>
-								<tr v-if="expandedSessionId === s.id" class="bg-zinc-900/50">
-									<td colspan="5" class="p-4">
+								<tr
+									v-if="expandedSessionId === s.id"
+									class="bg-zinc-900/50"
+								>
+									<td
+										colspan="5"
+										class="p-4"
+									>
 										<SessionDetail :session="s" />
 									</td>
 								</tr>

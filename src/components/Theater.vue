@@ -386,7 +386,9 @@ const showBeginButton = ref(false)
 
 const handleBegin = () => {
 	try {
-		document.documentElement.requestFullscreen().catch(e => console.warn('Fullscreen failed', e))
+		document.documentElement
+			.requestFullscreen()
+			.catch(e => console.warn('Fullscreen failed', e))
 	} catch (e) {}
 	showBeginButton.value = false
 }
@@ -457,7 +459,8 @@ const nextInstruction = (index: number) => {
 				const prevInstr = sessionInstructions.value[instrIndex.value - 1]
 				if (prevInstr.options.voice) {
 					if (Array.isArray(prevInstr.options.voice)) {
-						previousVoiceText = prevInstr.options.voice[prevInstr.options.voice.length - 1]
+						previousVoiceText =
+							prevInstr.options.voice[prevInstr.options.voice.length - 1]
 					} else {
 						previousVoiceText = prevInstr.options.voice as string
 					}
@@ -565,7 +568,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 
 const finishSession = () => {
 	// Check if we should show the session selector
-	if (activeProgram.value.id === 'initial_training') {
+	if (activeProgram.value.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
 		const physData = sessionTracker.stopSession()
 		const log: SessionLog = {

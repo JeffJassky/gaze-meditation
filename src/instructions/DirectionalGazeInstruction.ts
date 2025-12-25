@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue'
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import DirectionalGazeView from './views/DirectionalGazeView.vue'
 import { faceMeshService, type Point } from '../services/faceMeshService'
+import { voiceService } from '../services/voiceService'
 
 interface DirectionalOptions extends InstructionOptions {
 	direction: 'LEFT' | 'RIGHT' | 'UP' | 'DOWN'
@@ -51,6 +52,11 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 		this.score.value = 0
 		this.isInitialized = false
 
+		if (this.options.voice) {
+			const voiceText = Array.isArray(this.options.voice) ? this.options.voice.join(' ') : this.options.voice
+			this.playVoice(voiceText, { previousText: context.previousVoiceText })
+		}
+
 		// Ensure service running
 		await faceMeshService.init()
 
@@ -93,7 +99,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 			if (correct) {
 				this.correctFrames++
 				// If no duration is set, complete immediately on success
-				if (!this.duration || this.duration <= 0) {
+				if ((!this.duration || this.duration <= 0) && !voiceService.isSpeaking) {
 					this.complete(true)
 					return
 				}
@@ -111,7 +117,7 @@ export class DirectionalGazeInstruction extends Instruction<DirectionalOptions> 
 
 		// Check duration only if it exists
 		if (this.duration && this.duration > 0) {
-			if (Date.now() - this.startTime > this.duration) {
+			if (Date.now() - this.startTime > this.duration && !voiceService.isSpeaking) {
 				this.complete(this.score.value > 50)
 				return
 			}
