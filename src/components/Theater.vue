@@ -348,6 +348,23 @@ const initSession = async () => {
 
 	loadingProgress.value = 100
 
+	// Check if we lost fullscreen during permission prompts
+	if (!document.fullscreenElement) {
+		loadingMessage.value = 'Session Ready'
+		showBeginButton.value = true
+
+		await new Promise<void>(resolve => {
+			const unwatch = watch(showBeginButton, val => {
+				if (!val) {
+					unwatch()
+					resolve()
+				}
+			})
+		})
+
+		loadingMessage.value = 'Preparing Session'
+	}
+
 	// Start Session Sequence
 	setTimeout(() => {
 		// Fade out content first
@@ -363,6 +380,15 @@ const initSession = async () => {
 
 const handleGrantAccess = () => {
 	showPermissionRequest.value = false
+}
+
+const showBeginButton = ref(false)
+
+const handleBegin = () => {
+	try {
+		document.documentElement.requestFullscreen().catch(e => console.warn('Fullscreen failed', e))
+	} catch (e) {}
+	showBeginButton.value = false
 }
 
 const nextInstruction = (index: number) => {
@@ -746,7 +772,7 @@ onMounted(() => {
 						{{ loadingMessage }}
 					</div>
 					<ProgressBar
-						v-if="!showPermissionRequest"
+						v-if="!showPermissionRequest && !showBeginButton"
 						:progress="loadingProgress"
 						:fill-color="currentResolvedTheme.positiveColor || '#10b981'"
 					/>
@@ -783,6 +809,26 @@ onMounted(() => {
 							}"
 						>
 							Grant Access
+						</button>
+					</div>
+
+					<!-- Begin Button (Restore Fullscreen) -->
+					<div
+						v-if="showBeginButton"
+						class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
+					>
+						<button
+							@click.stop="handleBegin"
+							class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105"
+							:style="{
+								backgroundColor: currentResolvedTheme.positiveColor || '#10b981',
+								color: '#000',
+								boxShadow: `0 0 20px ${
+									currentResolvedTheme.positiveColor || '#10b981'
+								}40`
+							}"
+						>
+							Begin Session
 						</button>
 					</div>
 				</div>
