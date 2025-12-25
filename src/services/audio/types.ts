@@ -1,4 +1,4 @@
-export type AudioBusName = 'binaural' | 'music' | 'vocals' | 'fx'
+export type AudioBusName = 'binaural' | 'music' | 'voice' | 'fx'
 
 export interface AudioSessionConfig {
 	track: string

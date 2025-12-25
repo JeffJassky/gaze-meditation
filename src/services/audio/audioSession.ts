@@ -23,7 +23,7 @@ export class AudioSession {
 		}
 
 		console.log('[AudioSession] Setting up...')
-		this.ctx = new AudioContext({ latencyHint: 'balanced' })
+		this.ctx = new AudioContext({ latencyHint: 'playback' })
 
 		this.masterGain = this.ctx.createGain()
 		this.masterGain.gain.value = 1.0
@@ -32,7 +32,7 @@ export class AudioSession {
 		this.buses = {
 			binaural: this.ctx.createGain(),
 			music: this.ctx.createGain(),
-			vocals: this.ctx.createGain(),
+			voice: this.ctx.createGain(),
 			fx: this.ctx.createGain()
 		}
 
@@ -69,10 +69,20 @@ export class AudioSession {
 		try {
 			const res = await fetch(path)
 			if (!res.ok) throw new Error(`HTTP ${res.status}`)
+			
+			const contentType = res.headers.get('content-type')
+			if (contentType && !contentType.includes('audio') && !contentType.includes('octet-stream')) {
+				console.warn(`[AudioSession] Warning: loading buffer from ${path} returned Content-Type: ${contentType}`)
+				// If it's HTML, it's likely a 404 fallback
+				if (contentType.includes('text/html')) {
+					throw new Error('Received HTML instead of Audio (Likely 404)')
+				}
+			}
+
 			const buf = await res.arrayBuffer()
 			const decoded = await this.ctx.decodeAudioData(buf)
 			console.log(`[AudioSession] Buffer loaded: ${path} (${decoded.duration.toFixed(2)}s)`)
-			
+
 			this.bufferCache.set(path, decoded)
 			return decoded
 		} catch (e) {

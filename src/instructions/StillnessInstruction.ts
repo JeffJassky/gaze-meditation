@@ -2,6 +2,7 @@ import { ref, markRaw } from 'vue'
 import { Instruction, type InstructionContext, type InstructionOptions } from '../core/Instruction'
 import StillnessView from './views/StillnessView.vue'
 import { faceMeshService } from '../services/faceMeshService'
+import { postureAnalyzer } from '../services/analysis/postureAnalyzer'
 
 interface StillnessOptions extends InstructionOptions {
 	duration: number // ms to hold still
@@ -24,13 +25,6 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 	private startHoldTime = 0
 	private accumulatedTime = 0 // Track time across multiple "holds" if not resetting
 
-	// Dynamic Centering
-	private centerPitch = 0
-	private centerYaw = 0
-	private centerHeadX = 0
-	private centerHeadY = 0
-	private isInitialized = false
-
 	constructor(options: StillnessOptions) {
 		super({
 			resetProgressOnFail: false,
@@ -47,12 +41,20 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 	async start(context: InstructionContext) {
 		this.context = context
 		this.resolvedTheme = context.resolvedTheme
-		this.isInitialized = false
 		this.progress.value = 0
 		this.accumulatedTime = 0
 		this.drift.value = 0
 
 		await faceMeshService.init()
+		
+		// Initialize Analyzer
+		postureAnalyzer.start()
+		// We want to lock the current posture as the target
+		// Wait a frame to ensure we have fresh data? faceMesh init waits for video.
+		// Let's capture immediately if ready, loop will handle rest.
+		if (faceMeshService.debugData.faceScale > 0) {
+			postureAnalyzer.captureCenter()
+		}
 
 		this.status.value = 'WAITING'
 		this.loop()
@@ -60,50 +62,31 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 
 	stop() {
 		if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId)
+		// We do NOT stop the analyzer here, as it might be needed for session tracking.
 	}
 
 	private loop() {
 		if (this.status.value === 'SUCCESS' || this.status.value === 'FAILED') return
 
-		const currentYaw = faceMeshService.debugData.headYaw
-		const currentPitch = faceMeshService.debugData.headPitch
-		const currentHeadX = faceMeshService.debugData.headX
-		const currentHeadY = faceMeshService.debugData.headY
-
-		// Initialization
-		if (!this.isInitialized) {
-			if (currentYaw !== 0 || currentPitch !== 0) {
-				this.centerYaw = currentYaw
-				this.centerPitch = currentPitch
-				this.centerHeadX = currentHeadX
-				this.centerHeadY = currentHeadY
-				this.isInitialized = true
+		// Sync with Analyzer
+		this.drift.value = postureAnalyzer.drift.value
+		this.driftX.value = postureAnalyzer.driftX.value
+		this.driftY.value = postureAnalyzer.driftY.value
+		this.driftXPos.value = postureAnalyzer.driftXPos.value
+		this.driftYPos.value = postureAnalyzer.driftYPos.value
+		
+		// If analyzer is still calibrating (e.g. no face yet), just wait
+		if (postureAnalyzer.state.value === 'CALIBRATING') {
+			// Try to capture if we have a face now
+			if (faceMeshService.debugData.faceScale > 0) {
+				postureAnalyzer.captureCenter()
 			}
-		} else {
-			// Adaptive Center (Slow Moving Average)
-			const alpha = 0.05
-			this.centerYaw = this.lerp(this.centerYaw, currentYaw, alpha)
-			this.centerPitch = this.lerp(this.centerPitch, currentPitch, alpha)
-			this.centerHeadX = this.lerp(this.centerHeadX, currentHeadX, alpha)
-			this.centerHeadY = this.lerp(this.centerHeadY, currentHeadY, alpha)
+			this.animationFrameId = requestAnimationFrame(() => this.loop())
+			return
 		}
 
-		// Calculate drift from the *Average* Center
-		const diffYaw = currentYaw - this.centerYaw
-		const diffPitch = currentPitch - this.centerPitch
-		const diffHeadX = currentHeadX - this.centerHeadX
-		const diffHeadY = currentHeadY - this.centerHeadY
-
-		this.driftX.value = diffYaw
-		this.driftY.value = diffPitch
-		this.driftXPos.value = -diffHeadX
-		this.driftYPos.value = diffHeadY
-
-		const totalDrift = Math.hypot(diffYaw, diffPitch, diffHeadX * 1.5, diffHeadY * 1.5)
-		this.drift.value = totalDrift
-
 		if (this.status.value === 'HOLDING') {
-			if (totalDrift > this.tolerance) {
+			if (this.drift.value > this.tolerance) {
 				if (this.options.resetProgressOnFail) {
 					this.fail('Moved too much')
 					return
@@ -123,19 +106,15 @@ export class StillnessInstruction extends Instruction<StillnessOptions> {
 					return
 				}
 			}
-		} else if (this.status.value === 'WAITING' && this.isInitialized) {
+		} else if (this.status.value === 'WAITING') {
 			// Check if we can start/resume holding
-			if (totalDrift < this.tolerance) {
+			if (this.drift.value < this.tolerance) {
 				this.status.value = 'HOLDING'
 				this.startHoldTime = Date.now()
 			}
 		}
 
 		this.animationFrameId = requestAnimationFrame(() => this.loop())
-	}
-
-	private lerp(start: number, end: number, amt: number) {
-		return (1 - amt) * start + amt * end
 	}
 
 	private fail(reason: string) {

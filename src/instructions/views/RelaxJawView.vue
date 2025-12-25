@@ -5,7 +5,7 @@
 	>
 		<h1 class="prompt">
 			<span
-				v-for="(segment, index) in instruction.options.prompt.split('~')"
+				v-for="(segment, index) in instruction.options.prompt?.split('~')"
 				:key="index"
 				class="inline-block"
 				>{{ segment.trim() }}&nbsp;</span

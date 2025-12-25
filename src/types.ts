@@ -78,6 +78,20 @@ export interface SessionMetric {
 	reactionTime: number
 }
 
+export interface PhysiologicalSnapshot {
+	timestamp: number // Relative to session start (ms)
+	blinkRate: number // Blinks per minute (rolling)
+	blinkSpeed: number // Average blink duration in ms (rolling)
+	breathRate: number // Estimated breaths per minute
+	stillness: number // 0-1 score (1 = perfectly still)
+	headYaw: number
+	headPitch: number
+	headRoll: number
+	browRaise: number
+	eyeOpenness: number
+	mouthOpenness: number
+}
+
 export interface SessionLog {
 	id: string
 	subjectId: string
@@ -86,6 +100,7 @@ export interface SessionLog {
 	endTime?: string
 	totalScore: number
 	metrics: SessionMetric[]
+	physiologicalData: PhysiologicalSnapshot[]
 }
 
 export interface UserCalibration {

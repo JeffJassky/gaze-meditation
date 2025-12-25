@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import InstructionSelector from './InstructionSelector.vue'
 import AudioDebugPanel from './AudioDebugPanel.vue'
+import SessionLiveMonitor from './SessionLiveMonitor.vue'
 import type { Instruction } from '../core/Instruction'
 import { playbackSpeed } from '../state/playback'
 
@@ -19,6 +20,8 @@ const emit = defineEmits<{
   (e: 'menu-toggle', open: boolean): void
 }>()
 
+const showMonitor = ref(false)
+
 const progress = computed(() => {
   if (props.instructions.length === 0) return 0
   return ((props.currentIndex) / (props.instructions.length - 1 || 1)) * 100
@@ -26,7 +29,21 @@ const progress = computed(() => {
 </script>
 
 <template>
-  <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-zinc-800 p-4 flex flex-col gap-3 items-center min-w-[350px]">
+  <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4">
+    
+    <!-- Live Monitor Popover -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-y-4 opacity-0 scale-95"
+      enter-to-class="translate-y-0 opacity-100 scale-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="translate-y-0 opacity-100 scale-100"
+      leave-to-class="translate-y-4 opacity-0 scale-95"
+    >
+      <SessionLiveMonitor v-if="showMonitor" />
+    </Transition>
+
+    <div class="bg-black/80 backdrop-blur-md rounded-xl shadow-2xl border border-zinc-800 p-4 flex flex-col gap-3 items-center min-w-[350px]">
     <div class="flex items-center gap-4 w-full justify-center">
       <!-- Controls -->
       <div class="flex items-center gap-2">
@@ -96,6 +113,18 @@ const progress = computed(() => {
 
       <div class="h-6 w-px bg-zinc-700"></div>
 
+      <!-- Live Monitor Toggle -->
+      <button 
+        @click="showMonitor = !showMonitor"
+        class="p-2 rounded hover:bg-zinc-700 transition-colors"
+        :class="showMonitor ? 'text-cyan-400' : 'text-zinc-500 hover:text-white'"
+        title="Toggle Bio-Monitor"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </button>
+
+      <div class="h-6 w-px bg-zinc-700"></div>
+
       <AudioDebugPanel />
     </div>
 
@@ -145,5 +174,6 @@ const progress = computed(() => {
         <span class="w-6">{{ instructions.length }}</span>
       </div>
     </div>
+  </div>
   </div>
 </template>

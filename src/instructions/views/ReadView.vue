@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { toRefs, onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
 import { ReadInstruction } from '../ReadInstruction'
 
 interface ReadViewProps {
@@ -7,23 +7,28 @@ interface ReadViewProps {
 }
 
 const props = defineProps<ReadViewProps>()
-const { instruction } = toRefs(props)
 
 onMounted(() => {
-	console.log(`ReadInstruction mounted with text: ${instruction.value.currentText.value}`)
+	console.log(`[ReadView] Mounted. ID: ${props.instruction.id}`)
+	// Watch the text for changes to debug
+	watch(() => props.instruction.currentText.value, (newVal) => {
+		console.log(`[ReadView] Text changed to: "${newVal}"`)
+	}, { immediate: true })
 })
 </script>
 
 <template>
 	<div class="instruction-view read-view">
+		<!-- Prompt (Title) -->
 		<div
 			v-if="instruction.options.prompt"
 			class="prompt-text"
-			:style="{ color: instruction.resolvedTheme.textColor }"
+			:style="{ color: instruction.resolvedTheme.textColor || '#ffffff' }"
 		>
 			{{ instruction.options.prompt }}
 		</div>
 
+		<!-- Main Text Content -->
 		<Transition
 			name="read-segment"
 			mode="out-in"
@@ -31,10 +36,10 @@ onMounted(() => {
 			<div
 				:key="instruction.currentIndex.value"
 				class="read-content leading-relaxed"
-				:style="{ color: instruction.resolvedTheme.secondaryTextColor }"
+				:style="{ color: instruction.resolvedTheme.secondaryTextColor || '#e4e4e7' }"
 			>
 				<span
-					v-for="(segment, index) in (instruction.currentText?.value || '').split('~')"
+					v-for="(segment, index) in (instruction.currentText.value || '').split('~')"
 					:key="index"
 					class="inline-block"
 					>{{ segment.trim() }}&nbsp;</span

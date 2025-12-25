@@ -37,7 +37,10 @@ class FaceMeshService {
 		headPitch: 0,
 		headX: 0,
 		headY: 0,
+		headRoll: 0, // Neck tilt (radians)
 		faceScale: 0, // Inter-Ocular Distance (approx Z-depth proxy)
+		
+		browRaise: 0, // 0-1 normalized brow height
 
 		gazeX: 0,
 
@@ -277,9 +280,17 @@ class FaceMeshService {
 		// Looking Down -> Nose moves Down (positive Y)
 
 		const headPitch = (nose.y - midEye.y) / iod
+		
+		// Roll: Angle between eyes
+		// Right is 263, Left is 33. 
+		// Calculate angle of the line connecting them.
+		const dY = rightOuter.y - leftOuter.y
+		const dX = rightOuter.x - leftOuter.x
+		const headRoll = Math.atan2(dY, dX)
 
 		this.debugData.headYaw = headYaw
 		this.debugData.headPitch = headPitch
+		this.debugData.headRoll = headRoll
 		this.debugData.faceScale = iod // Store raw IOD as scale proxy
 
 		// Position (Normalized to Video Dimensions 0-1)
@@ -306,6 +317,21 @@ class FaceMeshService {
 		this.debugData.gazeX = screenX
 
 		this.debugData.gazeY = screenY
+		
+		// Brow Tension (Distance between brow and eye)
+		const leftBrow = keypoints[66]
+		const rightBrow = keypoints[296]
+		const leftEyeTop = keypoints[159]
+		const rightEyeTop = keypoints[386]
+		
+		if (leftBrow && rightBrow && leftEyeTop && rightEyeTop) {
+			const lDist = this.getDistance(leftBrow, leftEyeTop)
+			const rDist = this.getDistance(rightBrow, rightEyeTop)
+			const avgDist = (lDist + rDist) / 2
+			// Normalize by IOD. Typical relaxed range is ~0.2 to 0.3 IOD.
+			// Raised is > 0.35, Furrowed/Low is < 0.15
+			this.debugData.browRaise = avgDist / iod
+		}
 
 		// Calculate Mouth Openness (Use Inner Landmarks for strict gating)
 		const upperLipInner = keypoints[13]

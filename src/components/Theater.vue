@@ -18,8 +18,10 @@ import SessionCard from './SessionCard.vue'
 import { saveSession } from '../services/storageService'
 import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
+import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
+import { voiceService } from '../services/voiceService'
 import { playbackSpeed } from '../state/playback'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import theBlueDoor from '../programs/the-blue-door'
@@ -366,6 +368,10 @@ const handleGrantAccess = () => {
 const nextInstruction = (index: number) => {
 	console.log('[Theater] nextInstruction:', index)
 
+	if (index === 0) {
+		sessionTracker.startSession()
+	}
+
 	if (index >= sessionInstructions.value.length) {
 		// Stop previous if exists
 
@@ -419,11 +425,26 @@ const nextInstruction = (index: number) => {
 		state.value = SessionState.VALIDATING
 
 		if (currentInstr.value) {
+			// Calculate previous voice text for continuity
+			let previousVoiceText: string | undefined
+			if (instrIndex.value > 0) {
+				const prevInstr = sessionInstructions.value[instrIndex.value - 1]
+				if (prevInstr.options.voice) {
+					if (Array.isArray(prevInstr.options.voice)) {
+						previousVoiceText = prevInstr.options.voice[prevInstr.options.voice.length - 1]
+					} else {
+						previousVoiceText = prevInstr.options.voice as string
+					}
+				}
+			}
+
 			currentInstr.value.start({
 				complete: (success, metrics, result) =>
 					triggerReinforcement(success, metrics, result),
 
-				resolvedTheme: currentResolvedTheme.value
+				resolvedTheme: currentResolvedTheme.value,
+				programId: activeProgram.value.id,
+				previousVoiceText
 			})
 		}
 	}, 500 / playbackSpeed.value)
@@ -520,6 +541,7 @@ const finishSession = () => {
 	// Check if we should show the session selector
 	if (activeProgram.value.id === 'initial_training') {
 		state.value = SessionState.SELECTION
+		const physData = sessionTracker.stopSession()
 		const log: SessionLog = {
 			id: `SES_${Date.now()}`,
 			subjectId: props.subjectId,
@@ -527,7 +549,8 @@ const finishSession = () => {
 			startTime: new Date(startTimeRef.value).toISOString(),
 			endTime: new Date().toISOString(),
 			totalScore: score.value,
-			metrics: metricsRef.value
+			metrics: metricsRef.value,
+			physiologicalData: physData
 		}
 		saveSession(log)
 		// Do not emit exit
@@ -537,6 +560,7 @@ const finishSession = () => {
 	state.value = SessionState.FINISHED
 	audioSession.binaural.stop(3)
 	audioSession.musicLooper.stop(3)
+	const physData = sessionTracker.stopSession()
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
@@ -544,7 +568,8 @@ const finishSession = () => {
 		startTime: new Date(startTimeRef.value).toISOString(),
 		endTime: new Date().toISOString(),
 		totalScore: score.value,
-		metrics: metricsRef.value
+		metrics: metricsRef.value,
+		physiologicalData: physData
 	}
 	saveSession(log)
 	setTimeout(() => emit('exit'), 3000 / playbackSpeed.value)
@@ -623,6 +648,7 @@ onMounted(() => {
 		currentInstr.value?.stop()
 
 		// Teardown Services
+		sessionTracker.stopSession()
 		faceMeshService.stop()
 		audioSession.binaural.stop() // Ensure binaural stops
 		audioSession.musicLooper.stop()

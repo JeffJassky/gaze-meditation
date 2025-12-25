@@ -22,6 +22,7 @@ import { audioSession } from '../services/audio'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import Home from './Home.vue'
 import SessionCard from './SessionCard.vue'
+import SessionDetail from './SessionDetail.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 import { initialTrainingProgram } from '../programs/initial-training'
@@ -342,6 +343,11 @@ const activeTab = ref<'home' | 'start' | 'history' | 'users'>(props.initialTab |
 const newUserName = ref('')
 const isSidebarOpen = ref(false)
 const isTransitioning = ref(false)
+const expandedSessionId = ref<string | null>(null)
+
+const toggleExpand = (id: string) => {
+	expandedSessionId.value = expandedSessionId.value === id ? null : id
+}
 
 const refreshData = () => {
 	users.value = getUsers()
@@ -705,25 +711,32 @@ onMounted(() => {
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-zinc-800">
-							<tr
-								v-for="s in sessions"
-								:key="s.id"
-								class="hover:bg-zinc-800/30"
-							>
-								<td class="px-6 py-4 font-mono text-zinc-500">{{ s.id }}</td>
-								<td class="px-6 py-4 text-white font-medium">
-									{{ getSubjectName(s.subjectId) }}
-								</td>
-								<td class="px-6 py-4 text-zinc-400">
-									{{ new Date(s.startTime).toLocaleString() }}
-								</td>
-								<td class="px-6 py-4 text-right font-mono text-cyan-400">
-									{{ s.totalScore }}
-								</td>
-								<td class="px-6 py-4 text-right text-zinc-400">
-									{{ getSessionAccuracy(s) }}%
-								</td>
-							</tr>
+							<template v-for="s in sessions" :key="s.id">
+								<tr
+									@click="toggleExpand(s.id)"
+									class="hover:bg-zinc-800/30 cursor-pointer transition-colors"
+									:class="expandedSessionId === s.id ? 'bg-zinc-800/20' : ''"
+								>
+									<td class="px-6 py-4 font-mono text-zinc-500">{{ s.id }}</td>
+									<td class="px-6 py-4 text-white font-medium">
+										{{ getSubjectName(s.subjectId) }}
+									</td>
+									<td class="px-6 py-4 text-zinc-400">
+										{{ new Date(s.startTime).toLocaleString() }}
+									</td>
+									<td class="px-6 py-4 text-right font-mono text-cyan-400">
+										{{ s.totalScore }}
+									</td>
+									<td class="px-6 py-4 text-right text-zinc-400">
+										{{ getSessionAccuracy(s) }}%
+									</td>
+								</tr>
+								<tr v-if="expandedSessionId === s.id" class="bg-zinc-900/50">
+									<td colspan="5" class="p-4">
+										<SessionDetail :session="s" />
+									</td>
+								</tr>
+							</template>
 						</tbody>
 					</table>
 					<div

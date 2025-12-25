@@ -1,6 +1,7 @@
 import type { ThemeConfig, ProgramBinauralConfig } from '../types'
 import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
 import { playbackSpeed } from '../state/playback'
+import { voiceService } from '../services/voiceService'
 
 export interface InstructionContext {
 	// Callbacks to report status to the engine
@@ -11,6 +12,12 @@ export interface InstructionContext {
 
 	// Resolved theme for the current instruction
 	resolvedTheme: ThemeConfig
+	
+	// ID of the current program (needed for voice generation caching)
+	programId: string
+
+	// Text of the previous voice segment (from previous instruction) for continuity
+	previousVoiceText?: string
 }
 
 export interface InstructionCapabilities {
@@ -33,6 +40,7 @@ export interface InstructionOptions {
 		enabled?: boolean
 		message?: string
 	}
+	voice?: string | string[] // Text to be spoken
 	audio?: {
 		binaural?: ProgramBinauralConfig
 	}
@@ -52,6 +60,7 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 	public options: TOptions
 	protected context: InstructionContext | null = null
 	public resolvedTheme: ThemeConfig // Public property to hold the resolved theme
+	protected voicePromise: Promise<void> | null = null
 
 	constructor(options: TOptions) {
 		this.options = {
@@ -105,5 +114,19 @@ export abstract class Instruction<TOptions extends InstructionOptions = Instruct
 			return this.options.onCompleteCallback(success, result)
 		}
 		return undefined // Continue sequentially
+	}
+
+	protected async playVoice(text: string, context?: { previousText?: string, nextText?: string }): Promise<void> {
+		if (!this.context) {
+			console.warn('Cannot play voice: Context not initialized')
+			return
+		}
+		this.voicePromise = voiceService.playVoice(text, this.context.programId, context)
+		return this.voicePromise
+	}
+
+	protected async preloadVoice(text: string, context?: { previousText?: string, nextText?: string }): Promise<void> {
+		if (!this.context) return
+		voiceService.preloadVoice(text, this.context.programId, context)
 	}
 }

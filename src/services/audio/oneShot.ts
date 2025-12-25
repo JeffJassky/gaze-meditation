@@ -3,7 +3,7 @@ import { AudioSession } from './audioSession'
 export async function playOneShot(
 	session: AudioSession,
 	path: string,
-	bus: 'vocals' | 'fx',
+	bus: 'voice' | 'fx',
 	volume = 1
 ) {
 	const buffer = await session.loadBuffer(path)
