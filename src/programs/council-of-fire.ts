@@ -97,7 +97,7 @@ export const councilOfFireLong: Program = {
 		// ============================================================
 
 		new ReadInstruction({
-			voice: `Now, imagine now that you are standing at the edge of a forest.`,
+			voice: `Now, imagine that you are standing at the edge of a forest.`,
 			text: ''
 		}),
 
