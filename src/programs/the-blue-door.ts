@@ -12,8 +12,8 @@ export const theBlueDoor: Program = {
 	id: 'prog_blue_door',
 	title: 'The Blue Door',
 	description:
-		'A journey to a place of inner peace and beauty. Uses fractionation and installs a permanent anchor for peace.',
-	tags: ['peace', 'bliss'],
+		'A journey to a place of inner peace and beauty. Installs a permanent anchor for peace.',
+	tags: ['peace', 'beauty'],
 	audio: {
 		musicTrack: 'audio/music.mp3',
 		binaural: { hertz: 12 }
