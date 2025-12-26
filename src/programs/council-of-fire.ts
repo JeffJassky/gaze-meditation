@@ -88,8 +88,19 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Good. You're doing well.`,
+			voice: `Good. And in a moment I'll ask you to close them again for the remainder of the session. When you do, just let them rest, knowing there's nothing else you'll need to see.`,
 			text: ''
+		}),
+
+		new CloseEyesInstruction({
+			voice: `Now, allow yourself to rest your eyes closed.`,
+			text: 'Close your eyes'
+		}),
+
+		new ReadInstruction({
+			voice: `Just relaxing in darkness... In stillness...`,
+			text: '',
+			cooldown: 5000
 		}),
 
 		// ============================================================
