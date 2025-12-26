@@ -647,24 +647,26 @@ export const councilOfFireLong: Program = {
 		}),
 
 		new ReadInstruction({
-			voice: `Eight. Almost fully present. You might notice your fingers wanting to move. Your jaw wanting to stretch. Let your body wake in whatever way feels natural.`,
+			voice: `8. Almost fully present. You might notice your fingers wanting to move. Your jaw wanting to stretch. Let your body wake in whatever way feels natural.`,
 			text: '8'
 		}),
 
 		new ReadInstruction({
-			voice: `Nine. The room is clear now. Solid. You are here. Grounded. The council remains available whenever you choose to return. But you are here now.`,
+			voice: `9. The room is clear now. Solid. You are here. Grounded. The council remains available whenever you choose to return`,
 			text: '9',
 			audio: { binaural: { hertz: 14 } }
 		}),
 
 		new ReadInstruction({
-			voice: `Ten. Looking around the room. Noticing your surroundings. Take your time. There's no rush.`,
-			text: '10'
+			voice: `Ten. Opening your eyes. Looking around the room. Noticing your surroundings. Take your time.`,
+			text: '10',
+			cooldown: 5000
 		}),
 
 		new ReadInstruction({
 			voice: `Welcome back.`,
-			text: 'Welcome back'
+			text: 'Welcome back',
+			cooldown: 5000
 		}),
 
 		new ReadInstruction({
