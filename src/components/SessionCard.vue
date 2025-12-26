@@ -42,8 +42,8 @@ defineEmits<{
 			</div>
 			<div class="flex gap-2 mt-4 flex-wrap">
 				<span class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500">
-					{{ Math.ceil(program.instructions.length / 3) }}-{{
-						Math.ceil(program.instructions.length / 2)
+					{{ Math.ceil(program.instructions.length / 4) }}-{{
+						Math.ceil(program.instructions.length / 3)
 					}}
 					min
 				</span>

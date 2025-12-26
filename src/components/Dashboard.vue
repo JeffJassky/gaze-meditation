@@ -31,8 +31,8 @@ import somaticResetActive from '../programs/kinetic-reset'
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
 	somaticResetFull,
-	theBlueDoor,
 	councilOfFireLong,
+	theBlueDoor,
 	somaticResetActive
 ]
 
@@ -619,11 +619,11 @@ onMounted(() => {
 									>
 										{{
 											Math.ceil(
-												initialTrainingProgram.instructions.length / 6
+												initialTrainingProgram.instructions.length / 4
 											)
 										}}-{{
 											Math.ceil(
-												initialTrainingProgram.instructions.length / 4
+												initialTrainingProgram.instructions.length / 3
 											)
 										}}
 										min
