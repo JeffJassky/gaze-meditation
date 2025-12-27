@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, markRaw } from 'vue'
+import { ref, markRaw, onMounted } from 'vue'
 import Dashboard from './components/Dashboard.vue'
 import Theater from './components/Theater.vue'
+import DeviceDebug from './components/DeviceDebug.vue'
 import type { Program } from './types'
 
 // Import new FormInstruction related types and classes
@@ -11,7 +12,7 @@ import type { Instruction } from './core/Instruction'
 import { StillnessInstruction } from './instructions/StillnessInstruction'
 import { FractionationInstruction } from './instructions/FractionationInstruction'
 
-type View = 'dashboard' | 'theater'
+type View = 'dashboard' | 'theater' | 'debug'
 
 interface ActiveSession {
 	program: Program
@@ -21,6 +22,12 @@ interface ActiveSession {
 const view = ref<View>('dashboard')
 const activeSession = ref<ActiveSession | null>(null)
 const dashboardTab = ref<'home' | 'start' | 'history' | 'users'>('home')
+
+onMounted(() => {
+	if (window.location.pathname === '/device-debug') {
+		view.value = 'debug'
+	}
+})
 
 const startSession = (program: Program, subjectId: string) => {
 	activeSession.value = { program: markRaw(program), subjectId }
@@ -48,6 +55,8 @@ const endSession = () => {
 			:subjectId="activeSession.subjectId"
 			@exit="endSession"
 		/>
+
+		<DeviceDebug v-if="view === 'debug'" />
 	</div>
 </template>
 
