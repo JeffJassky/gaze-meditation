@@ -59,6 +59,8 @@ export interface ProgramBinauralConfig {
 export interface Program {
 	id: string
 	title: string
+	isAdult?: boolean
+	// experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
 	description: string
 	tags?: string[]
 	audio?: {

@@ -27,6 +27,7 @@ import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 import { initialTrainingProgram } from '../programs/tutorial'
 import somaticResetActive from '../programs/kinetic-reset'
+import { heldWithoutRope } from '../programs/held-without-rope'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
@@ -34,6 +35,11 @@ const FULL_PROGRAMS: Program[] = [
 	councilOfFireLong,
 	theBlueDoor,
 	somaticResetActive
+]
+
+// Fun & Sexy Programs
+const FUN_PROGRAMS: Program[] = [
+	heldWithoutRope
 ]
 
 // Test Programs
@@ -331,6 +337,19 @@ const newUserName = ref('')
 const isSidebarOpen = ref(false)
 const isTransitioning = ref(false)
 const expandedSessionId = ref<string | null>(null)
+
+// Fun & Sexy Password Wall
+const isFunSessionsUnlocked = ref(false)
+const showPasswordPrompt = ref(false)
+const passwordInput = ref('')
+
+const checkPassword = () => {
+	if (passwordInput.value === '1234') {
+		isFunSessionsUnlocked.value = true
+		showPasswordPrompt.value = false
+		passwordInput.value = ''
+	}
+}
 
 const toggleExpand = (id: string) => {
 	expandedSessionId.value = expandedSessionId.value === id ? null : id
@@ -658,6 +677,79 @@ onMounted(() => {
 							@start="handleStartSession"
 						/>
 					</div>
+					<br />
+					<br />
+					<br />
+					<br />
+					<!-- Fun & Sexy Section (Password Protected) -->
+					<div v-if="isFunSessionsUnlocked">
+						<label
+							class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center animate-in fade-in"
+							>Fun & Sexy Sessions</label
+						>
+						<div
+							class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2"
+						>
+							<SessionCard
+								v-for="prog in FUN_PROGRAMS"
+								:key="prog.id"
+								:program="prog"
+								:disabled="!selectedUser"
+								@start="handleStartSession"
+							/>
+						</div>
+					</div>
+					<div
+						v-else
+						class="mt-8 flex flex-col items-center justify-center gap-4"
+					>
+						<button
+							v-if="!showPasswordPrompt"
+							@click="showPasswordPrompt = true"
+							class="text-xs uppercase font-bold text-zinc-600 hover:text-cyan-400 tracking-wider transition-colors border border-zinc-800 hover:border-cyan-500/50 rounded-full px-4 py-2"
+						>
+							Restricted Access
+						</button>
+						<div
+							v-else
+							class="flex items-center gap-2 animate-in fade-in zoom-in-95"
+						>
+							<input
+								ref="passwordInputRef"
+								type="password"
+								v-model="passwordInput"
+								@input="checkPassword"
+								placeholder="Enter Code"
+								class="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 w-32 text-center focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
+								autofocus
+							/>
+							<button
+								@click="
+									() => {
+										showPasswordPrompt = false
+										passwordInput = ''
+									}
+								"
+								class="text-zinc-500 hover:text-white"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-4 w-4"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+					</div>
+
 					<br />
 					<br />
 					<br />

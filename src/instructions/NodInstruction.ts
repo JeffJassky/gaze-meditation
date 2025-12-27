@@ -44,6 +44,8 @@ export class NodInstruction extends Instruction<NodOptions> {
 	private animationFrameId: number | null = null
 	private completionTimer: number | null = null
 	private isFinished = false
+	private voicePlaying = false
+	private isActive = false
 
 	// Dynamic Centering (Low Pass Filter)
 	private centerPitch = 0
@@ -60,6 +62,7 @@ export class NodInstruction extends Instruction<NodOptions> {
 	public readonly RIGHT_THRESH = 0.009
 
 	async start(context: InstructionContext) {
+		this.isActive = true
 		this.context = context
 		this.resolvedTheme = context.resolvedTheme
 		this.nodsCompleted.value = 0
@@ -69,17 +72,26 @@ export class NodInstruction extends Instruction<NodOptions> {
 		this.yawState.value = 0
 		this.isInitialized = false
 		this.totalProgress.value = 0
+		this.voicePlaying = false
 
 		if (this.options.voice) {
+			this.voicePlaying = true
 			const voiceText = Array.isArray(this.options.voice) ? this.options.voice.join(' ') : this.options.voice
-			this.playVoice(voiceText, { previousText: context.previousVoiceText })
+			this.playVoice(voiceText, { previousText: context.previousVoiceText }).then(() => {
+				this.voicePlaying = false
+				if (this.isActive && this.nodsCompleted.value >= this.options.nodsRequired!) {
+					this.complete(true)
+				}
+			})
 		}
 
 		await faceMeshService.init()
+		if (!this.isActive) return
 		this.loop()
 	}
 
 	stop() {
+		this.isActive = false
 		if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId)
 		if (this.completionTimer) clearTimeout(this.completionTimer)
 	}
@@ -263,7 +275,9 @@ export class NodInstruction extends Instruction<NodOptions> {
 
 		if (this.nodsCompleted.value >= this.options.nodsRequired!) {
 			this.isFinished = true
-			this.complete(true)
+			if (!this.voicePlaying) {
+				this.complete(true)
+			}
 		}
 	}
 

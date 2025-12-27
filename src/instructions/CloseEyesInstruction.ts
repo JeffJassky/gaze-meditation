@@ -15,6 +15,7 @@ export class CloseEyesInstruction extends ReadInstruction {
 	private isDetecting = false
 	private animationFrameId: number | null = null
 	private startTime = 0
+	private isFinishing = false
 
 	private readonly STABILITY_DURATION = 500
 	private readonly CLOSE_THRESHOLD = -0.04
@@ -33,6 +34,7 @@ export class CloseEyesInstruction extends ReadInstruction {
 		super.start(context)
 
 		this.isDetecting = true // Start detecting immediately
+		this.isFinishing = false
 		this.isInitialized = false
 		this.centerOpenness = 0
 		this.stableSince = 0
@@ -129,7 +131,25 @@ export class CloseEyesInstruction extends ReadInstruction {
 	}
 
 	private finish() {
-		this.stop()
-		this.context?.complete(true)
+		if (this.isFinishing) return
+		this.isFinishing = true
+
+		// Stop local detection loop
+		this.isDetecting = false
+		if (this.animationFrameId) {
+			cancelAnimationFrame(this.animationFrameId)
+			this.animationFrameId = null
+		}
+
+		const doComplete = () => {
+			this.stop()
+			this.context?.complete(true)
+		}
+
+		if (this.voicePromise) {
+			this.voicePromise.finally(doComplete)
+		} else {
+			doComplete()
+		}
 	}
 }
