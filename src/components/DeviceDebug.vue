@@ -6,6 +6,7 @@ import { HeadRegion } from '../../src-new/services/devices/camera/regions/head'
 import { MouthRegion } from '../../src-new/services/devices/camera/regions/mouth'
 import { BreathRegion } from '../../src-new/services/devices/camera/regions/breath'
 import { Microphone } from '../../src-new/services/devices/microphone/microphone'
+import { Accelerometer } from '../../src-new/services/devices/accelerometer/accelerometer'
 
 // -- Configuration --
 const width = 300
@@ -17,6 +18,7 @@ const HISTORY_SIZE = 300 // 5 seconds @ 60fps
 // Using shallowRef to avoid deep reactivity overhead on complex class instances
 const camera = shallowRef<Camera | null>(null)
 const microphone = shallowRef<Microphone | null>(null)
+const accelerometer = shallowRef<Accelerometer | null>(null)
 
 // Regions
 const eyes = shallowRef<EyesRegion | null>(null)
@@ -39,7 +41,9 @@ const currentMetrics = ref({
 	blinkDetected: false,
 	chinDist: 0,
 	baselineChinDist: 0,
-	tongueMetric: 0
+	tongueMetric: 0,
+	accelFreq: 0,
+	accelMag: 0
 })
 
 const history = ref<(typeof currentMetrics.value)[]>([])
@@ -49,7 +53,13 @@ const transcript = ref('')
 const interimTranscript = ref('')
 const isMicListening = ref(false)
 const isCameraRunning = ref(false)
+const isAccelConnected = ref(false)
 const faceDetected = ref(false)
+
+const accelState = ref({
+    isMoving: false,
+    justImpacted: false
+})
 
 // Head Gesture State
 const headState = ref({
@@ -221,11 +231,48 @@ onMounted(async () => {
 	loop()
 })
 
+const connectAccelerometer = async () => {
+    console.log('Connect Accelerometer clicked')
+    
+    if (!('bluetooth' in navigator)) {
+        alert('Web Bluetooth is not supported in this browser.')
+        console.error('Web Bluetooth not supported')
+        return
+    }
+
+	if (!accelerometer.value) {
+		const acc = new Accelerometer()
+		accelerometer.value = acc
+
+		acc.addEventListener('data', (e: any) => {
+			currentMetrics.value.accelFreq = e.detail.freq
+			currentMetrics.value.accelMag = e.detail.mag
+		})
+
+        acc.addEventListener('move', () => accelState.value.isMoving = true)
+        acc.addEventListener('still', () => accelState.value.isMoving = false)
+        acc.addEventListener('impact', () => {
+            accelState.value.justImpacted = true
+            setTimeout(() => accelState.value.justImpacted = false, 200)
+        })
+
+		acc.addEventListener('start', () => isAccelConnected.value = true)
+		acc.addEventListener('stop', () => isAccelConnected.value = false)
+	}
+
+	try {
+		await accelerometer.value.start()
+	} catch (e) {
+		console.error('Failed to connect accelerometer', e)
+	}
+}
+
 onUnmounted(async () => {
 	if (rafId) cancelAnimationFrame(rafId)
 
 	if (camera.value) await camera.value.stop()
 	if (microphone.value) await microphone.value.stop()
+	if (accelerometer.value) await accelerometer.value.stop()
 })
 
 const drawLandmarks = (ctx: CanvasRenderingContext2D, face: any) => {
@@ -357,6 +404,9 @@ const formatTime = (ms: number) => {
 					>
 					<span :class="isMicListening ? 'text-green-500' : 'text-red-500'"
 						>MIC: {{ isMicListening ? 'ONLINE' : 'OFFLINE' }}</span
+					>
+					<span :class="isAccelConnected ? 'text-green-500' : 'text-red-500'"
+						>ACCEL: {{ isAccelConnected ? 'ONLINE' : 'OFFLINE' }}</span
 					>
 					<span :class="faceDetected ? 'text-cyan-500' : 'text-zinc-600'"
 						>FACE: {{ faceDetected ? 'DETECTED' : 'SEARCHING...' }}</span
@@ -730,6 +780,75 @@ const formatTime = (ms: number) => {
 				<div class="flex justify-between text-[10px] text-zinc-600">
 					<span>Dist: {{ mouthState.chinDist.toFixed(1) }}</span>
 					<span>Base: {{ mouthState.baselineChinDist.toFixed(1) }}</span>
+				</div>
+			</div>
+
+			<!-- 7. Accelerometer -->
+			<div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col gap-4">
+				<div class="flex justify-between items-center">
+					<h2 class="text-sm uppercase font-bold text-yellow-400">Smart Sensor</h2>
+					<button
+						v-if="!isAccelConnected"
+						@click="connectAccelerometer"
+						class="text-[10px] px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-500 transition-colors"
+					>
+						CONNECT
+					</button>
+					<div v-else class="flex gap-2">
+						<span
+							class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-zinc-800 text-zinc-400"
+						>
+							CONNECTED
+						</span>
+                        <span
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
+                            :class="accelState.isMoving ? 'bg-yellow-500 text-black' : 'bg-zinc-800 text-zinc-600'"
+                        >
+                            MOVING
+                        </span>
+                         <span
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
+                            :class="!accelState.isMoving ? 'bg-zinc-600 text-zinc-300' : 'bg-zinc-800 text-zinc-600'"
+                        >
+                            STOPPED
+                        </span>
+                        <span
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
+                            :class="accelState.justImpacted ? 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'bg-zinc-800 text-zinc-600'"
+                        >
+                            IMPACT
+                        </span>
+					</div>
+				</div>
+				<div class="relative h-[60px] w-full bg-black/50 rounded border border-zinc-800/50">
+					<svg
+						:viewBox="`0 0 ${width} ${height}`"
+						class="w-full h-full"
+						preserveAspectRatio="none"
+					>
+						<!-- Freq Range 0-15 Hz (Cyan) -->
+						<path
+							:d="createPath('accelFreq', 15, 0)"
+							fill="none"
+							stroke="#22d3ee"
+							stroke-width="1.5"
+							vector-effect="non-scaling-stroke"
+							opacity="0.9"
+						/>
+						<!-- Magnitude Range 0-80.0 G (Yellow) -->
+						<path
+							:d="createPath('accelMag', 80, 0)"
+							fill="none"
+							stroke="#facc15"
+							stroke-width="1.5"
+							vector-effect="non-scaling-stroke"
+							opacity="0.9"
+						/>
+					</svg>
+				</div>
+				<div class="flex justify-between text-[10px] text-zinc-600 font-mono">
+					<span class="text-cyan-400">Freq: {{ currentMetrics.accelFreq.toFixed(1) }}Hz</span>
+					<span class="text-yellow-400">Mag: {{ currentMetrics.accelMag.toFixed(2) }}G</span>
 				</div>
 			</div>
 		</div>

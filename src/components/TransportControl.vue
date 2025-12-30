@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import InstructionSelector from './InstructionSelector.vue'
+import SceneSelector from './SceneSelector.vue'
 import AudioDebugPanel from './AudioDebugPanel.vue'
 import SessionLiveMonitor from './SessionLiveMonitor.vue'
-import type { Instruction } from '../core/Instruction'
+import { type Scene } from '../../src-new/core/Scene'
 import { playbackSpeed } from '../state/playback'
 
 const props = defineProps<{
-  instructions: Instruction<any>[]
+  scenes: Scene[]
   currentIndex: number
   isPlaying: boolean
 }>()
@@ -48,9 +48,17 @@ const toggleFullscreen = () => {
 }
 
 const progress = computed(() => {
-  if (props.instructions.length === 0) return 0
-  return ((props.currentIndex) / (props.instructions.length - 1 || 1)) * 100
+  if (props.scenes.length === 0) return 0
+  return ((props.currentIndex) / (props.scenes.length - 1 || 1)) * 100
 })
+
+const getSceneDescription = (scene: Scene) => {
+  const voice = scene.config.voice
+  const text = scene.config.text
+  const voiceStr = Array.isArray(voice) ? voice.join(' ') : voice
+  const textStr = Array.isArray(text) ? text.join(' ') : text
+  return voiceStr || textStr || 'No description'
+}
 </script>
 
 <template>
@@ -99,8 +107,8 @@ const progress = computed(() => {
         </button>
 
         <button 
-          @click="emit('select', Math.min(props.instructions.length - 1, props.currentIndex + 1))"
-          :disabled="props.currentIndex === props.instructions.length - 1"
+          @click="emit('select', Math.min(props.scenes.length - 1, props.currentIndex + 1))"
+          :disabled="props.currentIndex === props.scenes.length - 1"
           class="p-2 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
           v-tooltip="'Next'"
         >
@@ -111,8 +119,8 @@ const progress = computed(() => {
       <div class="h-6 w-px bg-zinc-700"></div>
 
       <!-- Jump To -->
-      <InstructionSelector 
-        :instructions="instructions"
+      <SceneSelector 
+        :scenes="scenes"
         :currentIndex="currentIndex"
         placement="top"
         @select="(i) => emit('select', i)"
@@ -178,25 +186,25 @@ const progress = computed(() => {
              ></div>
           </div>
           
-          <!-- Instruction Markers -->
+          <!-- Scene Markers -->
           <div class="absolute inset-0 px-0 flex items-center pointer-events-none">
             <div class="relative w-full h-full">
               <button
-                v-for="(instr, index) in instructions"
-                :key="instr.id"
+                v-for="(scene, index) in scenes"
+                :key="scene.id"
                 @click="emit('select', index)"
                 class="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-black/50 transition-all duration-[250ms] pointer-events-auto hover:scale-150 z-10"
                 :class="[
                   index <= currentIndex ? 'bg-cyan-400' : 'bg-zinc-600',
                   index === currentIndex ? 'scale-125 ring-2 ring-cyan-500/50 opacity-100' : 'opacity-0 group-hover:opacity-100'
                 ]"
-                :style="{ left: `${(index / (instructions.length - 1 || 1)) * 100}%` }"
+                :style="{ left: `${(index / (scenes.length - 1 || 1)) * 100}%` }"
                 v-tooltip="{
                   content: `
                     <div class='p-1'>
-                      <div class='text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1'>${instr.constructor.name.replace('Instruction', '')} #${index + 1}</div>
+                      <div class='text-[10px] uppercase tracking-wider font-bold text-cyan-400 mb-1'>Scene #${index + 1}</div>
                       <div class='text-xs text-white max-w-[200px] line-clamp-3'>
-                        ${(Array.isArray(instr.options.voice) ? instr.options.voice.join(' ') : instr.options.voice) || (Array.isArray(instr.options.text) ? instr.options.text.join(' ') : instr.options.text) || instr.options.prompt || 'No description'}
+                        ${getSceneDescription(scene)}
                       </div>
                     </div>
                   `,
@@ -208,7 +216,7 @@ const progress = computed(() => {
             </div>
           </div>
         </div>
-        <span class="w-6">{{ instructions.length }}</span>
+        <span class="w-6">{{ scenes.length }}</span>
       </div>
     </div>
   </div>

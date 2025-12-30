@@ -1,23 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { User, Program, SessionLog } from '../types'
+import type { User, Session, SessionLog } from '../types'
 import { FormFieldType } from '../types'
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService'
-import { SpeechInstruction } from '../instructions/SpeechInstruction'
-import { CalibrationInstruction } from '../instructions/CalibrationInstruction'
-import { DirectionalGazeInstruction } from '../instructions/DirectionalGazeInstruction'
-import { StillnessInstruction } from '../instructions/StillnessInstruction'
-import { FormInstruction } from '../instructions/FormInstruction'
-import { NoBlinkInstruction } from '../instructions/NoBlinkInstruction'
-import { TypeInstruction } from '../instructions/TypeInstruction'
-import { NodInstruction } from '../instructions/NodInstruction'
-import { FractionationInstruction } from '../instructions/FractionationInstruction'
-import { ReadInstruction } from '../instructions/ReadInstruction' // Import new ReadInstruction
-import { CloseEyesInstruction } from '../instructions/CloseEyesInstruction'
-import { OpenEyesInstruction } from '../instructions/OpenEyesInstruction'
-import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
-import { TongueOutInstruction } from '../instructions/TongueOutInstruction'
-import { BreatheInstruction } from '../instructions/BreatheInstruction'
 import { audioSession } from '../services/audio'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import Home from './Home.vue'
@@ -25,66 +10,66 @@ import SessionCard from './SessionCard.vue'
 import SessionDetail from './SessionDetail.vue'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
-import { initialTrainingProgram } from '../programs/tutorial'
+import { initialTrainingSession } from '../programs/tutorial'
 import somaticResetActive from '../programs/kinetic-reset'
 import { heldWithoutRope } from '../programs/held-without-rope'
 
-// Full Programs
-const FULL_PROGRAMS: Program[] = [
+// Full Sessions
+const FULL_SESSIONS: Session[] = [
 	somaticResetFull,
 	councilOfFireLong,
 	theBlueDoor,
 	somaticResetActive
 ]
 
-// Fun & Sexy Programs
-const FUN_PROGRAMS: Program[] = [
-	heldWithoutRope
-]
+// Fun & Sexy Sessions
+const FUN_SESSIONS: Session[] = [heldWithoutRope]
 
-// Test Programs
-const TEST_PROGRAMS: Program[] = [
+// Test Sessions
+const TEST_SESSIONS: Session[] = [
 	{
-		id: 'test_breathe_instruction',
+		id: 'test_breathe_scene',
 		title: 'Breathe',
 		description: 'Adaptive breath tracking using head pitch.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new BreatheInstruction({
-				prompt: 'Just breathe naturally.',
-				duration: 20000,
-				skipIntro: true
-			})
+		scenes: [
+			{
+				text: 'Just breathe naturally.',
+                behavior: {
+                    suggestions: [{ type: 'breathe', duration: 20000 }]
+                }
+			}
 		]
 	},
 	{
 		id: 'test_close_eyes',
 		title: 'Close Eyes (Test)',
-		description: 'Instruction that waits for you to close your eyes.',
+		description: 'Scene that waits for you to close your eyes.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new CloseEyesInstruction({
-				prompt: 'Close Your Eyes',
-				text: 'Please close your eyes now. The instruction will complete when you do.',
-				skipIntro: true
-			})
+		scenes: [
+			{
+				text: 'Please close your eyes now. The scene will complete when you do.',
+                behavior: {
+                    suggestions: [{ type: 'eyes:close' }]
+                }
+			}
 		]
 	},
 	{
 		id: 'test_open_eyes',
 		title: 'Open Eyes (Test)',
-		description: 'Instruction that waits for you to open your eyes.',
+		description: 'Scene that waits for you to open your eyes.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new OpenEyesInstruction({
-				prompt: 'Open Your Eyes',
+		scenes: [
+			{
 				text: 'Please open your eyes now. I will chime until you do.',
-				repeatAfter: 3, // faster for testing
-				skipIntro: true
-			})
+                behavior: {
+                    suggestions: [{ type: 'eyes:open' }]
+                }
+			}
 		]
 	},
 	{
@@ -93,29 +78,28 @@ const TEST_PROGRAMS: Program[] = [
 		description: 'Sequence: Close -> Open -> Close -> Open',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new ReadInstruction({
-				text: "Now in a moment, I'll ask you to close your eyes.",
-				skipIntro: true
-			}),
-			new ReadInstruction({
+		scenes: [
+			{
+				text: "Now in a moment, I'll ask you to close your eyes."
+			},
+			{
 				text: "Each time you hear the bell, you'll open your eyes."
-			}),
-			new CloseEyesInstruction({ text: 'Close your eyes.' }),
-			new OpenEyesInstruction({ text: 'Open your eyes.' }),
-			new ReadInstruction({
+			},
+			{ text: 'Close your eyes.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
+			{ text: 'Open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } },
+			{
 				text: [
 					'Good.',
 					'Each time the swirling light returns, you are 10 times more relaxed.'
 				]
-			}),
-			new CloseEyesInstruction({ text: 'Close those eyes again.' }),
-			new OpenEyesInstruction({ text: 'Open your eyes.' }),
-			new ReadInstruction({
+			},
+			{ text: 'Close those eyes again.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
+			{ text: 'Open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } },
+			{
 				text: ['Deeper and deeper.']
-			}),
-			new CloseEyesInstruction({ text: 'Close those eyes again.' }),
-			new OpenEyesInstruction({ text: 'And open your eyes.' })
+			},
+			{ text: 'Close those eyes again.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
+			{ text: 'And open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } }
 		]
 	},
 	{
@@ -124,172 +108,160 @@ const TEST_PROGRAMS: Program[] = [
 		description: 'Relax your jaw and let your mouth fall open.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new RelaxJawInstruction({
-				prompt: 'Open your mouth and relax your jaw',
-				duration: 1000,
-				skipIntro: true
-			})
+		scenes: [
+			{
+				text: 'Open your mouth and relax your jaw',
+                behavior: {
+                    suggestions: [{ type: 'mouth:relax', duration: 5000 }]
+                }
+			}
 		]
 	},
 	{
-		id: 'test_blink_instruction',
+		id: 'test_blink_scene',
 		title: 'Dont Blink',
 		description: "Stare at the screen. Don't you dare blink.",
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new NoBlinkInstruction({
-				prompt: 'Blink three times',
-				duration: 5000,
-				skipIntro: true
-			})
+		scenes: [
+			{
+				text: 'Do not blink',
+                behavior: {
+                    suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
+                }
+			}
 		]
 	},
-	// {
-	// 	id: 'test_calibration_instruction',
-	// 	title: 'Calibration',
-	// 	description: ' CalibrationInstruction.',
-	// 	audio: { musicTrack: '/audio/music.mp3' },
-	// 	spiralBackground: '/img/spiral.png',
-	// 	instructions: [new CalibrationInstruction({ prompt: 'Calibrate your eyes' })]
-	// },
 	{
-		id: 'test_directional_gaze_instruction',
+		id: 'test_directional_gaze_scene',
 		title: 'Direct Your Gaze',
 		description: 'Gaze at one thing - and not the other.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new DirectionalGazeInstruction({
-				prompt: 'Gently turn your head to the left.',
-				direction: 'LEFT',
-				skipIntro: true
-			}),
-			new DirectionalGazeInstruction({
-				prompt: 'Gently turn your head to the right.',
-				direction: 'RIGHT'
-			}),
-			new DirectionalGazeInstruction({
-				prompt: 'Gently upward.',
-				direction: 'UP'
-			}),
-			new DirectionalGazeInstruction({
-				prompt: 'Down.',
-				direction: 'DOWN',
-				duration: 10000
-			})
+		scenes: [
+			{
+				text: 'Gently turn your head to the left.',
+                behavior: {
+                    suggestions: [{ type: 'head:left' }]
+                }
+			},
+			{
+				text: 'Gently turn your head to the right.',
+                behavior: {
+                    suggestions: [{ type: 'head:right' }]
+                }
+			},
+			{
+				text: 'Gently upward.',
+                behavior: {
+                    suggestions: [{ type: 'head:up' }]
+                }
+			},
+			{
+				text: 'Down.',
+                behavior: {
+                    suggestions: [{ type: 'head:down', duration: 10000 }]
+                }
+			}
 		]
 	},
 	{
-		id: 'test_form_instruction',
+		id: 'test_form_scene',
 		title: 'Fill out a Form',
 		description: 'Answer questons in a form.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new FormInstruction({
-				prompt: 'Please enter your name',
+		scenes: [
+			{
+				text: 'Please enter your name',
+                behavior: {
+                    suggestions: [{ type: 'form:submit' }]
+                },
 				question: 'What is your name?',
 				fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
-				autoContinue: true,
-				skipIntro: true
-			})
+				autoContinue: true
+			} as any // Cast to any because FormSceneConfig extends SceneConfig
 		]
 	},
-	// {
-	// 	id: 'test_fractionation_instruction',
-	// 	title: 'Fractionation',
-	// 	description: 'Open and close your eyes. Go deeper each time.',
-	// 	audio: { musicTrack: '/audio/music.mp3' },
-	// 	spiralBackground: '/img/spiral.png',
-	// 	instructions: [
-	// 		new FractionationInstruction({
-	// 			prompt: 'Close your eyes.',
-	// 			cycles: 1
-	// 		})
-	// 	]
-	// },
 	{
-		id: 'test_nod_instruction',
+		id: 'test_nod_scene',
 		title: 'Nod & Shake your Head',
 		description: 'Nod or shake your head as instructed.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new NodInstruction({
-				prompt: 'Nod your head twice',
-				type: 'YES',
-				showProgress: true,
-				skipIntro: true
-			}),
-			new NodInstruction({
-				prompt: 'Shake your head twice',
-				type: 'NO',
-				showProgress: true
-			})
+		scenes: [
+			{
+				text: 'Nod your head twice',
+                behavior: {
+                    suggestions: [{ type: 'head:nod', options: { nodsRequired: 2 } }]
+                }
+			},
+			{
+				text: 'Shake your head twice',
+                behavior: {
+                    suggestions: [{ type: 'head:shake', options: { nodsRequired: 2 } }]
+                }
+			}
 		]
 	},
 	{
-		id: 'test_read_instruction',
+		id: 'test_read_scene',
 		title: 'Read',
 		description: 'Simply read what is shown.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new ReadInstruction({
-				prompt: 'This waited 3 seconds to fade in',
+		scenes: [
+			{
 				text: 'It lasts 3 seconds, then fades out',
 				duration: 3000,
-				delay: 3000,
 				fadeInDuration: 1000,
-				fadeOutDuration: 1000,
-				skipIntro: true
-			}),
-			new ReadInstruction({
-				prompt: 'This shows up instantly',
+				fadeOutDuration: 1000
+			},
+			{
 				text: 'lasts 1 second, then fades out over 5 seconds',
 				duration: 1000,
 				fadeOutDuration: 5000
-			})
+			}
 		]
 	},
 	{
-		id: 'test_speech_instruction',
+		id: 'test_speech_scene',
 		title: 'Verbal Affirmation',
 		description: 'Speak what you see.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new SpeechInstruction({
-				prompt: 'Read this aloud',
-				targetValue: 'I am reading this.',
-				duration: 3000,
-				skipIntro: true
-			})
+		scenes: [
+			{
+				text: 'Read this aloud',
+                behavior: {
+                    suggestions: [{ type: 'speech:speak', options: { targetValue: 'I am reading this.', duration: 3000 } }]
+                }
+			}
 		]
 	},
 	{
-		id: 'test_stillness_instruction',
+		id: 'test_stillness_scene',
 		title: 'Stay Still',
 		description: 'Stay very... very... still.',
 		audio: { musicTrack: '/audio/music.mp3' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new StillnessInstruction({
-				prompt: 'keep the blue dot centered in the ring.',
-				duration: 20000
-			})
+		scenes: [
+			{
+				text: 'keep the blue dot centered in the ring.',
+                behavior: {
+                    suggestions: [{ type: 'head:still', duration: 20000 }]
+                }
+			}
 		]
 	},
 	{
-		id: 'test_type_instruction',
+		id: 'test_type_scene',
 		title: 'Type',
 		description: 'Type the words you see them.',
 		audio: { musicTrack: 'silence.mp4' },
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new TypeInstruction({ prompt: 'Type "test"', targetPhrase: 'test', skipIntro: true })
+		scenes: [
+			{ text: 'Type "test"', behavior: { suggestions: [{ type: 'type', options: { targetPhrase: 'test' } }] } }
 		]
 	},
 	{
@@ -300,33 +272,30 @@ const TEST_PROGRAMS: Program[] = [
 			binaural: { hertz: 6, volume: 0.5 }
 		},
 		spiralBackground: '/img/spiral.png',
-		instructions: [
-			new ReadInstruction({
-				prompt: 'Audio Test (6Hz)',
+		scenes: [
+			{
 				text: '6hz binural beats are playing at 50% volume',
-				duration: 5000,
-				skipIntro: true
-			}),
-			new ReadInstruction({
-				prompt: 'Audio Test (3Hz)',
+				duration: 5000
+			},
+			{
 				text: 'Slowing down to 3Hz... Deep relaxation.',
 				duration: 5000,
 				audio: {
 					binaural: { hertz: 3, volume: 0.5 }
 				}
-			})
+			}
 		]
 	}
 ]
 
 interface DashboardProps {
-	// onStartSession: (program: Program, subjectId: string) => void; // Will be an emit
+	// onStartSession: (program: Session, subjectId: string) => void; // Will be an emit
 	initialTab?: 'home' | 'start' | 'history' | 'users'
 }
 
 const props = defineProps<DashboardProps>()
 const emit = defineEmits<{
-	(e: 'startSession', program: Program, subjectId: string): void
+	(e: 'startSession', program: Session, subjectId: string): void
 }>()
 
 const users = ref<User[]>([])
@@ -346,7 +315,7 @@ const passwordInput = ref('')
 const checkPassword = () => {
 	if (passwordInput.value === '1234') {
 		isFunSessionsUnlocked.value = true
-		showPasswordPrompt.value = false
+		showPasswordPrompt = false
 		passwordInput.value = ''
 	}
 }
@@ -378,7 +347,7 @@ const handleCreateUser = () => {
 	activeTab.value = 'start'
 }
 
-const handleStartSession = async (program: Program) => {
+const handleStartSession = async (program: Session) => {
 	if (!selectedUser.value) return
 
 	// Start transition
@@ -417,7 +386,7 @@ const handleStartTutorial = () => {
 			selectedUser.value = newUser.id
 		}
 	}
-	handleStartSession(initialTrainingProgram)
+	handleStartSession(initialTrainingSession)
 }
 
 const getSubjectName = (subjectId: string) => {
@@ -594,7 +563,31 @@ onMounted(() => {
 						href="/device-debug"
 						class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-zinc-800/50 text-zinc-500 hover:text-cyan-400 group"
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-600 group-hover:text-cyan-500 transition-colors"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="18"
+							height="18"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="text-zinc-600 group-hover:text-cyan-500 transition-colors"
+						>
+							<path d="M20 7h-9" />
+							<path d="M14 17H5" />
+							<circle
+								cx="17"
+								cy="17"
+								r="3"
+							/>
+							<circle
+								cx="7"
+								cy="7"
+								r="3"
+							/>
+						</svg>
 						Device Debug
 					</a>
 				</div>
@@ -641,31 +634,31 @@ onMounted(() => {
 									<h3
 										class="text-3xl font-bold text-white group-hover:text-cyan-400 transition-colors text-left"
 									>
-										{{ initialTrainingProgram.title }}
+										{{ initialTrainingSession.title }}
 									</h3>
 									<span
 										class="text-xs bg-zinc-800 px-3 py-1 rounded-full text-zinc-400 border border-zinc-700 whitespace-nowrap"
 									>
 										{{
 											Math.ceil(
-												initialTrainingProgram.instructions.length / 4
+												initialTrainingSession.scenes.length / 4
 											)
 										}}-{{
 											Math.ceil(
-												initialTrainingProgram.instructions.length / 3
+												initialTrainingSession.scenes.length / 3
 											)
 										}}
 										min
 									</span>
 								</div>
 								<p class="text-zinc-400 max-w-xl text-left">
-									{{ initialTrainingProgram.description }}
+									{{ initialTrainingSession.description }}
 								</p>
 							</div>
 							<div class="flex flex-col items-end gap-4">
 								<button
 									:disabled="!selectedUser"
-									@click="handleStartSession(initialTrainingProgram)"
+									@click="handleStartSession(initialTrainingSession)"
 									class="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-black px-10 py-4 rounded-xl font-bold text-base tracking-wide transition-all shadow-lg shadow-cyan-500/20 active:scale-95"
 								>
 									Start Introduction
@@ -680,7 +673,7 @@ onMounted(() => {
 					>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						<SessionCard
-							v-for="prog in FULL_PROGRAMS"
+							v-for="prog in FULL_SESSIONS"
 							:key="prog.id"
 							:program="prog"
 							:disabled="!selectedUser"
@@ -701,7 +694,7 @@ onMounted(() => {
 							class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2"
 						>
 							<SessionCard
-								v-for="prog in FUN_PROGRAMS"
+								v-for="prog in FUN_SESSIONS"
 								:key="prog.id"
 								:program="prog"
 								:disabled="!selectedUser"
@@ -773,7 +766,7 @@ onMounted(() => {
 						style="opacity: 0.5"
 					>
 						<SessionCard
-							v-for="prog in TEST_PROGRAMS"
+							v-for="prog in TEST_SESSIONS"
 							:key="prog.id"
 							:program="prog"
 							:disabled="!selectedUser"

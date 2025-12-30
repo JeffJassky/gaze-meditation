@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { Program } from '../types'
+import type { Session } from '../types'
 
 defineProps<{
-	program: Program
+	program: Session
 	disabled?: boolean
 }>()
 
 defineEmits<{
-	(e: 'start', program: Program): void
+	(e: 'start', program: Session): void
 }>()
 </script>
 
@@ -42,8 +42,8 @@ defineEmits<{
 			</div>
 			<div class="flex gap-2 mt-4 flex-wrap">
 				<span class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-500">
-					{{ Math.ceil(program.instructions.length / 4) }}-{{
-						Math.ceil(program.instructions.length / 3)
+					{{ Math.ceil(program.scenes.length / 4) }}-{{
+						Math.ceil(program.scenes.length / 3)
 					}}
 					min
 				</span>

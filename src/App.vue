@@ -3,19 +3,12 @@ import { ref, markRaw, onMounted } from 'vue'
 import Dashboard from './components/Dashboard.vue'
 import Theater from './components/Theater.vue'
 import DeviceDebug from './components/DeviceDebug.vue'
-import type { Program } from './types'
-
-// Import new FormInstruction related types and classes
-import { FormInstruction } from './instructions/FormInstruction'
-import { FormFieldType, type FormField } from './types'
-import type { Instruction } from './core/Instruction'
-import { StillnessInstruction } from './instructions/StillnessInstruction'
-import { FractionationInstruction } from './instructions/FractionationInstruction'
+import type { Session } from './types'
 
 type View = 'dashboard' | 'theater' | 'debug'
 
 interface ActiveSession {
-	program: Program
+	program: Session
 	subjectId: string
 }
 
@@ -29,7 +22,7 @@ onMounted(() => {
 	}
 })
 
-const startSession = (program: Program, subjectId: string) => {
+const startSession = (program: Session, subjectId: string) => {
 	activeSession.value = { program: markRaw(program), subjectId }
 	view.value = 'theater'
 }
@@ -39,6 +32,7 @@ const endSession = () => {
 	dashboardTab.value = 'start'
 	view.value = 'dashboard'
 }
+
 </script>
 
 <template>

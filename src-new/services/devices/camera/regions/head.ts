@@ -18,8 +18,8 @@ export class HeadRegion extends CameraRegion {
 	private centerY = 0
 	private isInitialized = false
 
-	private pitchState: -1 | 0 | 1 = 0 // -1: Up, 0: Center, 1: Down
-	private yawState: -1 | 0 | 1 = 0 // -1: Left, 0: Center, 1: Right
+	public pitchState: -1 | 0 | 1 = 0 // -1: Up, 0: Center, 1: Down
+	public yawState: -1 | 0 | 1 = 0 // -1: Left, 0: Center, 1: Right
 
 	// Orientation State (Turn/Tilt)
 	private turnState: 'CENTER' | 'LEFT' | 'RIGHT' = 'CENTER'
@@ -120,6 +120,8 @@ export class HeadRegion extends CameraRegion {
 					x: this.x,
 					y: this.y,
 					scale: this.scale,
+					pitchState: this.pitchState,
+					yawState: this.yawState,
 					face: face // Raw face data
 				}
 			})

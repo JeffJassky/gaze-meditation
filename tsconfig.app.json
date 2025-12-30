@@ -11,7 +11,12 @@
     "erasableSyntaxOnly": false,
 	"verbatimModuleSyntax":true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@new/*": ["src-new/*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src-new/**/*.ts", "src-new/**/*.tsx", "src-new/**/*.vue"]
 }

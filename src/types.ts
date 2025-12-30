@@ -1,4 +1,67 @@
-import { type InstructionOptions, type Instruction } from './core/Instruction'
+import { type Ref } from 'vue'
+
+export interface SceneCapabilities {
+	faceMesh?: boolean
+	audioInput?: boolean
+	speech?: boolean // Uses shared SpeechService
+}
+
+export interface BehaviorSuggestion {
+	type:
+		| 'head:still'
+		| 'head:nod'
+		| 'head:left'
+		| 'head:right'
+		| 'head:down'
+		| 'head:up'
+		| 'eyes:close'
+		| 'eyes:open'
+		| 'eyes:blink'
+		| 'eyes:no-blink'
+		| 'mouth:relax'
+		| 'togue:out'
+		| 'form:submit'
+		| 'button:click'
+		| 'speech:speak'
+		| string
+	options?: any // Other configuration options for the behavior (such as tolerance, etc)
+	duration?: number // The duration the behavior must be held for
+	failBehavor?: 'pause' | 'reset' // How to handle the duration timer when the suggestion fails
+}
+
+export interface SceneConfig {
+	id?: string // Used for condtitional jumps / branching
+	theme?: ThemeConfig // visual theming for the scene
+	voice?: string | string[] // Text to be spoken during the scene
+	text?: string | string[] // Text to be displayed during the scene
+	duration?: number // Forced duration, by default, it's dynamic based on the text, voice audio duration, or maybe dependent on challenge completion
+	audio?: {
+		binaural?: SessionBinauralConfig
+	}
+	behavior?: {
+		suggestions?: BehaviorSuggestion[]
+		success?: {
+			enabled?: boolean
+			message?: string
+		}
+		fail?: {
+			enabled?: boolean
+			message?: string
+		}
+	}
+	onCompleteCallback?: (success: boolean, result?: any) => string | undefined 
+
+	// Fade options
+	fadeOutDuration?: number
+
+	// Delay after completion before next instruction starts
+	cooldown?: number
+
+    // Legacy support
+    skipIntro?: boolean
+    capabilities?: SceneCapabilities
+}
+
 // Enums
 
 export enum SessionState {
@@ -21,7 +84,7 @@ export enum FormFieldType {
 	MULTISELECT = 'multiselect'
 }
 
-// Interfaces for Form Instruction
+// Interfaces for Form Scene
 export interface FormField {
 	label: string
 	type: FormFieldType
@@ -30,7 +93,7 @@ export interface FormField {
 	required?: boolean // Optional: for validation
 }
 
-export interface FormInstructionOptions extends InstructionOptions {
+export interface FormSceneConfig extends SceneConfig {
 	question: string
 	fields: FormField[]
 	autoContinue?: boolean
@@ -50,13 +113,13 @@ export interface ThemeConfig {
 	}
 }
 
-export interface ProgramBinauralConfig {
+export interface SessionBinauralConfig {
 	hertz?: number // 6 by default
 	volume?: number // 0.5 by default
 }
 
 // Data Models
-export interface Program {
+export interface Session {
 	id: string
 	title: string
 	isAdult?: boolean
@@ -65,16 +128,21 @@ export interface Program {
 	tags?: string[]
 	audio?: {
 		musicTrack?: string // Simulated audio track name
-		binaural?: ProgramBinauralConfig
+		binaural?: SessionBinauralConfig
 	}
 	videoBackground?: string
 	spiralBackground?: string
-	instructions: Instruction[] // All instructions extend the base Instruction class
+	scenes: SceneConfig[] // All items use the unified Scene class
 	theme?: ThemeConfig // Optional theme configuration for the program
 }
 
+interface ChallengeConfig {
+	type: string
+	options?: any
+}
+
 export interface SessionMetric {
-	instructionId: string
+	sceneId: string
 	success: boolean
 	timestamp: number
 	reactionTime: number

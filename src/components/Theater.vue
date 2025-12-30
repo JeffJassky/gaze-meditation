@@ -1,34 +1,32 @@
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue' // Add shallowRef
+import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue'
 import {
 	SessionState,
-	type Program,
+	type Session,
 	type SessionLog,
 	type SessionMetric,
 	type ThemeConfig
-} from '../types' // Import ThemeConfig
-import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
-import type { Instruction } from '../core/Instruction'
-import { ReadInstruction } from '../instructions/ReadInstruction' // Import ReadInstruction
+} from '../types'
+import { DEFAULT_THEME } from '../theme'
+import { Scene } from '../../src-new/core/Scene'
 import Visuals from './Visuals.vue'
 import HUD from './HUD.vue'
 import TransportControl from './TransportControl.vue'
 import ProgressBar from './ProgressBar.vue'
 import SessionCard from './SessionCard.vue'
 import { saveSession } from '../services/storageService'
-import { getInstructionEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
+import { getSceneEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
-import { voiceService } from '../services/voiceService'
 import { playbackSpeed } from '../state/playback'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
 
 interface TheaterProps {
-	program: Program
+	program: Session
 	subjectId: string
 }
 
@@ -37,12 +35,12 @@ const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
 
-const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+const FULL_SESSIONS: Session[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
 
-const activeProgram = shallowRef<Program>(props.program)
+const activeSession = shallowRef<Session>(props.program)
 const state = ref<SessionState>(SessionState.INITIALIZING)
-const sessionInstructions = shallowRef<Instruction[]>([]) // Use shallowRef to avoid deep reactivity/unwrapping
-const instrIndex = ref(0)
+const sessionScenes = shallowRef<Scene[]>([]) 
+const sceneIndex = ref(0)
 const score = ref(0)
 const isPaused = ref(false)
 const controlsVisible = ref(false)
@@ -63,13 +61,11 @@ const showControls = () => {
 	}
 }
 
-// Watchers to update timer logic when state changes
 watch([isMenuOpen, isHoveringControls], ([menuOpen, hovering]) => {
 	if (menuOpen || hovering) {
 		controlsVisible.value = true
 		if (controlsTimer.value) clearTimeout(controlsTimer.value)
 	} else {
-		// Resume timer if neither is active
 		showControls()
 	}
 })
@@ -77,24 +73,24 @@ watch([isMenuOpen, isHoveringControls], ([menuOpen, hovering]) => {
 const handlePause = () => {
 	isPaused.value = true
 	if (timerRef.value) clearTimeout(timerRef.value)
-	currentInstr.value?.stop()
+	currentScene.value?.stop()
 }
 
 const handlePlay = () => {
 	isPaused.value = false
-	nextInstruction(instrIndex.value)
+	nextScene(sceneIndex.value)
 }
 
 const handleRestart = () => {
 	isPaused.value = false
-	nextInstruction(0)
+	nextScene(0)
 }
 
 const timerRef = ref<number | null>(null)
 const startTimeRef = ref<number>(Date.now())
 const metricsRef = ref<SessionMetric[]>([])
 
-const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME) // Reactive theme for providing
+const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME)
 
 // Loading State
 const loadingMessage = ref('Preparing Session')
@@ -104,59 +100,49 @@ const showPermissionRequest = ref(false)
 const permissionType = ref<'camera' | 'microphone' | 'both'>('both')
 
 const handleScreenClick = (e: MouseEvent) => {
-	// If permission request is visible, ignore screen clicks for controls
 	if (showPermissionRequest.value) return
-
-	// Ignore clicks if in selection mode
 	if (state.value === SessionState.SELECTION) return
 
 	showControls()
 
-	// If it's a tap on the left/right side, navigate
 	const width = window.innerWidth
 	const x = e.clientX
-
-	// Threshold for side taps (outer 25%)
 	const threshold = width * 0.25
 
 	if (x < threshold) {
-		if (instrIndex.value > 0) {
-			nextInstruction(instrIndex.value - 1)
+		if (sceneIndex.value > 0) {
+			nextScene(sceneIndex.value - 1)
 		}
 	} else if (x > width - threshold) {
-		if (instrIndex.value < sessionInstructions.value.length - 1) {
-			nextInstruction(instrIndex.value + 1)
+		if (sceneIndex.value < sessionScenes.value.length - 1) {
+			nextScene(sceneIndex.value + 1)
 		}
 	}
 }
 
-// Computed for current instruction object
-const currentInstr = computed(() => {
-	if (instrIndex.value < sessionInstructions.value.length) {
-		return sessionInstructions.value[instrIndex.value]
+const currentScene = computed(() => {
+	if (sceneIndex.value < sessionScenes.value.length) {
+		return sessionScenes.value[sceneIndex.value]
 	}
 	return undefined
 })
 
-// Watch for changes in currentInstr and program to update the theme
 watch(
-	[currentInstr, activeProgram],
-	([newInstr, newProgram]) => {
-		console.log('[Theater] currentInstr changed:', newInstr?.options?.id)
-		if (newInstr) {
-			currentResolvedTheme.value = getInstructionEffectiveTheme(
-				newProgram as Program,
-				newInstr as Instruction<any>
+	[currentScene, activeSession],
+	([newScene, newSession]) => {
+		console.log('[Theater] currentScene changed:', newScene?.id)
+		if (newScene) {
+			currentResolvedTheme.value = getSceneEffectiveTheme(
+				newSession as Session,
+				newScene as any
 			)
 		} else {
-			// If no instruction, use program's theme or default
-			currentResolvedTheme.value = newProgram?.theme || DEFAULT_THEME
+			currentResolvedTheme.value = newSession?.theme || DEFAULT_THEME
 		}
 	},
 	{ immediate: true }
-) // Immediate ensures theme is set on initial load
+)
 
-// Provide the current resolved theme as a ref
 provide('resolvedTheme', currentResolvedTheme)
 
 const initSession = async () => {
@@ -165,53 +151,58 @@ const initSession = async () => {
 	loadingProgress.value = 0
 	showLoadingContent.value = false
 
-	// Trigger content fade-in slightly after mount
 	setTimeout(() => {
 		showLoadingContent.value = true
 	}, 100)
 
-	// 1. Determine Capabilities Needed
 	let needsFaceMesh = false
 	let needsAudio = false
 	let needsSpeech = false
 
-	// Check if any instruction needs faceMesh
-	if (activeProgram.value.instructions.some(i => i.options.capabilities?.faceMesh)) {
+	if (
+		activeSession.value.scenes.some(
+			s =>
+				s.capabilities?.faceMesh ||
+				s.behavior?.suggestions?.some(
+					sig => sig.type === 'breathe' || sig.type === 'head:nod' || sig.type === 'head:still'
+				)
+		)
+	) {
 		needsFaceMesh = true
 	}
 
-	if (activeProgram.value.instructions.some(i => i.options.capabilities?.speech)) {
+	if (
+		activeSession.value.scenes.some(
+			s =>
+				s.capabilities?.speech ||
+				s.behavior?.suggestions?.some(sig => sig.type === 'speech:speak')
+		)
+	) {
 		needsSpeech = true
 	}
 
-	// Check if we need audio (program track or instructions)
-	// Default to needing audio for binaural beats unless explicitly 'none'
 	if (
-		activeProgram.value.audio?.musicTrack !== 'none' ||
-		activeProgram.value.audio?.binaural ||
-		activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput)
+		activeSession.value.audio?.musicTrack !== 'none' ||
+		activeSession.value.audio?.binaural ||
+		activeSession.value.scenes.some(s => s.capabilities?.audioInput)
 	) {
 		needsAudio = true
 	}
 
 	console.log('[Theater] Capabilities:', { needsAudio, needsFaceMesh, needsSpeech })
 
-	// 1.5 Check Permissions (Pre-flight)
 	if (
 		needsFaceMesh ||
 		needsSpeech ||
-		(needsAudio &&
-			activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput))
+		(needsAudio && activeSession.value.scenes.some(s => s.capabilities?.audioInput))
 	) {
 		try {
-			// Determine what we need
 			const camQuery = needsFaceMesh
 				? navigator.permissions.query({ name: 'camera' as any })
 				: Promise.resolve(null)
 			const micQuery =
 				needsSpeech ||
-				(needsAudio &&
-					activeProgram.value.instructions.some(i => i.options.capabilities?.audioInput))
+				(needsAudio && activeSession.value.scenes.some(s => s.capabilities?.audioInput))
 					? navigator.permissions.query({ name: 'microphone' as any })
 					: Promise.resolve(null)
 
@@ -220,17 +211,12 @@ const initSession = async () => {
 			let missingCam = camStatus?.state === 'prompt'
 			let missingMic = micStatus?.state === 'prompt'
 
-			// If API not supported, assume we might need to prompt (fallthrough)
-			// But usually init() handles it. We mainly want to catch the 'prompt' state to show UI.
-
 			if (missingCam || missingMic) {
-				// Pause init and show UI
 				loadingMessage.value = 'Enable Biofeedback'
 				permissionType.value =
 					missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
 				showPermissionRequest.value = true
 
-				// Wait for user interaction
 				await new Promise<void>(resolve => {
 					const unwatch = watch(showPermissionRequest, val => {
 						if (!val) {
@@ -244,36 +230,32 @@ const initSession = async () => {
 			}
 		} catch (e) {
 			console.warn('Permissions Query API not supported', e)
-			// Proceed to let browser handle it naturally
 		}
 	}
 
 	loadingProgress.value = 20
 
-	// 2. Initialize Audio if needed
 	if (needsAudio) {
 		try {
 			await audioSession.setup()
-			// Start Program Audio Track if exists
 			if (
-				activeProgram.value.audio?.musicTrack &&
-				activeProgram.value.audio.musicTrack !== 'none'
+				activeSession.value.audio?.musicTrack &&
+				activeSession.value.audio.musicTrack !== 'none'
 			) {
 				try {
 					await audioSession.musicLooper.start({
-						track: activeProgram.value.audio.musicTrack,
+						track: activeSession.value.audio.musicTrack,
 						volume: 0.8
 					})
 				} catch (e) {
 					console.warn(
-						`[Theater] Failed to start music track: ${activeProgram.value.audio.musicTrack}`,
+						`[Theater] Failed to start music track: ${activeSession.value.audio.musicTrack}`,
 						e
 					)
 				}
 			}
 
-			// Start Binaural Beats
-			const bConfig = activeProgram.value.audio?.binaural
+			const bConfig = activeSession.value.audio?.binaural
 			audioSession.binaural.start({
 				carrierFreq: 100,
 				beatFreq: bConfig?.hertz ?? 6,
@@ -285,7 +267,6 @@ const initSession = async () => {
 	}
 	loadingProgress.value = 50
 
-	// 3. Initialize Speech if needed
 	if (needsSpeech) {
 		try {
 			await speechService.init()
@@ -302,7 +283,6 @@ const initSession = async () => {
 
 	loadingProgress.value = 75
 
-	// 4. Initialize FaceMesh if needed
 	if (needsFaceMesh) {
 		try {
 			await faceMeshService.init()
@@ -316,10 +296,10 @@ const initSession = async () => {
 	loadingProgress.value = 90
 
 	// Prepend Reminders
-	const reminders: Instruction[] = []
+	const reminders: Scene[] = []
 	const reminderText: string[] = []
-	const firstInstruction = activeProgram.value.instructions[0]
-	const shouldSkipIntro = firstInstruction?.options.skipIntro === true
+	const firstScene = activeSession.value.scenes[0]
+	const shouldSkipIntro = firstScene?.skipIntro === true
 
 	if (!shouldSkipIntro) {
 		if (needsFaceMesh && needsSpeech) {
@@ -331,24 +311,25 @@ const initSession = async () => {
 		}
 
 		reminders.push(
-			new ReadInstruction({
+			new Scene({
 				id: 'reminder-dnd',
 				text: [
 					...reminderText,
 					'Use headphones for best results.',
 					'To avoid interruptions,',
 					'consider putting your device ~ into do not disturb mode.'
-				]
+				],
+				duration: 8000
 			})
 		)
 	}
 
-	sessionInstructions.value = [...reminders, ...activeProgram.value.instructions]
-	console.log('[Theater] Instructions Prepared:', sessionInstructions.value.length)
+	const programScenes = activeSession.value.scenes.map(s => new Scene(s))
+	sessionScenes.value = [...reminders, ...programScenes]
+	console.log('[Theater] Scenes Prepared:', sessionScenes.value.length)
 
 	loadingProgress.value = 100
 
-	// Check if we lost fullscreen during permission prompts
 	if (!document.fullscreenElement) {
 		loadingMessage.value = 'Session Ready'
 		showBeginButton.value = true
@@ -365,15 +346,11 @@ const initSession = async () => {
 		loadingMessage.value = 'Preparing Session'
 	}
 
-	// Start Session Sequence
 	setTimeout(() => {
-		// Fade out content first
 		showLoadingContent.value = false
-
-		// Wait for content fade out (1s transition), then start session (fading out background)
 		setTimeout(() => {
-			console.log('[Theater] Starting first instruction')
-			nextInstruction(0)
+			console.log('[Theater] Starting first scene')
+			nextScene(0)
 		}, 1200 / playbackSpeed.value)
 	}, 500 / playbackSpeed.value)
 }
@@ -393,56 +370,35 @@ const handleBegin = () => {
 	showBeginButton.value = false
 }
 
-const nextInstruction = (index: number) => {
-	console.log('[Theater] nextInstruction:', index)
+const nextScene = (index: number) => {
+	console.log('[Theater] nextScene:', index)
 
 	if (index === 0) {
 		sessionTracker.startSession()
 	}
 
-	if (index >= sessionInstructions.value.length) {
-		// Stop previous if exists
-
-		if (currentInstr.value) {
-			currentInstr.value.stop()
+	if (index >= sessionScenes.value.length) {
+		if (currentScene.value) {
+			currentScene.value.stop()
 		}
-
-		// Increment index to trigger instruction fade out
-
-		instrIndex.value = index
-
-		// Wait for instruction transition to complete (3s per style)
-
+		sceneIndex.value = index
 		setTimeout(() => {
 			finishSession()
 		}, 3000 / playbackSpeed.value)
-
 		return
 	}
 
-	// Stop previous if exists
-
-	if (currentInstr.value) {
-		currentInstr.value.stop()
+	if (currentScene.value) {
+		currentScene.value.stop()
 	}
 
-	instrIndex.value = index
-
+	sceneIndex.value = index
 	state.value = SessionState.INSTRUCTING
 
-	console.log(
-		'[Theater] State set to INSTRUCTING, currentInstr:',
-		currentInstr.value?.options?.id
-	)
-
-	// Apply Instruction Audio Settings if present
-
-	if (currentInstr.value?.options.audio?.binaural) {
-		const b = currentInstr.value.options.audio.binaural
-
+	if (currentScene.value?.config.audio?.binaural) {
+		const b = currentScene.value.config.audio.binaural
 		if (audioSession.binaural.isActive) {
 			if (b.hertz !== undefined) audioSession.binaural.setBeatFrequency(b.hertz)
-
 			if (b.volume !== undefined) audioSession.binaural.setVolume(b.volume)
 		}
 	}
@@ -452,84 +408,73 @@ const nextInstruction = (index: number) => {
 	timerRef.value = window.setTimeout(() => {
 		state.value = SessionState.VALIDATING
 
-		if (currentInstr.value) {
-			// Calculate previous voice text for continuity
+		if (currentScene.value) {
 			let previousVoiceText: string | undefined
-			if (instrIndex.value > 0) {
-				const prevInstr = sessionInstructions.value[instrIndex.value - 1]
-				if (prevInstr.options.voice) {
-					if (Array.isArray(prevInstr.options.voice)) {
+			if (sceneIndex.value > 0) {
+				const prevScene = sessionScenes.value[sceneIndex.value - 1]
+				if (prevScene.config.voice) {
+					if (Array.isArray(prevScene.config.voice)) {
 						previousVoiceText =
-							prevInstr.options.voice[prevInstr.options.voice.length - 1]
+							prevScene.config.voice[prevScene.config.voice.length - 1]
 					} else {
-						previousVoiceText = prevInstr.options.voice as string
+						previousVoiceText = prevScene.config.voice as string
 					}
 				}
 			}
 
-			currentInstr.value.start({
+			currentScene.value.start({
 				complete: (success, metrics, result) =>
 					triggerReinforcement(success, metrics, result),
-
-				resolvedTheme: currentResolvedTheme.value,
-				programId: activeProgram.value.id,
+				programId: activeSession.value.id,
 				previousVoiceText
 			})
 		}
 	}, 500 / playbackSpeed.value)
 }
 
-const findInstructionIndexById = (id: string): number => {
-	return sessionInstructions.value.findIndex(instr => instr.id === id)
+const findSceneIndexById = (id: string): number => {
+	return sessionScenes.value.findIndex(s => s.id === id)
 }
-
-// Trigger reinforcement ... (rest of function unchanged, just verifying use of sessionInstructions/instrIndex)
 
 const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	if (timerRef.value) clearTimeout(timerRef.value)
 
-	// Stop instruction logic (stop listening/tracking)
-	currentInstr.value?.stop()
+	currentScene.value?.stop()
 
-	const cooldown = currentInstr.value?.cooldown ?? 2000 / playbackSpeed.value
+	const cooldown = currentScene.value?.cooldown ?? 2000 / playbackSpeed.value
 
-	// Record Metric
-	if (currentInstr.value) {
+	if (currentScene.value) {
 		metricsRef.value.push({
-			instructionId: currentInstr.value.options.id,
+			sceneId: currentScene.value.id,
 			success,
 			timestamp: Date.now(),
 			reactionTime: metrics?.reactionTime || 0
 		})
 
-		// --- New Logic for onComplete Callback ---
-		if (currentInstr.value.onComplete) {
-			const nextInstructionId = currentInstr.value.onComplete(success, result)
-			if (nextInstructionId) {
-				const jumpToIndex = findInstructionIndexById(nextInstructionId)
+		if (currentScene.value.onComplete) {
+			const nextSceneId = currentScene.value.onComplete(success, result)
+			if (nextSceneId) {
+				const jumpToIndex = findSceneIndexById(nextSceneId)
 				if (jumpToIndex !== -1) {
-					// Wait for reinforcement period then jump
 					setTimeout(() => {
-						nextInstruction(jumpToIndex)
+						nextScene(jumpToIndex)
 					}, cooldown)
-					return // Exit here as we are jumping
+					return 
 				} else {
 					console.warn(
-						`Instruction with ID '${nextInstructionId}' not found. Continuing sequentially.`
+						`Scene with ID '${nextSceneId}' not found. Continuing sequentially.`
 					)
 				}
 			}
 		}
-		// --- End New Logic ---
 	}
 
-	const isPosEnabled = currentInstr.value?.options.positiveReinforcement?.enabled !== false
-	const isNegEnabled = currentInstr.value?.options.negativeReinforcement?.enabled !== false
+	const isPosEnabled = currentScene.value?.config.behavior?.success?.enabled !== false
+	const isNegEnabled = currentScene.value?.config.behavior?.fail?.enabled !== false
 
 	if (success) {
 		if (isPosEnabled) {
-			// Bonus Calc
-			const duration = currentInstr.value?.duration || 5000
+			const duration = currentScene.value?.duration || 5000
 			const reaction = metrics?.reactionTime || 0
 			const remainingRatio = Math.max(0, (duration - reaction) / duration)
 			const points = Math.round(100 * remainingRatio)
@@ -537,14 +482,12 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			score.value += points
 			state.value = SessionState.REINFORCING_POS
 
-			// Time in reinforcement state
 			setTimeout(() => {
-				nextInstruction(instrIndex.value + 1)
+				nextScene(sceneIndex.value + 1)
 			}, cooldown)
 		} else {
-			// Skip reinforcement visuals but respect cooldown
 			setTimeout(() => {
-				nextInstruction(instrIndex.value + 1)
+				nextScene(sceneIndex.value + 1)
 			}, cooldown)
 		}
 	} else {
@@ -552,29 +495,25 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			score.value -= 50
 			state.value = SessionState.REINFORCING_NEG
 
-			// Time in reinforcement state
 			setTimeout(() => {
-				// Retry
-				nextInstruction(instrIndex.value)
+				nextScene(sceneIndex.value)
 			}, cooldown)
 		} else {
-			// Skip reinforcement visuals but respect cooldown
 			setTimeout(() => {
-				nextInstruction(instrIndex.value)
+				nextScene(sceneIndex.value)
 			}, cooldown)
 		}
 	}
 }
 
 const finishSession = () => {
-	// Check if we should show the session selector
-	if (activeProgram.value.id.includes('initial_training')) {
+	if (activeSession.value.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
 		const physData = sessionTracker.stopSession()
 		const log: SessionLog = {
 			id: `SES_${Date.now()}`,
 			subjectId: props.subjectId,
-			programId: activeProgram.value.id,
+			programId: activeSession.value.id,
 			startTime: new Date(startTimeRef.value).toISOString(),
 			endTime: new Date().toISOString(),
 			totalScore: score.value,
@@ -582,7 +521,6 @@ const finishSession = () => {
 			physiologicalData: physData
 		}
 		saveSession(log)
-		// Do not emit exit
 		return
 	}
 
@@ -593,7 +531,7 @@ const finishSession = () => {
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
-		programId: activeProgram.value.id,
+		programId: activeSession.value.id,
 		startTime: new Date(startTimeRef.value).toISOString(),
 		endTime: new Date().toISOString(),
 		totalScore: score.value,
@@ -604,35 +542,28 @@ const finishSession = () => {
 	setTimeout(() => emit('exit'), 3000 / playbackSpeed.value)
 }
 
-const handleSessionSelect = async (program: Program) => {
+const handleSessionSelect = async (program: Session) => {
 	console.log('[Theater] Transitioning to session:', program.title)
 
-	// 1. Swap Program
-	activeProgram.value = program
-
-	// 2. Reset Data
+	activeSession.value = program
 	score.value = 0
 	metricsRef.value = []
 	startTimeRef.value = Date.now()
 
-	// 3. Update Audio (Music)
-	if (activeProgram.value.audio?.musicTrack && activeProgram.value.audio.musicTrack !== 'none') {
+	if (activeSession.value.audio?.musicTrack && activeSession.value.audio.musicTrack !== 'none') {
 		try {
-			// Smoothly switch track
 			await audioSession.musicLooper.start({
-				track: activeProgram.value.audio.musicTrack,
+				track: activeSession.value.audio.musicTrack,
 				volume: 0.8
 			})
 		} catch (e) {
 			console.warn(`[Theater] Failed to update music track`, e)
 		}
 	} else {
-		// If no music in new program, fade out
 		audioSession.musicLooper.stop(2)
 	}
 
-	// 4. Update Audio (Binaural)
-	const bConfig = activeProgram.value.audio?.binaural
+	const bConfig = activeSession.value.audio?.binaural
 	if (bConfig) {
 		if (audioSession.binaural.isActive) {
 			audioSession.binaural.setBeatFrequency(bConfig.hertz ?? 6)
@@ -646,18 +577,10 @@ const handleSessionSelect = async (program: Program) => {
 		}
 	}
 
-	// 5. Setup Instructions
-	// Load program instructions directly, skipping the initialization reminders
-	// since the user has already completed the tutorial/setup.
-	sessionInstructions.value = [...activeProgram.value.instructions]
-
-	// 6. Start
-	// Trigger first instruction. This will switch state to INSTRUCTING,
-	// causing the Selection overlay to fade out and the new instruction to fade in.
-	nextInstruction(0)
+	sessionScenes.value = activeSession.value.scenes.map(s => new Scene(s))
+	nextScene(0)
 }
 
-// Initialize Session on mount
 onMounted(() => {
 	try {
 		document.documentElement
@@ -674,12 +597,11 @@ onMounted(() => {
 
 	onUnmounted(() => {
 		if (timerRef.value) clearTimeout(timerRef.value)
-		currentInstr.value?.stop()
+		currentScene.value?.stop()
 
-		// Teardown Services
 		sessionTracker.stopSession()
 		faceMeshService.stop()
-		audioSession.binaural.stop() // Ensure binaural stops
+		audioSession.binaural.stop()
 		audioSession.musicLooper.stop()
 		speechService.stop()
 
@@ -699,7 +621,7 @@ onMounted(() => {
 	>
 		<!-- Video Background -->
 		<video
-			v-if="activeProgram.videoBackground"
+			v-if="activeSession.videoBackground"
 			autoplay
 			loop
 			muted
@@ -708,17 +630,19 @@ onMounted(() => {
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		>
 			<source
-				:src="activeProgram.videoBackground"
+				:src="activeSession.videoBackground"
 				type="video/mp4"
 			/>
 		</video>
 
-		<!-- Spiral Background (Blurred Base) -->
+		<!-- Spiral Background -->
 		<div
-			v-if="activeProgram.spiralBackground"
+			v-if="activeSession.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeProgram.spiralBackground})`,
+				backgroundImage: `url(${
+					activeSession.spiralBackground.startsWith('/') ? '' : '/'
+				}${activeSession.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -728,12 +652,13 @@ onMounted(() => {
 			}"
 		></div>
 
-		<!-- Spiral Background (Sharp Center Mask) -->
 		<div
-			v-if="activeProgram.spiralBackground"
+			v-if="activeSession.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeProgram.spiralBackground})`,
+				backgroundImage: `url(${
+					activeSession.spiralBackground.startsWith('/') ? '' : '/'
+				}${activeSession.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -780,7 +705,6 @@ onMounted(() => {
 						:fill-color="currentResolvedTheme.positiveColor || '#10b981'"
 					/>
 
-					<!-- Permission Request Button -->
 					<div
 						v-if="showPermissionRequest"
 						class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
@@ -815,7 +739,6 @@ onMounted(() => {
 						</button>
 					</div>
 
-					<!-- Begin Button (Restore Fullscreen) -->
 					<div
 						v-if="showBeginButton"
 						class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700"
@@ -852,7 +775,7 @@ onMounted(() => {
 
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 						<SessionCard
-							v-for="prog in FULL_PROGRAMS"
+							v-for="prog in FULL_SESSIONS"
 							:key="prog.id"
 							:program="prog"
 							@start="handleSessionSelect"
@@ -871,20 +794,20 @@ onMounted(() => {
 			</div>
 		</Transition>
 
-		<!-- Active Instruction View -->
+		<!-- Active Scene View -->
 		<div class="absolute inset-0 z-10 pointer-events-none">
 			<Transition
-				name="instruction"
+				name="scene"
 				mode="out-in"
 			>
 				<component
 					v-if="
 						(state === SessionState.INSTRUCTING || state === SessionState.VALIDATING) &&
-						currentInstr
+						currentScene
 					"
-					:is="currentInstr.component"
-					:instruction="currentInstr"
-					:key="currentInstr.options.id"
+					:is="currentScene.component"
+					:scene="currentScene"
+					:key="currentScene.id"
 					class="pointer-events-auto"
 				/>
 			</Transition>
@@ -893,7 +816,7 @@ onMounted(() => {
 		<!-- Heads Up Display -->
 		<HUD
 			:state="state"
-			:currentInstruction="currentInstr"
+			:currentScene="currentScene"
 			:score="score"
 			@exit="emit('exit')"
 			class="z-50"
@@ -902,15 +825,15 @@ onMounted(() => {
 		<Transition name="fade">
 			<TransportControl
 				v-show="controlsVisible && state !== SessionState.SELECTION"
-				:instructions="sessionInstructions"
-				:currentIndex="instrIndex"
+				:scenes="sessionScenes"
+				:currentIndex="sceneIndex"
 				:isPlaying="
 					!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE
 				"
 				@play="handlePlay"
 				@pause="handlePause"
 				@restart="handleRestart"
-				@select="nextInstruction"
+				@select="nextScene"
 				@menu-toggle="val => (isMenuOpen = val)"
 				@mouseenter="isHoveringControls = true"
 				@mouseleave="isHoveringControls = false"
@@ -950,7 +873,7 @@ onMounted(() => {
 }
 
 /* Global styles if needed */
-.instruction-enter-active {
+.scene-enter-active {
 	/* Define fallbacks just in case */
 	--duration-slow: calc(3s / var(--speed-factor, 1));
 	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
@@ -965,7 +888,7 @@ onMounted(() => {
 	height: 100%;
 }
 
-.instruction-leave-active {
+.scene-leave-active {
 	/* Define fallbacks just in case */
 	--duration-slow: calc(3s / var(--speed-factor, 1));
 	--ease-in-glacial: cubic-bezier(0.75, 0, 1, 1);
@@ -980,17 +903,17 @@ onMounted(() => {
 	height: 100%;
 }
 
-.instruction-enter-from {
+.scene-enter-from {
 	opacity: 0;
 	transform: scale(1.1);
 }
 
-.instruction-leave-to {
+.scene-leave-to {
 	opacity: 0;
 	transform: scale(0.9);
 }
 
-.instruction-leave-from {
+.scene-leave-from {
 	opacity: 1;
 	transform: scale(1);
 }

@@ -303,6 +303,12 @@ export default defineConfig(({ mode }) => {
 	return {
 		base: '/',
 		plugins: [vue(), voiceMiddleware()],
+		resolve: {
+			alias: {
+				'@': path.resolve(__dirname, './src'),
+				'@new': path.resolve(__dirname, './src-new')
+			}
+		},
 		server: {
 			headers: {
 				'Cross-Origin-Opener-Policy': 'same-origin',

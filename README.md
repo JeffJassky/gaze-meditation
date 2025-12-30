@@ -10,8 +10,8 @@ Unlike passive video, **Gaze** waits for you. It knows when you are looking away
 
 Modern meditation apps are passive audio players. **Gaze** is an active participant in your relaxation. By using client-side computer vision, the application creates a "Bio-Feedback Loop":
 
-1. **Instruction:** The app guides you into a state (e.g., "Look at the center," "Relax your jaw").
-2. **Verification:** The app uses the webcam to verify compliance using gaze detection and facial landmark tracking.
+1. **Scene:** The app guides you into a state (e.g., "Look at the center," "Relax your jaw").
+2. **Verification:** The app uses the webcam to verify compliance using behavior tracking and facial landmark tracking.
 3. **Progression:** The script advances only when the physical state is achieved, deepening the immersion.
 
 ## ⚡ Features
@@ -26,15 +26,9 @@ Modern meditation apps are passive audio players. **Gaze** is an active particip
 - **Dynamic Pacing:** Text duration is algorithmically calculated based on sentence structure, ensuring a natural reading rhythm.
 - **Privacy First:** **All computer vision processing is done 100% locally in your browser.** No video data is ever sent to a server.
 
-## 📚 Included Programs
-
-The application comes pre-loaded with several "flows" or programs:
-
-- **The Somatic Dissolve (20 min):** A full-body deep relaxation session focusing on jaw release and shoulder tension.
-
 ## 🛠️ For Developers
 
-Gaze is built with **TypeScript** and designed to be extensible. You can write your own hypnotic scripts using the JSON-like `Program` structure.
+Gaze is built with **TypeScript** and designed to be extensible. You can write your own hypnotic scripts using the JSON-like `Session` structure.
 
 ### Installation
 
@@ -49,22 +43,25 @@ npm install
 # Run local development server
 npm run dev`
 
-### Creating Custom Programs
+### Creating Custom Sessions
 
-You can add new scripts in the `programs` directory. The engine supports a variety of Instruction types:
+You can add new scripts in the `programs` directory. The engine uses a unified `Scene` system with multiple `Behavior` suggestions:
 
 TypeScript
 
 `// Example: A simple interaction block
-new RelaxJawInstruction({
-    prompt: 'Let your mouth hang open...',
-    duration: 30000 
-}),
-new NodInstruction({
-    prompt: 'Do you feel the tension leaving?',
-    nodsRequired: 1,
-    type: 'YES'
-})`
+{
+    text: 'Let your mouth hang open...',
+    behavior: {
+        suggestions: [{ type: 'mouth:relax', duration: 30000 }]
+    }
+},
+{
+    text: 'Do you feel the tension leaving?',
+    behavior: {
+        suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+    }
+}`
 
 ## 🔒 Privacy & Permissions
 
@@ -77,7 +74,7 @@ To function, **Gaze** requires access to your:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether you are a developer improving the face-tracking algorithms or a writer submitting new Hypnosis Scripts (`Programs`), please feel free to open a Pull Request.
+Contributions are welcome! Whether you are a developer improving the face-tracking algorithms or a writer submitting new Hypnosis Scripts (`Sessions`), please feel free to open a Pull Request.
 
 ## 📄 License
 

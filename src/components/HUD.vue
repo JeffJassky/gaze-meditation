@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue'
-import { SessionState, type Instruction, type ThemeConfig } from '../types' // Import ThemeConfig
-import { DEFAULT_THEME } from '../theme' // Import DEFAULT_THEME
+import { SessionState, type ThemeConfig } from '../types'
+import { DEFAULT_THEME } from '../theme'
+import { type Scene } from '../../src-new/core/Scene'
 import NeuralScoreDisplay from './NeuralScoreDisplay.vue'
 
 interface HUDProps {
 	state: SessionState
-	currentInstruction?: Instruction
+	currentScene?: Scene // Now receiving Scene
 	score: number
 }
 
@@ -16,16 +17,11 @@ const emit = defineEmits(['exit'])
 const resolvedThemeRef = inject<Ref<ThemeConfig>>('resolvedTheme')
 const resolvedTheme = computed(() => resolvedThemeRef?.value || DEFAULT_THEME)
 
-// HUD styles transition
 const hudStyles = computed(() => {
 	return {
 		transition: 'all 0.4s ease'
 	}
 })
-
-const handleExit = () => {
-	emit('exit')
-}
 </script>
 
 <template>
@@ -40,7 +36,7 @@ const handleExit = () => {
 		/>
 		<div class="flex justify-between items-start"></div>
 
-		<!-- Center: Reinforcement Feedback ONLY (Instructions are in Views now) -->
+		<!-- Center: Reinforcement Feedback -->
 		<div
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full max-w-4xl"
 		>
@@ -51,25 +47,25 @@ const handleExit = () => {
 				<h1
 					v-if="
 						props.state === SessionState.REINFORCING_POS &&
-						props.currentInstruction?.options.positiveReinforcement?.enabled
+						props.currentScene?.config.behavior?.success?.enabled !== false
 					"
 					key="pos"
 					class="text-6xl font-black drop-shadow-[0_0_25px_rgba(74,222,128,0.8)] animate-bounce"
 					:style="{ color: resolvedTheme.positiveColor }"
 				>
-					{{ props.currentInstruction.options.positiveReinforcement.message }}
+					{{ props.currentScene.config.behavior?.success?.message || 'SUCCESS' }}
 				</h1>
 
 				<h1
 					v-else-if="
 						props.state === SessionState.REINFORCING_NEG &&
-						props.currentInstruction?.options.negativeReinforcement?.enabled
+						props.currentScene?.config.behavior?.fail?.enabled !== false
 					"
 					key="neg"
 					class="text-6xl font-black drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] glitch-text"
 					:style="{ color: resolvedTheme.negativeColor }"
 				>
-					{{ props.currentInstruction.options.negativeReinforcement.message }}
+					{{ props.currentScene.config.behavior?.fail?.message || 'FAILED' }}
 				</h1>
 
 				<div

@@ -1,22 +1,22 @@
-import { DEFAULT_THEME } from '../theme';
-import type { ThemeConfig, Program } from '../types';
-import type { Instruction } from '../core/Instruction';
+import { DEFAULT_THEME } from '../theme'
+import type { ThemeConfig, Session } from '../types'
 
 export function resolveTheme(
-  programTheme: ThemeConfig | undefined,
-  instructionTheme: ThemeConfig | undefined,
+	programTheme: ThemeConfig | undefined,
+	itemTheme: ThemeConfig | undefined
 ): ThemeConfig {
-  return {
-    ...DEFAULT_THEME,
-    ...programTheme,
-    ...instructionTheme,
-  };
+	return {
+		...DEFAULT_THEME,
+		...programTheme,
+		...itemTheme
+	}
 }
 
-// Overload for when a Program and an Instruction object are passed directly
-export function getInstructionEffectiveTheme(
-  program: Program,
-  instruction: Instruction<any>, // Use any for options as it's not relevant for theme resolution here
+// Overload for when a Session and an Instruction/Scene object are passed directly
+export function getSceneEffectiveTheme(
+	program: Session,
+	item: { options?: { theme?: ThemeConfig }, config?: { theme?: ThemeConfig } }
 ): ThemeConfig {
-  return resolveTheme(program.theme, instruction.options.theme);
+	const itemTheme = item.config?.theme || item.options?.theme
+	return resolveTheme(program.theme, itemTheme)
 }
