@@ -36,9 +36,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Just breathe naturally.',
-                behavior: {
-                    suggestions: [{ type: 'breathe', duration: 20000 }]
-                }
+				behavior: {
+					suggestions: [{ type: 'breathe', duration: 20000 }]
+				}
 			}
 		]
 	},
@@ -51,9 +51,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Please close your eyes now. The scene will complete when you do.',
-                behavior: {
-                    suggestions: [{ type: 'eyes:close' }]
-                }
+				behavior: {
+					suggestions: [{ type: 'eyes:close' }]
+				}
 			}
 		]
 	},
@@ -65,41 +65,11 @@ const TEST_SESSIONS: Session[] = [
 		spiralBackground: '/img/spiral.png',
 		scenes: [
 			{
-				text: 'Please open your eyes now. I will chime until you do.',
-                behavior: {
-                    suggestions: [{ type: 'eyes:open' }]
-                }
+				text: 'Open your eyes.',
+				behavior: {
+					suggestions: [{ type: 'eyes:open' }]
+				}
 			}
-		]
-	},
-	{
-		id: 'test_manual_fractionation',
-		title: 'Fractionation',
-		description: 'Sequence: Close -> Open -> Close -> Open',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: "Now in a moment, I'll ask you to close your eyes."
-			},
-			{
-				text: "Each time you hear the bell, you'll open your eyes."
-			},
-			{ text: 'Close your eyes.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
-			{ text: 'Open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } },
-			{
-				text: [
-					'Good.',
-					'Each time the swirling light returns, you are 10 times more relaxed.'
-				]
-			},
-			{ text: 'Close those eyes again.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
-			{ text: 'Open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } },
-			{
-				text: ['Deeper and deeper.']
-			},
-			{ text: 'Close those eyes again.', behavior: { suggestions: [{ type: 'eyes:close' }] } },
-			{ text: 'And open your eyes.', behavior: { suggestions: [{ type: 'eyes:open' }] } }
 		]
 	},
 	{
@@ -111,9 +81,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Open your mouth and relax your jaw',
-                behavior: {
-                    suggestions: [{ type: 'mouth:relax', duration: 5000 }]
-                }
+				behavior: {
+					suggestions: [{ type: 'mouth:relax', duration: 5000 }]
+				}
 			}
 		]
 	},
@@ -126,9 +96,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Do not blink',
-                behavior: {
-                    suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
-                }
+				behavior: {
+					suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
+				}
 			}
 		]
 	},
@@ -141,27 +111,27 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Gently turn your head to the left.',
-                behavior: {
-                    suggestions: [{ type: 'head:left' }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:left' }]
+				}
 			},
 			{
 				text: 'Gently turn your head to the right.',
-                behavior: {
-                    suggestions: [{ type: 'head:right' }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:right' }]
+				}
 			},
 			{
 				text: 'Gently upward.',
-                behavior: {
-                    suggestions: [{ type: 'head:up' }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:up' }]
+				}
 			},
 			{
 				text: 'Down.',
-                behavior: {
-                    suggestions: [{ type: 'head:down', duration: 10000 }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:down', duration: 10000 }]
+				}
 			}
 		]
 	},
@@ -174,9 +144,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Please enter your name',
-                behavior: {
-                    suggestions: [{ type: 'form:submit' }]
-                },
+				behavior: {
+					suggestions: [{ type: 'form:submit' }]
+				},
 				question: 'What is your name?',
 				fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
 				autoContinue: true
@@ -192,15 +162,15 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Nod your head twice',
-                behavior: {
-                    suggestions: [{ type: 'head:nod', options: { nodsRequired: 2 } }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:nod', options: { nodsRequired: 2 } }]
+				}
 			},
 			{
 				text: 'Shake your head twice',
-                behavior: {
-                    suggestions: [{ type: 'head:shake', options: { nodsRequired: 2 } }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:shake', options: { nodsRequired: 2 } }]
+				}
 			}
 		]
 	},
@@ -233,9 +203,14 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'Read this aloud',
-                behavior: {
-                    suggestions: [{ type: 'speech:speak', options: { targetValue: 'I am reading this.', duration: 3000 } }]
-                }
+				behavior: {
+					suggestions: [
+						{
+							type: 'speech:speak',
+							options: { targetValue: 'I am reading this.', duration: 3000 }
+						}
+					]
+				}
 			}
 		]
 	},
@@ -248,9 +223,9 @@ const TEST_SESSIONS: Session[] = [
 		scenes: [
 			{
 				text: 'keep the blue dot centered in the ring.',
-                behavior: {
-                    suggestions: [{ type: 'head:still', duration: 20000 }]
-                }
+				behavior: {
+					suggestions: [{ type: 'head:still', duration: 20000 }]
+				}
 			}
 		]
 	},
@@ -261,7 +236,10 @@ const TEST_SESSIONS: Session[] = [
 		audio: { musicTrack: 'silence.mp4' },
 		spiralBackground: '/img/spiral.png',
 		scenes: [
-			{ text: 'Type "test"', behavior: { suggestions: [{ type: 'type', options: { targetPhrase: 'test' } }] } }
+			{
+				text: 'Type "test"',
+				behavior: { suggestions: [{ type: 'type', options: { targetPhrase: 'test' } }] }
+			}
 		]
 	},
 	{
@@ -286,7 +264,10 @@ const TEST_SESSIONS: Session[] = [
 			}
 		]
 	}
-]
+].map(session => ({
+	...session,
+	skipIntro: true
+}))
 
 interface DashboardProps {
 	// onStartSession: (program: Session, subjectId: string) => void; // Will be an emit
@@ -315,7 +296,7 @@ const passwordInput = ref('')
 const checkPassword = () => {
 	if (passwordInput.value === '1234') {
 		isFunSessionsUnlocked.value = true
-		showPasswordPrompt = false
+		showPasswordPrompt.value = false
 		passwordInput.value = ''
 	}
 }
@@ -328,8 +309,9 @@ const refreshData = () => {
 	users.value = getUsers()
 	sessions.value = getSessions().reverse() // Newest first
 
-	if (users.value.length > 0 && users.value[0]?.id) {
-		selectedUser.value = users.value[0].id
+	const firstUser = users.value[0]
+	if (users.value.length > 0 && firstUser) {
+		selectedUser.value = firstUser.id
 	}
 }
 
@@ -371,8 +353,9 @@ const handleStartSession = async (program: Session) => {
 const handleStartTutorial = () => {
 	// Ensure a user is selected
 	if (!selectedUser.value) {
-		if (users.value.length > 0) {
-			selectedUser.value = users.value[0].id
+		const firstUser = users.value[0]
+		if (firstUser) {
+			selectedUser.value = firstUser.id
 		} else {
 			// Fallback if no users exist (should be covered by seedDatabase, but good for safety)
 			const newUser: User = {
@@ -639,14 +622,8 @@ onMounted(() => {
 									<span
 										class="text-xs bg-zinc-800 px-3 py-1 rounded-full text-zinc-400 border border-zinc-700 whitespace-nowrap"
 									>
-										{{
-											Math.ceil(
-												initialTrainingSession.scenes.length / 4
-											)
-										}}-{{
-											Math.ceil(
-												initialTrainingSession.scenes.length / 3
-											)
+										{{ Math.ceil(initialTrainingSession.scenes.length / 4) }}-{{
+											Math.ceil(initialTrainingSession.scenes.length / 3)
 										}}
 										min
 									</span>

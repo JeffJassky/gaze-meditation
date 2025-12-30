@@ -37,8 +37,6 @@ const isFormValid = computed(() => {
   return props.fields.every(isFieldValid)
 })
 
-const accentHoverColor = computed(() => props.theme.accentHoverColor || props.theme.accentColor)
-
 watch(localFormData, (newVal) => {
   if (props.autoContinue && isFormValid.value) {
     emit('submit', newVal)

@@ -1,14 +1,12 @@
-import { ref, type Ref, markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
-import { eyesRegion } from '../services'
-import EyeGraphicElement from '../components/scene/visualizers/EyeGraphicElement.vue'
+import { eyesRegion, camera } from '../services'
 
 export interface EyeBehaviorOptions extends BehaviorOptions {
 	// ...
 }
 
 export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
-	public openness: Ref<number> = ref(1)
+	public static override readonly requiredDevices = ['camera']
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
@@ -19,27 +17,22 @@ export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
 	}
 
 	public get component() {
-		return markRaw(EyeGraphicElement)
-	}
-
-	public getVisualizerProps() {
-		return {
-			openness: this.openness.value * 100
-		}
+		return null
 	}
 
 	protected onStart(): void {
-		eyesRegion.addEventListener('update', this.handleUpdate)
-		eyesRegion.addEventListener('blink', this.handleBlink)
+		this.addManagedEventListener(eyesRegion, 'update', this.handleUpdate)
+		this.addManagedEventListener(eyesRegion, 'blink', this.handleBlink)
+		camera.start().catch(console.error)
+		this.setConditionMet(true)
 	}
 
 	protected onStop(): void {
-		eyesRegion.removeEventListener('update', this.handleUpdate)
-		eyesRegion.removeEventListener('blink', this.handleBlink)
+		// Handled by base class
 	}
 
 	private handleUpdate = (e: Event) => {
-		this.openness.value = (e as CustomEvent).detail.open
+		this.updateData({ openness: (e as CustomEvent).detail.open * 100 })
 	}
 
 	private handleBlink = () => {
@@ -48,47 +41,42 @@ export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
 }
 
 export class CloseEyesBehavior extends Behavior<EyeBehaviorOptions> {
-	public openness: Ref<number> = ref(1)
+	public static override readonly requiredDevices = ['camera']
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
 			duration: 8000, // Timeout for the action
-			failOnTimeout: true, 
+			failOnTimeout: true,
 			...options
 		})
 	}
 
 	public get component() {
-		return markRaw(EyeGraphicElement)
-	}
-
-	public getVisualizerProps() {
-		return {
-			openness: this.openness.value * 100
-		}
+		return null
 	}
 
 	protected onStart(): void {
-		eyesRegion.addEventListener('update', this.handleUpdate)
-		eyesRegion.addEventListener('close', this.handleClose)
+		this.addManagedEventListener(eyesRegion, 'update', this.handleUpdate)
+		this.addManagedEventListener(eyesRegion, 'close', this.handleClose)
+		camera.start().catch(console.error)
 	}
 
 	protected onStop(): void {
-		eyesRegion.removeEventListener('update', this.handleUpdate)
-		eyesRegion.removeEventListener('close', this.handleClose)
+		// Handled by base class
 	}
 
 	private handleUpdate = (e: Event) => {
-		this.openness.value = (e as CustomEvent).detail.open
+		this.updateData({ openness: (e as CustomEvent).detail.open * 100 })
 	}
 
 	private handleClose = () => {
+		console.log('[CloseEyesBehavior] handleClose triggered')
 		this.emitSuccess()
 	}
 }
 
 export class OpenEyesBehavior extends Behavior<EyeBehaviorOptions> {
-	public openness: Ref<number> = ref(0)
+	public static override readonly requiredDevices = ['camera']
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
@@ -99,30 +87,25 @@ export class OpenEyesBehavior extends Behavior<EyeBehaviorOptions> {
 	}
 
 	public get component() {
-		return markRaw(EyeGraphicElement)
-	}
-
-	public getVisualizerProps() {
-		return {
-			openness: this.openness.value * 100
-		}
+		return null
 	}
 
 	protected onStart(): void {
-		eyesRegion.addEventListener('update', this.handleUpdate)
-		eyesRegion.addEventListener('open', this.handleOpen)
+		this.addManagedEventListener(eyesRegion, 'update', this.handleUpdate)
+		this.addManagedEventListener(eyesRegion, 'open', this.handleOpen)
+		camera.start().catch(console.error)
 	}
 
 	protected onStop(): void {
-		eyesRegion.removeEventListener('update', this.handleUpdate)
-		eyesRegion.removeEventListener('open', this.handleOpen)
+		// Handled by base class
 	}
 
 	private handleUpdate = (e: Event) => {
-		this.openness.value = (e as CustomEvent).detail.open
+		this.updateData({ openness: (e as CustomEvent).detail.open * 100 })
 	}
 
 	private handleOpen = () => {
+		console.log('[OpenEyesBehavior] handleOpen triggered')
 		this.emitSuccess()
 	}
 }

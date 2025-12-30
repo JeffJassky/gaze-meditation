@@ -15,7 +15,7 @@ const props = defineProps<{
 
 const accentColor = computed(() => props.theme.accentColor || '#ffffff')
 const positiveColor = computed(() => props.theme.positiveColor || '#4ade80')
-const negativeColor = computed(() => props.theme.negativeColor || '#f87171')
+
 
 const arrowRotation = computed(() => {
   switch (props.direction) {

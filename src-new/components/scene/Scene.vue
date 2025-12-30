@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, inject, type Ref, ref, watch, onUnmounted } from 'vue'
+import { computed, inject, type Ref } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import { type Scene } from '@new/core/Scene'
 import { type ThemeConfig } from '@/types'
 import { DEFAULT_THEME } from '@/theme'
-import { calculateDuration } from '@/utils/time'
 
 interface Props {
 	scene: Scene
@@ -18,76 +17,22 @@ const props = defineProps<Props>()
 const resolvedTheme = inject<Ref<ThemeConfig>>('resolvedTheme')
 const theme = computed(() => resolvedTheme?.value || props.scene.config.theme || DEFAULT_THEME)
 
-const prompt = computed(() => {
-	const text = props.scene.config.text
-	if (!text) return ''
-	return Array.isArray(text) ? text.join(' ~ ') : text
-})
-
-const splitPrompt = computed(() => {
-	if (!prompt.value) return []
-	return prompt.value
-		.split('~')
-		.map(s => s.trim())
-		.filter(s => s)
-})
-
-// Use the progress from the scene instance
+// Use the progress and text state from the scene instance
 const progress = computed(() => props.scene.progress.value)
 const showProgress = computed(
-	() => props.scene.config.duration !== undefined || props.scene.behaviors.length > 0
+	() =>
+		props.scene.config.duration !== undefined ||
+		props.scene.behaviors.some(b => b.hasExplicitDuration)
 )
 
-// Text Sequencing Logic
-const activeSegment = ref('')
-const isTextVisible = ref(false)
-let sequenceTimeout: number | null = null
-
-const wait = (ms: number) => new Promise(resolve => {
-	sequenceTimeout = window.setTimeout(resolve, ms)
-})
-
-const playSequence = async () => {
-	if (sequenceTimeout) clearTimeout(sequenceTimeout)
-	isTextVisible.value = false
-	activeSegment.value = ''
-
-	const segments = splitPrompt.value
-	if (!segments.length) return
-
-	// Small delay before starting
-	await wait(300)
-
-	for (const segment of segments) {
-		activeSegment.value = segment
-		isTextVisible.value = true
-		
-		// Calculate read time (minimum 1.5s for very short text)
-		const duration = Math.max(calculateDuration(segment), 1500)
-		
-		await wait(duration)
-		
-		isTextVisible.value = false
-		await wait(500) // Transition out time
-	}
-}
-
-watch(splitPrompt, () => {
-	playSequence()
-}, { immediate: true })
-
-onUnmounted(() => {
-	if (sequenceTimeout) clearTimeout(sequenceTimeout)
-})
+const activeText = computed(() => props.scene.activeText.value)
+const isTextVisible = computed(() => props.scene.isTextVisible.value)
 </script>
 
 <template>
 	<div
 		class="scene-container"
-		:style="{
-			color: theme.textColor,
-			backgroundColor: theme.backgroundColor
-		}"
+		:style="{ color: theme.textColor }"
 	>
 		<!-- Background Layer -->
 		<div class="scene-layer background-layer">
@@ -96,22 +41,22 @@ onUnmounted(() => {
 
 		<!-- Main Content Layer -->
 		<div class="scene-layer content-layer flex flex-col items-center justify-center p-8">
-			<!-- Standardized Prompt Display -->
-			<slot name="prompt">
-				<div class="prompt-text mb-8 text-center z-10 h-32 flex items-center justify-center">
-					<Transition
-						enter-active-class="animate-in fade-in zoom-in duration-500 ease-out"
-						leave-active-class="animate-out fade-out zoom-out duration-500 ease-in"
+			<!-- Central Text Display -->
+			<div class="prompt-text relative mb-12 text-center z-10 h-48 flex items-center justify-center w-full">
+				<Transition
+					name="glacial"
+					mode="out-in"
+				>
+					<span
+						v-if="isTextVisible && activeText"
+						:key="activeText"
+						class="absolute inset-0 flex items-center justify-center px-4 leading-relaxed"
+						:style="{ color: theme.secondaryTextColor || theme.textColor }"
 					>
-						<span
-							v-if="isTextVisible && activeSegment"
-							class="inline-block max-w-4xl"
-						>
-							{{ activeSegment }}
-						</span>
-					</Transition>
-				</div>
-			</slot>
+						<span class="max-w-4xl">{{ activeText }}</span>
+					</span>
+				</Transition>
+			</div>
 
 			<!-- Primary Interactive/Visual Element -->
 			<div
@@ -139,12 +84,12 @@ onUnmounted(() => {
 		<div class="scene-layer overlay-layer pointer-events-none">
 			<div
 				v-if="showProgress"
-				class="absolute bottom-12 left-1/2 -translate-x-1/2"
+				class="absolute inset-0 flex items-center justify-center"
 			>
 				<ProgressBar
 					:progress="progress"
-					:size="60"
-					:stroke-width="4"
+					:size="180"
+					:stroke-width="8"
 					:fillColor="theme.accentColor || theme.textColor"
 					trackColor="rgba(255,255,255,0.1)"
 				/>
@@ -161,6 +106,7 @@ onUnmounted(() => {
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	background-color: transparent; /* Ensure Theater background is visible */
 }
 
 .scene-layer {
@@ -186,7 +132,23 @@ onUnmounted(() => {
 .prompt-text {
 	font-size: clamp(1.5rem, 4vw, 2.5rem);
 	font-weight: 500;
-	line-height: 1.4;
 	max-width: 900px;
+}
+
+/* Glacial Transition Styles */
+.glacial-enter-active,
+.glacial-leave-active {
+	transition: opacity calc(2s / var(--speed-factor, 1)) ease-in-out,
+		transform calc(2s / var(--speed-factor, 1)) ease-in-out;
+}
+
+.glacial-enter-from {
+	opacity: 0;
+	transform: scale(1.1);
+}
+
+.glacial-leave-to {
+	opacity: 0;
+	transform: scale(0.95);
 }
 </style>

@@ -9,10 +9,8 @@ export interface DirectionalGazeBehaviorOptions extends BehaviorOptions {
 }
 
 export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOptions> {
-	public isCorrect: Ref<boolean> = ref(false)
-	public score: Ref<number> = ref(0) // percentage of correct frames
+	public static override readonly requiredDevices = ['camera']
 
-	private startTime = 0
 	private correctFrames = 0
 	private totalFrames = 0
 	
@@ -35,30 +33,25 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 		return markRaw(DirectionalGazeVisualizer)
 	}
 
-	public getVisualizerProps() {
-		return {
-			direction: this.options.direction,
-			isCorrect: this.isCorrect.value,
-			score: this.score.value
-		}
-	}
-
 	protected onStart() {
-		this.isCorrect.value = false
-		this.score.value = 0
+		this.updateData({
+			direction: this.options.direction,
+			isCorrect: false,
+			score: 0
+		})
+
 		this.correctFrames = 0
 		this.totalFrames = 0
 		this.isInitialized = false
 		this.startTime = Date.now()
 
-		headRegion.addEventListener('pose', this.handleHeadPose)
-		eyesRegion.addEventListener('update', this.handleEyesUpdate)
+		this.addManagedEventListener(headRegion, 'pose', this.handleHeadPose)
+		this.addManagedEventListener(eyesRegion, 'update', this.handleEyesUpdate)
 		camera.start().catch(console.error)
 	}
 
 	protected onStop() {
-		headRegion.removeEventListener('pose', this.handleHeadPose)
-		eyesRegion.removeEventListener('update', this.handleEyesUpdate)
+		// Handled by base class
 	}
 
 	private handleHeadPose = (e: Event) => {
@@ -67,7 +60,7 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 		this.currentPitch = d.pitch
 	}
 
-	private handleEyesUpdate = (e: Event) => {
+	private handleEyesUpdate = () => {
 		if (!this.isActive) return
 
 		if (!this.isInitialized) {
@@ -83,10 +76,9 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 		const relPitch = this.currentPitch - this.centerPitch
 
 		this.totalFrames++
-		const correct = this.checkDirection(relYaw, relPitch)
-		this.isCorrect.value = correct
+		const isCorrect = this.checkDirection(relYaw, relPitch)
 
-		if (correct) {
+		if (isCorrect) {
 			this.correctFrames++
 		} else {
 			// Adapt baseline slowly when not correct
@@ -95,8 +87,10 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 			this.centerPitch = this.lerp(this.centerPitch, this.currentPitch, alpha)
 		}
 
-		this.score.value = (this.correctFrames / this.totalFrames) * 100
-		this.emitProgress(this.score.value / 100)
+		const score = (this.correctFrames / this.totalFrames) * 100
+		
+		this.updateData({ isCorrect, score })
+		this.emitProgress(score / 100)
 	}
 
 	private checkDirection(relYaw: number, relPitch: number): boolean {
@@ -116,10 +110,11 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 
 	// Override handleTimeout to succeed based on score
 	protected handleTimeout() {
-		if (this.score.value >= 50) {
-			this.emitSuccess({ score: this.score.value })
+		const score = (this.correctFrames / this.totalFrames) * 100
+		if (score >= 50) {
+			this.emitSuccess({ score })
 		} else {
-			this.emitFail({ score: this.score.value, reason: 'Insufficient score' })
+			this.emitFail({ score, reason: 'Insufficient score' })
 		}
 	}
 }

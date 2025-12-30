@@ -25,7 +25,6 @@ class PostureAnalyzer {
 
     // Constants
     private readonly ADAPTATION_RATE = 0.005 // Very slow adaptation to drifting center
-    private readonly INIT_SAMPLES = 60 // 1 second @ 60fps to set initial baseline
 
     public start() {
         if (this.isRunning) return

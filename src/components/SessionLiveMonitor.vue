@@ -36,7 +36,8 @@ const createPath = (key: 'stillness' | 'breathRate' | 'blinkRate' | 'blinkSpeed'
 	const history = sessionTracker.history
 	if (history.length < 2) return ''
 
-	const endTime = history[history.length - 1].timestamp
+	const lastItem = history[history.length - 1]
+	const endTime = lastItem ? lastItem.timestamp : 0
 	
 	const pts = history.map((h) => {
 		const x = (h.timestamp / (endTime || 1)) * width

@@ -9,71 +9,133 @@ export interface NodBehaviorOptions extends BehaviorOptions {
 }
 
 export class NodBehavior extends Behavior<NodBehaviorOptions> {
-	// Visualizer Props
-	public nodsCompleted: Ref<number> = ref(0)
-	public pitchState: Ref<number> = ref(0)
-	public yawState: Ref<number> = ref(0)
+
+	public static override readonly requiredDevices = ['camera']
+
+
+
+	private nodsCompleted = 0
+
+
 
 	constructor(options: NodBehaviorOptions) {
+
 		super({
+
 			type: 'YES',
+
 			nodsRequired: 2,
+
 			...options
+
 		})
+
 	}
+
+
 
 	public get component() {
+
 		return markRaw(NodVisualizer)
+
 	}
 
-	public getVisualizerProps() {
-		return {
-			type: this.options.type || 'YES',
-			nodsCompleted: this.nodsCompleted.value,
-			nodsRequired: this.options.nodsRequired || 2,
-			pitchState: this.pitchState.value,
-			yawState: this.yawState.value
-		}
-	}
+
 
 	protected onStart(): void {
-		this.nodsCompleted.value = 0
-		this.pitchState.value = 0
-		this.yawState.value = 0
 
-		headRegion.addEventListener('nod', this.handleNod)
-		headRegion.addEventListener('pose', this.handlePose)
+		this.nodsCompleted = 0
+
+		this.updateData({
+
+			type: this.options.type || 'YES',
+
+			nodsCompleted: 0,
+
+			nodsRequired: this.options.nodsRequired || 2,
+
+			pitchState: 0,
+
+			yawState: 0
+
+		})
+
+
+
+		this.addManagedEventListener(headRegion, 'nod', this.handleNod)
+
+		this.addManagedEventListener(headRegion, 'pose', this.handlePose)
+
+
 
 		camera.start().catch(e => {
+
 			console.warn('[NodBehavior] Camera start failed', e)
+
 			this.emitFail('Camera access failed')
+
 		})
+
 	}
+
+
 
 	protected onStop(): void {
-		headRegion.removeEventListener('nod', this.handleNod)
-		headRegion.removeEventListener('pose', this.handlePose)
+
+		// Handled by base class
+
 	}
+
+
 
 	private handleNod = (e: Event) => {
+
 		const detail = (e as CustomEvent).detail
+
 		const requiredType = this.options.type || 'YES'
 
+
+
 		if (detail.type === requiredType) {
-			this.nodsCompleted.value++
+
+			this.nodsCompleted++
+
+			const required = this.options.nodsRequired || 2
+
 			
-			if (this.nodsCompleted.value >= (this.options.nodsRequired || 2)) {
-				this.emitSuccess({ nods: this.nodsCompleted.value })
+
+			this.updateData({ nodsCompleted: this.nodsCompleted })
+
+
+
+			if (this.nodsCompleted >= required) {
+
+				this.emitSuccess({ nods: this.nodsCompleted })
+
 			} else {
-				const progress = this.nodsCompleted.value / (this.options.nodsRequired || 2)
-				this.emitProgress(progress)
+
+				this.emitProgress(this.nodsCompleted / required)
+
 			}
+
 		}
+
 	}
 
+
+
 	private handlePose = (e: Event) => {
+
 		const detail = (e as CustomEvent).detail
-		if (detail.pitchState !== undefined) this.pitchState.value = detail.pitchState
-		if (detail.yawState !== undefined) this.yawState.value = detail.yawState
+
+		this.updateData({
+
+			pitchState: detail.pitchState ?? 0,
+
+			yawState: detail.yawState ?? 0
+
+		})
+
 	}
+
 }

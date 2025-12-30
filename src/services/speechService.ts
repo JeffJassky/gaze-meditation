@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 
 // Define types for SpeechRecognition since they might not be in all TS envs
 // or we can rely on dom.d.ts if it's new enough.
@@ -18,58 +18,56 @@ class SpeechService {
      this._isStopping = false
      if (this.recognition) return
 
-     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-     if (!SpeechRecognition) {
+     const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+     if (!SpeechRecognitionClass) {
         console.error('Speech API not supported')
         this.error.value = 'Speech API not supported'
         return
      }
 
-     this.recognition = new SpeechRecognition()
-     this.recognition.continuous = true
-     this.recognition.interimResults = true
-     this.recognition.lang = 'en-US'
+     this.recognition = new SpeechRecognitionClass()
+     if (this.recognition) {
+        this.recognition.continuous = true
+        this.recognition.interimResults = true
+        this.recognition.lang = 'en-US'
 
-     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimTranscript = ''
-        let finalTranscript = ''
-
-        // We can choose to append to a global transcript or just expose the latest
-        // For our use cases (matching words), a running transcript of the current session is good.
-        // But if it runs forever, it gets huge.
-        // Let's just update a "window" of transcript or let the user reset it.
-        
-        // Actually, for `continuous=true`, the results array grows.
-        // We probably want to just reconstruct the current buffer.
-        
-        let full = ''
-        for (let i = 0; i < event.results.length; ++i) {
-           full += event.results[i][0].transcript
+        this.recognition.onresult = (event: any) => {
+           const results = event.results as SpeechRecognitionResultList
+           
+           let full = ''
+           for (let i = 0; i < results.length; ++i) {
+              const res = results[i]
+              if (res && res[0]) {
+                 full += res[0].transcript
+              }
+           }
+           this.transcript.value = full
+           
+           const lastIdx = results.length - 1
+           if (lastIdx >= 0) {
+               const lastRes = results[lastIdx]
+               if (lastRes && lastRes[0]) {
+                  this.lastResult.value = lastRes[0].transcript
+               }
+           }
         }
-        this.transcript.value = full
-        
-        // Also update lastResult for event-driven logic (like "did he just say X?")
-        const lastIdx = event.results.length - 1
-        if (lastIdx >= 0) {
-            this.lastResult.value = event.results[lastIdx][0].transcript
+
+        this.recognition.onerror = (event: any) => {
+           if (event.error === 'no-speech') return
+           console.warn('Speech Recognition Error', event.error)
+           this.error.value = event.error
         }
-     }
 
-     this.recognition.onerror = (event: any) => {
-        if (event.error === 'no-speech') return
-        console.warn('Speech Recognition Error', event.error)
-        this.error.value = event.error
-     }
-
-     this.recognition.onend = () => {
-        this.isListening.value = false
-        // Auto-restart if not explicitly stopped
-        if (!this._isStopping && this.recognition) {
-           try {
-              this.recognition.start()
-              this.isListening.value = true
-           } catch (e) {
-              console.warn('Speech auto-restart failed', e)
+        this.recognition.onend = () => {
+           this.isListening.value = false
+           // Auto-restart if not explicitly stopped
+           if (!this._isStopping && this.recognition) {
+              try {
+                 this.recognition.start()
+                 this.isListening.value = true
+              } catch (e) {
+                 console.warn('Speech auto-restart failed', e)
+              }
            }
         }
      }

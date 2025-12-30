@@ -44,30 +44,19 @@ const hudStyles = computed(() => {
 				name="hud-fade"
 				mode="out-in"
 			>
-				<h1
-					v-if="
-						props.state === SessionState.REINFORCING_POS &&
-						props.currentScene?.config.behavior?.success?.enabled !== false
-					"
-					key="pos"
-					class="text-6xl font-black drop-shadow-[0_0_25px_rgba(74,222,128,0.8)] animate-bounce"
-					:style="{ color: resolvedTheme.positiveColor }"
-				>
-					{{ props.currentScene.config.behavior?.success?.message || 'SUCCESS' }}
-				</h1>
-
-				<h1
-					v-else-if="
-						props.state === SessionState.REINFORCING_NEG &&
-						props.currentScene?.config.behavior?.fail?.enabled !== false
-					"
-					key="neg"
-					class="text-6xl font-black drop-shadow-[0_0_25px_rgba(220,38,38,0.8)] glitch-text"
-					:style="{ color: resolvedTheme.negativeColor }"
-				>
-					{{ props.currentScene.config.behavior?.fail?.message || 'FAILED' }}
-				</h1>
-
+				                    					<div
+				                    						v-if="state === SessionState.REINFORCING_POS"
+				                    						class="text-4xl font-bold tracking-widest text-emerald-400"
+				                    					>
+				                    						{{ props.currentScene?.config.behavior?.success?.message || 'SUCCESS' }}
+				                    					</div>
+				                    					<div
+				                    						v-else-if="state === SessionState.REINFORCING_NEG"
+				                    						class="text-4xl font-bold tracking-widest text-rose-500"
+				                    					>
+				                    						{{ props.currentScene?.config.behavior?.fail?.message || 'FAILED' }}
+				                    					</div>
+				                    
 				<div
 					v-else-if="props.state === SessionState.FINISHED"
 					key="finished"

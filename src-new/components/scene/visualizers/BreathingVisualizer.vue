@@ -19,7 +19,6 @@ const guideText = computed(() => {
 })
 
 const circleColor = computed(() => props.theme.positiveColor || '#00ffff')
-const trackColor = computed(() => (props.theme.secondaryTextColor || '#ffffff') + '00') // Transparent track
 </script>
 
 <template>

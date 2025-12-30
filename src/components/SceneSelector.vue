@@ -3,7 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { type Scene } from '../../src-new/core/Scene'
 
 const props = defineProps({
-	sscenes: {
+	scenes: {
 		type: Array as () => Scene[],
 		required: true
 	},
@@ -21,7 +21,7 @@ const emit = defineEmits<{(e: 'select', index: number): void, (e: 'toggle', expa
 
 const isExpanded = ref(false)
 const searchQuery = ref('')
-const placement = computed(() => props.placement || 'bottom')
+const placementValue = computed(() => props.placement || 'bottom')
 const scrollContainer = ref<HTMLElement | null>(null)
 
 watch(isExpanded, async val => {
@@ -58,9 +58,9 @@ const getSceneText = (scene: Scene) => {
 }
 
 const filteredScenes = computed(() => {
-	return props.scenes
-		.map((scene, originalIndex) => ({ scene, originalIndex }))
-		.filter(({ scene }) => {
+	return (props.scenes as Scene[])
+		.map((scene: Scene, originalIndex: number) => ({ scene, originalIndex }))
+		.filter(({ scene }: { scene: Scene }) => {
 			if (!searchQuery.value) return true
 			const query = searchQuery.value.toLowerCase()
 			const type = 'Scene'.toLowerCase()
@@ -84,7 +84,7 @@ const filteredScenes = computed(() => {
 		<div
 			v-if="isExpanded"
 			class="absolute left-0 bg-zinc-900/90 border border-zinc-700 p-2 rounded shadow-xl w-64 backdrop-blur-sm max-h-[60vh] flex flex-col z-50"
-			:class="placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
+			:class="placementValue === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
 		>
 			<input
 				v-model="searchQuery"

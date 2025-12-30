@@ -157,11 +157,9 @@ class FaceMeshService {
 		// Check if stopped again
 		if (this._isStopping) return
 
-		// Load Model
-
 		const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
 
-		const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig = {
+		const detectorConfig: any = {
 			runtime: 'tfjs',
 
 			refineLandmarks: false, // Iris not needed for Head Pose
@@ -210,15 +208,11 @@ class FaceMeshService {
 						try {
 							const faces = await this.detector.estimateFaces(this.video)
 
-							if (faces.length > 0) {
-								this.processFace(faces[0])
-
-								// if (frameCount % 60 === 0)
-								// 	console.log(
-								// 		`Face detected (Yaw: ${this.debugData.headYaw.toFixed(3)})`
-								// 	)
-							} else {
-								// if (frameCount % 60 === 0) console.log('No faces detected')
+							if (faces && faces.length > 0) {
+								const face = faces[0]
+								if (face) {
+									this.processFace(face)
+								}
 							}
 						} catch (e) {
 							console.error('Detection Error:', e)
@@ -352,13 +346,25 @@ class FaceMeshService {
 
 	private updateBlinkStatus(keypoints: faceLandmarksDetection.Keypoint[]) {
 		// Left Eye
-		const leftV = this.getDistance(keypoints[159], keypoints[145])
-		const leftH = this.getDistance(keypoints[33], keypoints[133])
-		const leftEAR = leftV / leftH
+		const leftTop = keypoints[159]
+		const leftBottom = keypoints[145]
+		const leftL = keypoints[33]
+		const leftR = keypoints[133]
 
 		// Right Eye
-		const rightV = this.getDistance(keypoints[386], keypoints[374])
-		const rightH = this.getDistance(keypoints[263], keypoints[362])
+		const rightTop = keypoints[386]
+		const rightBottom = keypoints[374]
+		const rightL = keypoints[263]
+		const rightR = keypoints[362]
+
+		if (!leftTop || !leftBottom || !leftL || !leftR || !rightTop || !rightBottom || !rightL || !rightR) return
+
+		const leftV = this.getDistance(leftTop!, leftBottom!)
+		const leftH = this.getDistance(leftL!, leftR!)
+		const leftEAR = leftV / leftH
+
+		const rightV = this.getDistance(rightTop!, rightBottom!)
+		const rightH = this.getDistance(rightL!, rightR!)
 		const rightEAR = rightV / rightH
 
 		const avgEAR = (leftEAR + rightEAR) / 2

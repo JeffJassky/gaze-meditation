@@ -20,6 +20,7 @@ import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
+import { camera } from '../../src-new/services'
 import { playbackSpeed } from '../state/playback'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import theBlueDoor from '../programs/the-blue-door'
@@ -155,56 +156,33 @@ const initSession = async () => {
 		showLoadingContent.value = true
 	}, 100)
 
-	let needsFaceMesh = false
-	let needsAudio = false
-	let needsSpeech = false
+	let needsCamera = false
+	let needsMicrophone = false
 
-	if (
-		activeSession.value.scenes.some(
-			s =>
-				s.capabilities?.faceMesh ||
-				s.behavior?.suggestions?.some(
-					sig => sig.type === 'breathe' || sig.type === 'head:nod' || sig.type === 'head:still'
-				)
-		)
-	) {
-		needsFaceMesh = true
-	}
+	activeSession.value.scenes.forEach(s => {
+		s.behavior?.suggestions?.forEach(sig => {
+			const BehaviorClass = Scene.getBehaviorClass(sig.type)
+			if (BehaviorClass) {
+				if ((BehaviorClass as any).requiredDevices?.includes('camera')) needsCamera = true
+				if ((BehaviorClass as any).requiredDevices?.includes('microphone')) needsMicrophone = true
+			}
+		})
+	})
 
-	if (
-		activeSession.value.scenes.some(
-			s =>
-				s.capabilities?.speech ||
-				s.behavior?.suggestions?.some(sig => sig.type === 'speech:speak')
-		)
-	) {
-		needsSpeech = true
-	}
-
-	if (
+	const needsAudio =
 		activeSession.value.audio?.musicTrack !== 'none' ||
-		activeSession.value.audio?.binaural ||
-		activeSession.value.scenes.some(s => s.capabilities?.audioInput)
-	) {
-		needsAudio = true
-	}
+		activeSession.value.audio?.binaural
 
-	console.log('[Theater] Capabilities:', { needsAudio, needsFaceMesh, needsSpeech })
+	console.log('[Theater] Hardware Requirements:', { needsCamera, needsMicrophone, needsAudio })
 
-	if (
-		needsFaceMesh ||
-		needsSpeech ||
-		(needsAudio && activeSession.value.scenes.some(s => s.capabilities?.audioInput))
-	) {
+	if (needsCamera || needsMicrophone) {
 		try {
-			const camQuery = needsFaceMesh
+			const camQuery = needsCamera
 				? navigator.permissions.query({ name: 'camera' as any })
 				: Promise.resolve(null)
-			const micQuery =
-				needsSpeech ||
-				(needsAudio && activeSession.value.scenes.some(s => s.capabilities?.audioInput))
-					? navigator.permissions.query({ name: 'microphone' as any })
-					: Promise.resolve(null)
+			const micQuery = needsMicrophone
+				? navigator.permissions.query({ name: 'microphone' as any })
+				: Promise.resolve(null)
 
 			const [camStatus, micStatus] = await Promise.all([camQuery, micQuery])
 
@@ -267,7 +245,7 @@ const initSession = async () => {
 	}
 	loadingProgress.value = 50
 
-	if (needsSpeech) {
+	if (needsMicrophone) {
 		try {
 			await speechService.init()
 			await speechService.start()
@@ -283,7 +261,7 @@ const initSession = async () => {
 
 	loadingProgress.value = 75
 
-	if (needsFaceMesh) {
+	if (needsCamera) {
 		try {
 			await faceMeshService.init()
 		} catch (e) {
@@ -298,15 +276,14 @@ const initSession = async () => {
 	// Prepend Reminders
 	const reminders: Scene[] = []
 	const reminderText: string[] = []
-	const firstScene = activeSession.value.scenes[0]
-	const shouldSkipIntro = firstScene?.skipIntro === true
+	const shouldSkipIntro = activeSession.value.skipIntro === true
 
 	if (!shouldSkipIntro) {
-		if (needsFaceMesh && needsSpeech) {
+		if (needsCamera && needsMicrophone) {
 			reminderText.push('Find yourself in a quiet, well-lit space ~ for optimal biofeedback.')
-		} else if (needsSpeech) {
+		} else if (needsMicrophone) {
 			reminderText.push('Find yourself in a quiet space ~ for optimal biofeedback.')
-		} else if (needsFaceMesh) {
+		} else if (needsCamera) {
 			reminderText.push('Find yourself in a well-lit space ~ for optimal biofeedback.')
 		}
 
@@ -412,7 +389,7 @@ const nextScene = (index: number) => {
 			let previousVoiceText: string | undefined
 			if (sceneIndex.value > 0) {
 				const prevScene = sessionScenes.value[sceneIndex.value - 1]
-				if (prevScene.config.voice) {
+				if (prevScene && prevScene.config.voice) {
 					if (Array.isArray(prevScene.config.voice)) {
 						previousVoiceText =
 							prevScene.config.voice[prevScene.config.voice.length - 1]
@@ -469,8 +446,8 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 		}
 	}
 
-	const isPosEnabled = currentScene.value?.config.behavior?.success?.enabled !== false
-	const isNegEnabled = currentScene.value?.config.behavior?.fail?.enabled !== false
+	const isPosEnabled = currentScene.value?.config.behavior?.success?.enabled === true
+	const isNegEnabled = currentScene.value?.config.behavior?.fail?.enabled === true
 
 	if (success) {
 		if (isPosEnabled) {
@@ -601,6 +578,7 @@ onMounted(() => {
 
 		sessionTracker.stopSession()
 		faceMeshService.stop()
+		camera.stop()
 		audioSession.binaural.stop()
 		audioSession.musicLooper.stop()
 		speechService.stop()
@@ -640,9 +618,7 @@ onMounted(() => {
 			v-if="activeSession.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${
-					activeSession.spiralBackground.startsWith('/') ? '' : '/'
-				}${activeSession.spiralBackground})`,
+				backgroundImage: `url(${activeSession.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -656,9 +632,7 @@ onMounted(() => {
 			v-if="activeSession.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${
-					activeSession.spiralBackground.startsWith('/') ? '' : '/'
-				}${activeSession.spiralBackground})`,
+				backgroundImage: `url(${activeSession.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',

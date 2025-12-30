@@ -120,7 +120,6 @@ export class MusicLooper {
 		const inPoint = config.loop?.inPoint ?? 10
 		const outPoint = config.loop?.outPoint ?? buffer.duration - 10
 
-		const duration = outPoint - inPoint
 		// The next track should start when this one reaches (outPoint - fade)
 		// relative to its start.
 		// Actually, we want the overlap to be 'fade'.

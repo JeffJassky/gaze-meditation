@@ -150,10 +150,10 @@ const animate = () => {
 
   // Update Background Shader Uniforms
   if (backgroundMaterial) {
-    backgroundMaterial.uniforms.uTime.value = elapsedTime;
+    backgroundMaterial.uniforms.uTime!.value = elapsedTime;
     const targetIntensity = props.state === SessionState.REINFORCING_NEG ? 1.0 : 0.0;
-    backgroundMaterial.uniforms.uIntensity.value = THREE.MathUtils.lerp(
-      backgroundMaterial.uniforms.uIntensity.value,
+    backgroundMaterial.uniforms.uIntensity!.value = THREE.MathUtils.lerp(
+      backgroundMaterial.uniforms.uIntensity!.value,
       targetIntensity,
       0.1
     );
@@ -202,6 +202,7 @@ onUnmounted(() => {
 });
 
 watch(() => props.state, (newState) => {
+  if (!newState) return
   // Any specific state change reactions can go here if needed,
   // though the animation loop already handles intensity lerping.
 });

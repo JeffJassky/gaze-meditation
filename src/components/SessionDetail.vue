@@ -12,11 +12,12 @@ const width = 600
 const height = 100
 const padding = 5
 
-const createPath = (key: keyof PhysiologicalSnapshot, scale = 1, offset = 0) => {
-	if (!metrics.value.length) return ''
-	
-	const maxTime = metrics.value[metrics.value.length - 1].timestamp
-	if (maxTime === 0) return ''
+const createPath = (key: keyof PhysiologicalSnapshot) => {
+	if (metrics.value.length < 2) return ''
+
+	const lastMetric = metrics.value[metrics.value.length - 1]
+	const maxTime = lastMetric ? lastMetric.timestamp : 0
+
 
 	// Find min/max for auto-scaling if needed, or use fixed scale
 	// Let's use fixed scales for known metrics to allow comparison

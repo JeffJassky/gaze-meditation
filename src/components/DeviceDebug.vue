@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, shallowRef } from 'vue'
+import { ref, onMounted, onUnmounted, shallowRef } from 'vue'
 import { Camera } from '../../src-new/services/devices/camera/camera'
 import { EyesRegion } from '../../src-new/services/devices/camera/regions/eyes'
 import { HeadRegion } from '../../src-new/services/devices/camera/regions/head'
@@ -337,41 +337,16 @@ const loop = () => {
 }
 
 // -- Visualization Helpers --
-const createPath = (key: keyof typeof currentMetrics.value, max: number, min?: number) => {
+const createPath = (key: string, max: number, min?: number) => {
 	if (history.value.length < 2) return ''
-	const endTime = history.value[history.value.length - 1].timestamp
-
+	
 	const pts = history.value.map((h, i) => {
-		// X coordinate
-		// To make it scroll smoothly, we ideally map time.
-		// But simpler: map index to width
 		const x = (i / (HISTORY_SIZE - 1)) * width
-
-		let val = h[key] as number
-		if (val === undefined || isNaN(val)) val = 0
+		let val = (h as any)[key] as number
 		
 		let normalized = 0
-
 		if (min !== undefined) {
 			normalized = (val - min) / (max - min)
-		} else if (
-			key === 'headRoll' ||
-			key === 'headPitch' ||
-			key === 'headYaw' ||
-			key === 'breathSignal'
-		) {
-			// Bipolar centering logic
-			// If signal is -max to +max, mapped to 0-1
-
-			// Invert Pitch so Down is Down on the graph
-			// Yaw is now correctly swapped at the source (HeadRegion)
-			let processedVal = val
-			if (key === 'headPitch') {
-				processedVal = -val
-			}
-
-			const clampedVal = Math.max(-max, Math.min(max, processedVal))
-			normalized = (clampedVal + max) / (2 * max)
 		} else {
 			normalized = Math.max(0, Math.min(max, val)) / max
 		}

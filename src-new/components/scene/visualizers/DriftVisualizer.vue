@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   driftX: number
   driftY: number
   driftRatio: number // 0 to 1 (amount of drift relative to tolerance)
+  size?: number
   theme: {
     positiveColor?: string
     negativeColor?: string
     [key: string]: any
   }
   tolerance?: number // To calculate scaling logic if needed, but driftRatio might be enough
-}>()
+}>(), {
+  size: 300
+})
 
-const OUTER_SIZE = 300
+const OUTER_SIZE = props.size
 const DISC_RATIO = 0.9
 const BORDER_WIDTH = 8
 
-const radius = (OUTER_SIZE - BORDER_WIDTH) / 2
-const circumference = 2 * Math.PI * radius
+const radius = OUTER_SIZE / 2 - 4
 
 function hexToRgb(hex: string) {
-  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
-  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b)
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : { r: 0, g: 0, b: 0 }
+	const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
+	hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b)
+
+	const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+	return result
+		? {
+			r: parseInt(result[1]!, 16),
+			g: parseInt(result[2]!, 16),
+			b: parseInt(result[3]!, 16)
+		  }
+		: { r: 0, g: 0, b: 0 }
 }
 
 function interpolateColor(color1: string, color2: string, factor: number) {

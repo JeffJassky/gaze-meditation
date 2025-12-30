@@ -8,10 +8,7 @@ export interface SpeechBehaviorOptions extends BehaviorOptions {
 }
 
 export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
-	public words: Ref<{ text: string; isSpoken: boolean }[]> = ref([])
-	public isComplete: Ref<boolean> = ref(false)
-
-	private unwatch: (() => void) | null = null
+	public static override readonly requiredDevices = ['microphone']
 
 	constructor(options: SpeechBehaviorOptions) {
 		super({
@@ -20,27 +17,19 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 			failOnTimeout: true,
 			...options
 		})
-		this.initWords()
 	}
 
 	public get component() {
 		return markRaw(SpeechVisualizer)
 	}
 
-	public getVisualizerProps() {
-		return {
-			words: this.words.value,
-			isComplete: this.isComplete.value
-		}
-	}
-
 	private initWords() {
-		this.words.value = this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false }))
+		return this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false }))
 	}
 
 	protected async onStart() {
-		this.isComplete.value = false
-		this.initWords()
+		const words = this.initWords()
+		this.updateData({ words, isComplete: false })
 
 		await speechService.init()
 		speechService.resetTranscript()
@@ -49,17 +38,15 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 			speechService.start()
 		}
 
-		this.unwatch = watch(speechService.transcript, (newVal) => {
-			this.handleTranscript(newVal)
-		})
+		this.addManagedEventListener(
+			watch(speechService.transcript, (newVal) => {
+				this.handleTranscript(newVal)
+			})
+		)
 	}
 
 	protected onStop() {
-		if (this.unwatch) {
-			this.unwatch()
-			this.unwatch = null
-		}
-		// We don't stop speech service globally here
+		// Handled by base class
 	}
 
 	private handleTranscript(transcript: string) {
@@ -83,10 +70,10 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 			}
 		})
 
-		this.words.value = newWords
+		this.updateData({ words: newWords })
 
-		if (allFound && !this.isComplete.value) {
-			this.isComplete.value = true
+		if (allFound) {
+			this.updateData({ isComplete: true })
 			setTimeout(() => {
 				this.emitSuccess({ transcript })
 			}, 500)

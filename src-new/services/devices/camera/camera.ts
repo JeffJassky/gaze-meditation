@@ -101,7 +101,7 @@ export class Camera extends Device {
 		// 2. Load Model
 		if (!this.detector) {
 			const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh
-			const detectorConfig: faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig = {
+			const detectorConfig: any = {
 				runtime: 'tfjs',
 				refineLandmarks: true, // We need iris for gaze if possible, though user logic used head pose mostly
 				maxFaces: 1
@@ -155,8 +155,14 @@ export class Camera extends Device {
 					
 					if (faces.length > 0) {
 						const face = faces[0]
-						// Notify regions
-						this.regions.forEach(region => region.update(face, timestamp))
+						if (face) {
+							// Notify regions
+							this.regions.forEach(region => region.update(face, timestamp))
+						}
+					} else {
+						if (timestamp % 2000 < 30) { // Log every ~2 seconds
+							console.warn('[Camera] No faces detected')
+						}
 					}
 				} catch (e) {
 					console.error('Detection error:', e)

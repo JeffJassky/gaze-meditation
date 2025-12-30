@@ -4,6 +4,7 @@ export const heldWithoutRope: Session = {
 	id: 'held_without_rope',
 	title: 'Held Without Rope',
 	isAdult: true,
+	skipIntro: true,
 	description:
 		'A 25-minute session exploring sensation, surrender, and the feeling of being held by nothing but attention and words.',
 	audio: { musicTrack: '/audio/music.mp3' },
@@ -21,9 +22,6 @@ export const heldWithoutRope: Session = {
 					hertz: 10
 				}
 			},
-			// skipIntro: true // Note: skipIntro was not in SceneConfig but user had it in programs. 
-            // I'll keep it as it might be used in Theater.vue during init.
-            // Actually, I should probably check if skipIntro is used.
 		},
 
 		{

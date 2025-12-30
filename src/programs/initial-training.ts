@@ -3,6 +3,7 @@ import type { Session } from '../types'
 export const initialTrainingSession: Session = {
 	id: 'initial_training',
 	title: 'Gaze Tutorial',
+	skipIntro: true,
 	description: 'Get started with Gaze in less than 5 minutes.',
 	audio: { musicTrack: '/audio/music.mp3' },
 	spiralBackground: '/img/spiral.png',
@@ -18,8 +19,7 @@ export const initialTrainingSession: Session = {
 				binaural: {
 					hertz: 14 // Light beta - alert but receptive
 				}
-			},
-			// skipIntro: true
+			}
 		},
 
 		{
@@ -386,7 +386,7 @@ export const initialTrainingSession: Session = {
 					hertz: 9
 				}
 			}
-		}),
+		},
 
 		// ═══════════════════════════════════════════════════════════════════════════
 		// SECTION 6: THE COMMITMENT MOMENT
@@ -513,9 +513,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Keep the dot centered in the ring. Fifteen seconds. Just breathing. Just being.`,
 			text: 'Keep the dot centered',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 15000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 15000 }]
+			},
 			audio: {
 				binaural: {
 					hertz: 7
@@ -570,9 +570,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Keep your eyes open. Soft. Don't strain. Just notice what happens over the next ten seconds.`,
 			text: 'Eyes open and soft',
-            behavior: {
-                suggestions: [{ type: 'eyes:no-blink', duration: 10000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:no-blink', duration: 10000 }]
+			},
 			audio: {
 				binaural: {
 					hertz: 8
@@ -617,9 +617,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `When you're ready, let your eyes close. Not forced. Just... allowed.`,
 			text: 'Close your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:close', duration: 8000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:close', duration: 8000 }]
+			},
 			audio: {
 				binaural: {
 					hertz: 7
@@ -640,9 +640,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Now let them open again.`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			},
 			audio: {
 				binaural: {
 					hertz: 9
@@ -697,8 +697,8 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Let your jaw soften. Let it hang slightly open if it wants to. Teeth not touching. Tongue resting.`,
 			behavior: {
-                suggestions: [{ type: 'mouth:relax', duration: 6000 }]
-            },
+				suggestions: [{ type: 'mouth:relax', duration: 6000 }]
+			},
 			audio: {
 				binaural: {
 					hertz: 7
@@ -788,9 +788,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Lower your gaze slightly now. Just enough to feel a subtle shift. Keep the blue light visible.`,
 			text: 'Lower your gaze',
-            behavior: {
-                suggestions: [{ type: 'head:down' }]
-            },
+			behavior: {
+				suggestions: [{ type: 'head:down' }]
+			},
 			audio: {
 				binaural: {
 					hertz: 8
@@ -835,9 +835,9 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `If you understand, nod gently now.`,
 			text: 'Nod yes',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            },
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			},
 			audio: {
 				binaural: {
 					hertz: 9
@@ -882,9 +882,11 @@ export const initialTrainingSession: Session = {
 		{
 			voice: `Say aloud: "I am ready."`,
 			text: 'Say "I am ready"',
-            behavior: {
-                suggestions: [{ type: 'speech:speak', options: { targetValue: 'I am ready', duration: 6000 } }]
-            },
+			behavior: {
+				suggestions: [
+					{ type: 'speech:speak', options: { targetValue: 'I am ready', duration: 6000 } }
+				]
+			},
 			audio: {
 				binaural: {
 					hertz: 10

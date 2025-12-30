@@ -1,11 +1,3 @@
-import { type Ref } from 'vue'
-
-export interface SceneCapabilities {
-	faceMesh?: boolean
-	audioInput?: boolean
-	speech?: boolean // Uses shared SpeechService
-}
-
 export interface BehaviorSuggestion {
 	type:
 		| 'head:still'
@@ -49,17 +41,13 @@ export interface SceneConfig {
 			message?: string
 		}
 	}
-	onCompleteCallback?: (success: boolean, result?: any) => string | undefined 
+	onCompleteCallback?: (success: boolean, result?: any) => string | undefined
 
 	// Fade options
 	fadeOutDuration?: number
 
 	// Delay after completion before next instruction starts
 	cooldown?: number
-
-    // Legacy support
-    skipIntro?: boolean
-    capabilities?: SceneCapabilities
 }
 
 // Enums
@@ -123,6 +111,7 @@ export interface Session {
 	id: string
 	title: string
 	isAdult?: boolean
+	skipIntro?: boolean
 	// experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
 	description: string
 	tags?: string[]
@@ -134,11 +123,6 @@ export interface Session {
 	spiralBackground?: string
 	scenes: SceneConfig[] // All items use the unified Scene class
 	theme?: ThemeConfig // Optional theme configuration for the program
-}
-
-interface ChallengeConfig {
-	type: string
-	options?: any
 }
 
 export interface SessionMetric {

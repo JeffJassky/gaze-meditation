@@ -120,7 +120,11 @@ export class BreathRegion extends CameraRegion {
 	public crossingState: 'INHALE' | 'EXHALE' = 'EXHALE'
 
 	// Supervisors
-	private channels: { [key: string]: ChannelSupervisor } 
+	private channels: {
+		pitch: ChannelSupervisor
+		lift: ChannelSupervisor
+		scale: ChannelSupervisor
+	}
 
 	// Logic State
 	private lastValue = 0

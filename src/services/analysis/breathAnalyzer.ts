@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { faceMeshService } from '../faceMeshService'
 
 // --- CONSTANTS ---

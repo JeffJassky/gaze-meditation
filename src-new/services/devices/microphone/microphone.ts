@@ -30,64 +30,66 @@ export class Microphone extends Device {
 		this._isStopping = false
 		if (this.isListening) return
 
-		const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-		if (!SpeechRecognition) {
+		const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+		if (!SpeechRecognitionClass) {
 			throw new Error('Speech API not supported')
 		}
 
 		if (!this.recognition) {
-			this.recognition = new SpeechRecognition()
-			this.recognition.continuous = true
-			this.recognition.interimResults = true
-			this.recognition.lang = 'en-US'
+			this.recognition = new SpeechRecognitionClass()
+			if (this.recognition) {
+				this.recognition.continuous = true
+				this.recognition.interimResults = true
+				this.recognition.lang = 'en-US'
 
-			this.recognition.onstart = () => {
-				this.isListening = true
-				this.dispatchEvent(new Event('start'))
-			}
+				this.recognition.onstart = () => {
+					this.isListening = true
+					this.dispatchEvent(new Event('start'))
+				}
 
-			this.recognition.onend = () => {
-				this.isListening = false
-				this.dispatchEvent(new Event('stop')) // Or 'end'
-				
-				// Auto-restart if not manually stopped
-				if (!this._isStopping) {
-					try {
-						this.recognition?.start()
-					} catch (e) {
-						// ignore
+				this.recognition.onend = () => {
+					this.isListening = false
+					this.dispatchEvent(new Event('stop'))
+					
+					if (!this._isStopping) {
+						try {
+							this.recognition?.start()
+						} catch (e) {
+							// ignore
+						}
 					}
 				}
-			}
 
-			this.recognition.onerror = (event: any) => {
-				const evt = new CustomEvent('error', { detail: event.error })
-				this.dispatchEvent(evt)
-			}
+				this.recognition.onerror = (event: any) => {
+					const evt = new CustomEvent('error', { detail: event.error })
+					this.dispatchEvent(evt)
+				}
 
-			this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-				let interimTranscript = ''
-				let finalTranscript = ''
-				
-				// Get the latest result
-				const lastIdx = event.results.length - 1
-				const lastResult = event.results[lastIdx]
-				const text = lastResult[0].transcript
-				const isFinal = lastResult.isFinal
+				this.recognition.onresult = (event: any) => {
+					const results = event.results as SpeechRecognitionResultList
+					
+					const lastIdx = results.length - 1
+					const lastResult = results[lastIdx]
+					
+					if (lastResult && lastResult[0]) {
+						const text = lastResult[0].transcript
+						const isFinal = lastResult.isFinal
 
-				const evt = new CustomEvent('result', {
-					detail: {
-						text,
-						isFinal,
-						timestamp: Date.now()
+						const evt = new CustomEvent('result', {
+							detail: {
+								text,
+								isFinal,
+								timestamp: Date.now()
+							}
+						})
+						this.dispatchEvent(evt)
 					}
-				})
-				this.dispatchEvent(evt)
+				}
 			}
 		}
 
 		try {
-			this.recognition.start()
+			this.recognition?.start()
 		} catch (e) {
 			// already started
 		}

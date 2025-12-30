@@ -25,7 +25,7 @@ export class MouthRegion extends CameraRegion {
 		super(camera, 'mouth', 'Mouth')
 	}
 
-	update(face: Face, timestamp: number) {
+	update(face: Face) {
 		const k = face.keypoints
 		const upper = k[13]
 		const lower = k[14]

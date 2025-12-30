@@ -54,9 +54,7 @@ class VoiceService {
 			})
 			
 			if (res.ok) {
-				// We can optionally load it into buffer cache now
-				const blob = await res.blob()
-				// const blobUrl = URL.createObjectURL(blob)
+				// console.log('[VoiceService] Preload success')
 			}
 
 		} catch (e) {

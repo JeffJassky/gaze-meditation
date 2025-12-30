@@ -8,18 +8,12 @@ export interface BreatheBehaviorOptions extends BehaviorOptions {
 }
 
 export class BreatheBehavior extends Behavior<BreatheBehaviorOptions> {
-	// Visualizer Props
-	public signal: Ref<number> = ref(0)
-	public velocity: Ref<number> = ref(0)
-	public respirationRate: Ref<number> = ref(0)
-	public state: Ref<string> = ref('CALIBRATING')
-
-	private lastSignal = 0
+	public static override readonly requiredDevices = ['camera']
 
 	constructor(options: BreatheBehaviorOptions) {
 		super({
 			duration: 30000,
-			failOnTimeout: false, // Breathing for the duration is success
+			failOnTimeout: true, // Breathing for the duration is success
 			...options
 		})
 	}
@@ -28,37 +22,36 @@ export class BreatheBehavior extends Behavior<BreatheBehaviorOptions> {
 		return markRaw(BreathingVisualizer)
 	}
 
-	public getVisualizerProps() {
-		return {
-			signal: this.signal.value,
-			velocity: this.velocity.value,
-			respirationRate: this.respirationRate.value,
-			state: this.state.value
-		}
-	}
-
 	protected onStart(): void {
-		this.signal.value = 0
-		this.velocity.value = 0
-		this.respirationRate.value = 0
-		this.state.value = 'CALIBRATING'
+		this.updateData({
+			signal: 0,
+			velocity: 0,
+			respirationRate: 0,
+			state: 'CALIBRATING'
+		})
 
-		breathRegion.addEventListener('update', this.handleUpdate)
+		this.addManagedEventListener(breathRegion, 'update', this.handleUpdate)
 		camera.start().catch(console.error)
 	}
 
 	protected onStop(): void {
-		breathRegion.removeEventListener('update', this.handleUpdate)
+		// Handled by base class
 	}
+
+	private lastSignal = 0
 
 	private handleUpdate = (e: Event) => {
 		const detail = (e as CustomEvent).detail
-		
-		this.signal.value = detail.uiSignal
-		this.velocity.value = detail.uiSignal - this.lastSignal
-		this.respirationRate.value = detail.rate
-		this.state.value = detail.state
-
+		const velocity = detail.uiSignal - this.lastSignal
 		this.lastSignal = detail.uiSignal
+
+		this.updateData({
+			signal: detail.uiSignal,
+			velocity,
+			respirationRate: detail.rate,
+			state: detail.state
+		})
+
+		this.setConditionMet(detail.state !== 'CALIBRATING')
 	}
 }

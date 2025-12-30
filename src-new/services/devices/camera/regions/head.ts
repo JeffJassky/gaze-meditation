@@ -1,5 +1,5 @@
 import { CameraRegion } from '../region'
-import type { Face, Keypoint } from '@tensorflow-models/face-landmarks-detection'
+import type { Face } from '@tensorflow-models/face-landmarks-detection'
 import { Camera } from '../camera'
 
 export class HeadRegion extends CameraRegion {
@@ -21,13 +21,10 @@ export class HeadRegion extends CameraRegion {
 	public pitchState: -1 | 0 | 1 = 0 // -1: Up, 0: Center, 1: Down
 	public yawState: -1 | 0 | 1 = 0 // -1: Left, 0: Center, 1: Right
 
-	// Orientation State (Turn/Tilt)
-	private turnState: 'CENTER' | 'LEFT' | 'RIGHT' = 'CENTER'
-	private tiltState: 'CENTER' | 'UP' | 'DOWN' = 'CENTER'
+	public isStable = true
+	public smoothedStability = 1
 
 	// Thresholds
-	private readonly UP_THRESH = -0.008
-	private readonly DOWN_THRESH = 0.012
 	private readonly LEFT_THRESH = -0.009
 	private readonly RIGHT_THRESH = 0.009
 	private readonly MOVE_THRESH = 0.005 // Normalized distance
@@ -44,7 +41,7 @@ export class HeadRegion extends CameraRegion {
 		super(camera, 'head', 'Head')
 	}
 
-	update(face: Face, timestamp: number) {
+	update(face: Face) {
 		const keypoints = face.keypoints
 		const nose = keypoints[1]
 		// 3D Landmarks for geometric calculation
@@ -62,7 +59,7 @@ export class HeadRegion extends CameraRegion {
 		// In MediaPipe: Z is depth (negative is closer to camera).
 		// Tilted Down: TopHead comes closer (Z decr), Chin goes back (Z incr).
 		const dy = chin.y - topHead.y
-		const dz = chin.z! - topHead.z! // Ensure Z exists (it usually does in facemesh)
+		const dz = (chin.z || 0) - (topHead.z || 0) // Ensure Z exists (it usually does in facemesh)
 
 		// This raw atan2 gives the angle of the face plane relative to vertical.
 		// We subtract a calibration offset (approx 0.2 rad) because neutral faces aren't perfectly vertical planes.
@@ -83,7 +80,7 @@ export class HeadRegion extends CameraRegion {
 		// We want Left = Negative, Right = Positive.
 		// So we use atan2(dz, dx).
 		const dx = rightSide.x - leftSide.x
-		const dzYaw = rightSide.z! - leftSide.z!
+		const dzYaw = (rightSide.z || 0) - (leftSide.z || 0)
 		// Reverted to standard calculation per calibration check
 		this.yaw = Math.atan2(dzYaw, dx)
 
@@ -96,8 +93,11 @@ export class HeadRegion extends CameraRegion {
 		// Scale / Position (unchanged)
 		const leftOuter = keypoints[33]
 		const rightOuter = keypoints[263]
-		const iod = Math.hypot(rightOuter.x - leftOuter.x, rightOuter.y - leftOuter.y)
-		this.scale = iod
+		
+		if (leftOuter && rightOuter) {
+			const iod = Math.hypot(rightOuter.x - leftOuter.x, rightOuter.y - leftOuter.y)
+			this.scale = iod
+		}
 
 		this.x = nose.x / this.camera.videoWidth
 		this.y = nose.y / this.camera.videoHeight

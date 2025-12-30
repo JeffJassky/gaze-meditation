@@ -39,16 +39,22 @@ export class EyesRegion extends CameraRegion {
 		super(camera, 'eyes', 'Eyes')
 	}
 
+	private frameCount = 0
+
 	update(face: Face, timestamp: number) {
+		this.frameCount++
+		if (this.frameCount % 100 === 0) {
+			console.log('[EyesRegion] Heartbeat', { ear: this.ear.toFixed(3), norm: this.openNormalized.toFixed(3), isOpen: this.isOpen })
+		}
 		const k = face.keypoints
 		// Left Eye
-		const lV = this.dist(k[159], k[145])
-		const lH = this.dist(k[33], k[133])
+		const lV = this.dist(k[159]!, k[145]!)
+		const lH = this.dist(k[33]!, k[133]!)
 		const lEAR = lH > 0 ? lV / lH : 0
 
 		// Right Eye
-		const rV = this.dist(k[386], k[374])
-		const rH = this.dist(k[263], k[362])
+		const rV = this.dist(k[386]!, k[374]!)
+		const rH = this.dist(k[263]!, k[362]!)
 		const rEAR = rH > 0 ? rV / rH : 0
 
 		const rawEar = (lEAR + rEAR) / 2
@@ -97,11 +103,13 @@ export class EyesRegion extends CameraRegion {
 			// Determine State
 			if (this.isOpen) {
 				if (this.openNormalized < FORCE_OPEN_THRESHOLD && deviation < this.CLOSE_THRESHOLD) {
+					console.log('[EyesRegion] Closing eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
 					this.isOpen = false
 					this.dispatchEvent(new CustomEvent('close'))
 				}
 			} else {
 				if (this.openNormalized > FORCE_OPEN_THRESHOLD || deviation > this.OPEN_THRESHOLD) {
+					console.log('[EyesRegion] Opening eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
 					this.isOpen = true
 					this.dispatchEvent(new CustomEvent('open'))
 				}

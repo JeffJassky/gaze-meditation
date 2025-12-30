@@ -8,7 +8,6 @@ export class Accelerometer extends Device {
 	private device: BluetoothDevice | null = null
 	private server: BluetoothRemoteGATTServer | null = null
 	private characteristic: BluetoothRemoteGATTCharacteristic | null = null
-	private isConnected: boolean = false
 
 	constructor() {
 		super('accelerometer', 'XIAO nRF52840 Sense')
@@ -60,7 +59,6 @@ export class Accelerometer extends Device {
 				this.handleNotifications.bind(this)
 			)
 
-			this.isConnected = true
 			this.dispatchEvent(new Event('start'))
 		}
 	}
@@ -72,7 +70,6 @@ export class Accelerometer extends Device {
 	}
 
 	private onDisconnected() {
-		this.isConnected = false
 		this.dispatchEvent(new Event('stop'))
 		// Attempt reconnect? Usually better to let UI handle re-request/re-connect
 	}
@@ -87,7 +84,6 @@ export class Accelerometer extends Device {
 	}
 
 	private buffer = ''
-	private lastMag = 0
 
 	private processBuffer(chunk: string) {
 		this.buffer += chunk
@@ -102,46 +98,39 @@ export class Accelerometer extends Device {
 	}
 
 	private parseLine(line: string) {
-		// 1. Immediate Knock/Impact from Hardware Interrupt
-		// Format: "K:10.0"
 		if (line.startsWith('K:')) {
 			console.log('Impact received:', line)
 			this.dispatchEvent(new Event('impact'))
 			return
 		}
 
-		// 2. Periodic Telemetry
-		// Expected Format: "F:3.50,M:12.10"
 		if (line.startsWith('F:')) {
-			const parts = line.split(',')
+			const parts: string[] = line.split(',')
 			if (parts.length === 2) {
-				const freqPart = parts[0].split(':') // ["F", "3.50"]
-				const magPart = parts[1].split(':') // ["M", "12.10"]
+				const freqPart = parts[0]?.split(':')
+				const magPart = parts[1]?.split(':')
 
-				if (freqPart.length === 2 && magPart.length === 2) {
-					const freq = parseFloat(freqPart[1])
-					const mag = parseFloat(magPart[1])
+				if (freqPart && magPart && freqPart.length === 2 && magPart.length === 2) {
+					const freqStr = freqPart[1]
+					const magStr = magPart[1]
+					
+					if (freqStr !== undefined && magStr !== undefined) {
+						const freq = parseFloat(freqStr)
+						const mag = parseFloat(magStr)
 
-					if (!isNaN(freq) && !isNaN(mag)) {
-						this.dispatchEvent(
-							new CustomEvent('data', {
-								detail: { freq, mag, timestamp: Date.now() }
-							})
-						)
+						if (!isNaN(freq) && !isNaN(mag)) {
+							this.dispatchEvent(
+								new CustomEvent('data', {
+									detail: { freq, mag, timestamp: Date.now() }
+								})
+							)
 
-						// 1. Move vs Stop
-						if (mag > 0) {
-							this.dispatchEvent(new Event('move'))
-						} else {
-							this.dispatchEvent(new Event('still'))
+							if (mag > 0) {
+								this.dispatchEvent(new Event('move'))
+							} else {
+								this.dispatchEvent(new Event('still'))
+							}
 						}
-
-						// 2. Impact Detection (Crossing 10.0 threshold upwards)
-						// if (mag >= 40 || (this.lastMag < 10 && mag >= 10)) {
-						// 	this.dispatchEvent(new Event('impact'))
-						// }
-
-						this.lastMag = mag
 					}
 				}
 			}

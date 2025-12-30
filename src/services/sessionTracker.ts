@@ -53,7 +53,7 @@ class SessionTracker {
 				const duration = now - this.blinkStartTimestamp
 				if (duration > 50 && duration < 1000) { // Filter noise
 					this.blinkDurations.push(duration)
-					this.pruneOldDurations(now)
+					this.pruneOldDurations()
 				}
 			}
 		})
@@ -111,7 +111,7 @@ class SessionTracker {
 		this.blinkTimes = this.blinkTimes.filter(t => now - t < window)
 	}
 
-	private pruneOldDurations(now: number) {
+	private pruneOldDurations() {
 		// Keep durations from last 60 seconds (approx) - actually just keep last N samples might be easier, 
 		// but let's stick to time or count. Let's keep last 20 blinks for average speed.
 		if (this.blinkDurations.length > 20) {
