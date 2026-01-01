@@ -27,6 +27,14 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 
 		})
 
+		this.updateData({
+			driftX: 0,
+			driftY: 0,
+			driftRatio: 0,
+			isStable: true,
+			tolerance: this.options.tolerance || 0.05
+		})
+
 	}
 
 
