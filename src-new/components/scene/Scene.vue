@@ -34,33 +34,27 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 		class="scene-container"
 		:style="{ color: theme.textColor }"
 	>
-		<!-- Background Layer -->
-		<div class="scene-layer background-layer">
+		<!-- 1. Background Layer (z-0) -->
+		<div class="scene-layer background-layer z-0">
 			<slot name="background"></slot>
 		</div>
 
-		<!-- Main Content Layer -->
-		<div class="scene-layer content-layer flex flex-col items-center justify-center p-8">
-			<!-- Central Text Display -->
-			<div class="prompt-text relative mb-12 text-center z-10 h-48 flex items-center justify-center w-full">
-				<Transition
-					name="glacial"
-					mode="out-in"
-				>
-					<span
-						v-if="isTextVisible && activeText"
-						:key="activeText"
-						class="absolute inset-0 flex items-center justify-center px-4 leading-relaxed"
-						:style="{ color: theme.secondaryTextColor || theme.textColor }"
-					>
-						<span class="max-w-4xl">{{ activeText }}</span>
-					</span>
-				</Transition>
-			</div>
+		<!-- 2. Progress Layer (z-10) - Back -->
+		<div class="scene-layer progress-layer z-10 pointer-events-none flex items-center justify-center">
+			<ProgressBar
+				v-if="showProgress"
+				:progress="progress"
+				:size="180"
+				:stroke-width="8"
+				:fillColor="theme.accentColor || theme.textColor"
+				trackColor="rgba(255,255,255,0.1)"
+			/>
+		</div>
 
-			<!-- Primary Interactive/Visual Element -->
+		<!-- 3. Behavior Layer (z-20) - Middle -->
+		<div class="scene-layer behavior-layer z-20 pointer-events-auto flex items-center justify-center p-8">
 			<div
-				class="scene-content relative z-10"
+				class="scene-content relative flex items-center justify-center"
 				:class="contentClass"
 			>
 				<!-- Render Behaviors -->
@@ -80,20 +74,27 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 			</div>
 		</div>
 
-		<!-- UI Overlay Layer -->
-		<div class="scene-layer overlay-layer pointer-events-none">
-			<div
-				v-if="showProgress"
-				class="absolute inset-0 flex items-center justify-center"
-			>
-				<ProgressBar
-					:progress="progress"
-					:size="180"
-					:stroke-width="8"
-					:fillColor="theme.accentColor || theme.textColor"
-					trackColor="rgba(255,255,255,0.1)"
-				/>
+		<!-- 4. Text Layer (z-30) - Top -->
+		<div class="scene-layer text-layer z-30 pointer-events-none flex items-center justify-center p-8">
+			<div class="prompt-text relative text-center flex items-center justify-center w-full max-w-4xl">
+				<Transition
+					name="glacial"
+					mode="out-in"
+				>
+					<span
+						v-if="isTextVisible && activeText"
+						:key="activeText"
+						class="absolute inset-0 flex items-center justify-center px-4 leading-relaxed"
+						:style="{ color: theme.secondaryTextColor || theme.textColor }"
+					>
+						<span>{{ activeText }}</span>
+					</span>
+				</Transition>
 			</div>
+		</div>
+
+		<!-- 5. Overlay Layer (z-40) - Highest -->
+		<div class="scene-layer overlay-layer z-40 pointer-events-none">
 			<slot name="overlay"></slot>
 		</div>
 	</div>
@@ -116,23 +117,10 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 	height: 100%;
 }
 
-.background-layer {
-	z-index: 0;
-}
-
-.content-layer {
-	z-index: 10;
-	pointer-events: auto;
-}
-
-.overlay-layer {
-	z-index: 20;
-}
-
 .prompt-text {
 	font-size: clamp(1.5rem, 4vw, 2.5rem);
 	font-weight: 500;
-	max-width: 900px;
+	/* Removed fixed height/margins to allow overlap */
 }
 
 /* Glacial Transition Styles */
