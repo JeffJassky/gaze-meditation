@@ -95,10 +95,8 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 
 
 
-	private handleStillness = (e: Event) => {
-
-		const detail = (e as CustomEvent).detail
-
+	private handleStillness = () => {
+		
 		const tolerance = this.options.tolerance || 0.05
 		
 		// If we somehow missed the initial capture (e.g. no face detected yet), capture now
@@ -119,15 +117,16 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 		const driftY = rawDriftY / tolerance
 		
 		const driftRatio = Math.min(1, Math.hypot(driftX, driftY))
+		const isWithinTolerance = driftRatio < 1.0
 
 		this.updateData({
 			driftX,
 			driftY,
 			driftRatio,
-			isStable: detail.isStable
+			isStable: isWithinTolerance
 		})
 
-		this.setConditionMet(detail.isStable)
+		this.setConditionMet(isWithinTolerance)
 
 	}
 
