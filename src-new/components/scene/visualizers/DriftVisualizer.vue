@@ -116,7 +116,7 @@ const cursorStyle = computed(() => {
 }
 
 .progress-ring-fill {
-  transition: stroke 0.5s ease-in-out;
+  transition: stroke 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cursor {
@@ -124,6 +124,6 @@ const cursorStyle = computed(() => {
   top: 50%;
   left: 50%;
   border-radius: 50%;
-  transition: transform 0.1s ease-out, background-color 0.2s ease-out;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

@@ -117,10 +117,15 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 		const tolerance = this.options.tolerance || 0.05
 
 		// Use the adaptive drift values from the HeadRegion event
-		// detail.x = yaw deviation from adaptive center
-		// detail.y = pitch deviation from adaptive center
-		const driftX = detail.x / tolerance
-		const driftY = detail.y / tolerance
+		// Include both Rotation (x/y) and Position (posX/posY)
+		// detail.x = relYaw, detail.posX = relX
+		// Weight position by 1.5 to match HeadRegion's internal drift logic
+		const rawDriftX = detail.x + (detail.posX * 1.5)
+		const rawDriftY = detail.y + (detail.posY * 1.5)
+
+		// Negate driftX to mirror movement (Left turn/move = Right dot movement)
+		const driftX = -rawDriftX / tolerance
+		const driftY = rawDriftY / tolerance
 		
 		const driftRatio = Math.min(1, Math.hypot(driftX, driftY))
 		const isWithinTolerance = driftRatio < 1.0

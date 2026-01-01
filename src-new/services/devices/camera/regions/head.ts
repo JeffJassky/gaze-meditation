@@ -170,11 +170,11 @@ export class HeadRegion extends CameraRegion {
 
 				// Dynamic Alpha: 
 
-				// If Stable: Adapt FAST (0.05) to re-center on the new comfortable position.
+				// If Stable: Adapt FAST (0.1) to re-center on the new comfortable position.
 
 				// If Unstable (Moving): Adapt SLOW (0.001) to "hold" the center so we can measure the deviation magnitude.
 
-				const alpha = this.isStable ? 0.05 : 0.001
+				const alpha = this.isStable ? 0.1 : 0.001
 
 				
 
