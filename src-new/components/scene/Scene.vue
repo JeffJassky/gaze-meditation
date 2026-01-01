@@ -44,7 +44,7 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 			<ProgressBar
 				v-if="showProgress"
 				:progress="progress"
-				:size="180"
+				:size="300"
 				:stroke-width="8"
 				:fillColor="theme.accentColor || theme.textColor"
 				trackColor="rgba(255,255,255,0.1)"

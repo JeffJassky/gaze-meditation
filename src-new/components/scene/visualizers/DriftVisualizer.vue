@@ -20,8 +20,6 @@ const OUTER_SIZE = props.size
 const DISC_RATIO = 0.9
 const BORDER_WIDTH = 8
 
-const radius = OUTER_SIZE / 2 - 4
-
 function hexToRgb(hex: string) {
 	const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
 	hex = hex.replace(shorthandRegex, (_, r, g, b) => r + r + g + g + b + b)
@@ -79,20 +77,6 @@ const cursorStyle = computed(() => {
 
 <template>
   <div class="drift-visualizer">
-    <svg :width="OUTER_SIZE" :height="OUTER_SIZE" class="progress-ring">
-      <circle
-        class="progress-ring-fill"
-        :cx="OUTER_SIZE / 2"
-        :cy="OUTER_SIZE / 2"
-        :r="radius"
-        :stroke-width="BORDER_WIDTH"
-        :stroke="indicatorColor"
-        fill="none"
-        stroke-linecap="round"
-        :style="{ filter: `drop-shadow(0 0 8px ${indicatorColor})` }"
-      />
-    </svg>
-    
     <div class="cursor" :style="cursorStyle"></div>
   </div>
 </template>
