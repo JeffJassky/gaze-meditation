@@ -1,6 +1,6 @@
 import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
-import { headRegion } from '../services'
+import { headRegion, camera } from '../services'
 import DriftVisualizer from '../components/scene/visualizers/DriftVisualizer.vue'
 
 export interface StillnessBehaviorOptions extends BehaviorOptions {
@@ -77,6 +77,11 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 			this.addManagedEventListener(headRegion, 'stillness', this.handleStillness)
 
 			this.addManagedEventListener(headRegion, 'unstable', this.handleUnstable)
+
+			camera.start().catch(e => {
+				console.warn('[StillnessBehavior] Camera start failed', e)
+				this.emitFail('Camera access failed')
+			})
 
 		}
 
