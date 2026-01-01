@@ -7,6 +7,7 @@ import { MouthRegion } from '../../src-new/services/devices/camera/regions/mouth
 import { BreathRegion } from '../../src-new/services/devices/camera/regions/breath'
 import { Microphone } from '../../src-new/services/devices/microphone/microphone'
 import { Accelerometer } from '../../src-new/services/devices/accelerometer/accelerometer'
+import GAZEMotionTuner from './GAZEMotionTuner.vue'
 
 // -- Configuration --
 const width = 300
@@ -58,6 +59,8 @@ const faceDetected = ref(false)
 
 const accelState = ref({
     isMoving: false,
+    isWorn: false,
+    isSleeping: false,
     justImpacted: false
 })
 
@@ -249,8 +252,28 @@ const connectAccelerometer = async () => {
 			currentMetrics.value.accelMag = e.detail.mag
 		})
 
-        acc.addEventListener('move', () => accelState.value.isMoving = true)
-        acc.addEventListener('still', () => accelState.value.isMoving = false)
+        acc.addEventListener('move', () => {
+            accelState.value.isMoving = true
+            accelState.value.isWorn = false
+            accelState.value.isSleeping = false
+        })
+        acc.addEventListener('worn', () => {
+            accelState.value.isMoving = false
+            accelState.value.isWorn = true
+            accelState.value.isSleeping = false
+        })
+        acc.addEventListener('still', () => {
+            accelState.value.isMoving = false
+            accelState.value.isWorn = false
+        })
+        acc.addEventListener('sleep', () => {
+            accelState.value.isMoving = false
+            accelState.value.isWorn = false
+            accelState.value.isSleeping = true
+        })
+        acc.addEventListener('wake', () => {
+            accelState.value.isSleeping = false
+        })
         acc.addEventListener('impact', () => {
             accelState.value.justImpacted = true
             setTimeout(() => accelState.value.justImpacted = false, 200)
@@ -781,9 +804,21 @@ const formatTime = (ms: number) => {
                         >
                             MOVING
                         </span>
+                        <span
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
+                            :class="accelState.isWorn ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-600'"
+                        >
+                            WORN
+                        </span>
+                        <span
+                            class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
+                            :class="accelState.isSleeping ? 'bg-purple-500 text-white' : 'bg-zinc-800 text-zinc-600'"
+                        >
+                            SLEEPING
+                        </span>
                          <span
                             class="text-[10px] px-1.5 py-0.5 rounded font-bold transition-colors"
-                            :class="!accelState.isMoving ? 'bg-zinc-600 text-zinc-300' : 'bg-zinc-800 text-zinc-600'"
+                            :class="(!accelState.isMoving && !accelState.isWorn && !accelState.isSleeping) ? 'bg-zinc-600 text-zinc-300' : 'bg-zinc-800 text-zinc-600'"
                         >
                             STOPPED
                         </span>
@@ -826,6 +861,11 @@ const formatTime = (ms: number) => {
 					<span class="text-yellow-400">Mag: {{ currentMetrics.accelMag.toFixed(2) }}G</span>
 				</div>
 			</div>
+
+            <!-- 8. Motion Tuner -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2">
+                <GAZEMotionTuner :accelerometer="accelerometer" />
+            </div>
 		</div>
 
 		<!-- Microphone Section -->
