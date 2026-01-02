@@ -1,4 +1,3 @@
-import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, mouthRegion } from '../services'
 

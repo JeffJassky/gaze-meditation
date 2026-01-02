@@ -41,5 +41,3 @@ export class RelaxJawBehavior extends Behavior<RelaxJawBehaviorOptions> {
 		this.setConditionMet(rel > this.options.threshold!)
 	}
 }
-
-	

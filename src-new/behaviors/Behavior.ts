@@ -158,14 +158,14 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 		}, 16)
 	}
 
-	protected resumeProgress() {
+	public resumeProgress() {
 		if (this.isProgressActive) return
 		console.log(`[Behavior] ${this.constructor.name} progress resumed`)
 		this.isProgressActive = true
 		this.lastTick = Date.now()
 	}
 
-	protected pauseProgress() {
+	public pauseProgress() {
 		if (!this.isProgressActive) return
 		console.log(`[Behavior] ${this.constructor.name} progress paused`)
 		this.isProgressActive = false
@@ -175,7 +175,7 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 		}
 	}
 
-	protected resetProgress() {
+	public resetProgress() {
 		console.log(`[Behavior] ${this.constructor.name} progress reset`)
 		this.accumulatedTime = 0
 		this.emitProgress(0)
@@ -217,6 +217,8 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 		} else {
 			this.pauseProgress()
 		}
+
+		this.dispatchEvent(new CustomEvent('conditionChange', { detail: { met } }))
 	}
 
 	/**

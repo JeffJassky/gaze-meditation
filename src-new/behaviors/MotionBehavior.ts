@@ -6,8 +6,6 @@ export class MotionBehavior extends Behavior<BehaviorOptions> {
 
 	constructor(options: BehaviorOptions) {
 		super({
-			duration: 10000, // Default timeout for the action
-			failOnTimeout: true,
 			...options
 		})
 	}
@@ -20,7 +18,10 @@ export class MotionBehavior extends Behavior<BehaviorOptions> {
 		this.addManagedEventListener(accelerometer, 'move', this.handleMove)
 		this.addManagedEventListener(accelerometer, 'still', this.handleStill)
 		this.addManagedEventListener(accelerometer, 'worn', this.handleStill)
-		accelerometer.start().catch(console.error)
+		accelerometer.start().catch(e => {
+			console.warn('[MotionBehavior] Accelerometer start failed', e)
+			this.emitFail('Accelerometer access failed')
+		})
 	}
 
 	protected onStop(): void {
@@ -36,6 +37,5 @@ export class MotionBehavior extends Behavior<BehaviorOptions> {
 
 	private handleStill = () => {
 		this.setConditionMet(false)
-		this.emitFail('Device is still')
 	}
 }

@@ -19,7 +19,7 @@
 // ==========================================
 uint8_t var_tapThreshold = 0x03; // T: Max Sensitivity
 float var_spikeValue = 100.0;	 // V: Visual Spike Height
-int var_blindFrames = 0;		 // B: 200ms blindness after hit
+int var_blindFrames = 20;		 // B: 200ms blindness after hit
 
 // ==========================================
 // 3. VISUALIZATION SETTINGS
@@ -183,14 +183,27 @@ void loop()
 	if (isSleeping)
 	{
 		digitalWrite(LED_RED, HIGH); // OFF = Sleep
-		// CPU halts here until Pin 11 goes HIGH
+
+		// CPU halts here until Pin 11 goes HIGH or another system event occurs
 		waitForEvent();
 
-		// ... WOKE UP ...
+		// Check if it was a real motion interrupt from the LSM6DS3.
+		// If the pin is still LOW, it was a background event (BLE, timers, etc).
+		if (digitalRead(PIN_LSM6DS3TR_C_INT1) == LOW)
+		{
+			return; // Stay in logical sleep
+		}
+
+		// ... REALLY WOKE UP ...
 		digitalWrite(LED_RED, LOW); // ON = Awake
 		isSleeping = false;
 		lastMotionTime = millis();
 		broadcastLine("STATUS: Awake!");
+
+		// Clear flags immediately so we don't double-trigger
+		uint8_t dummy;
+		myIMU.readRegister(&dummy, LSM6DS3_WAKE_UP_SRC);
+		myIMU.readRegister(&dummy, LSM6DS3_TAP_SRC);
 	}
 
 	// ==========================================
@@ -280,20 +293,18 @@ void processCommand(String cmd)
 
 	if (cmd == "?")
 	{
-		String conf = "CONF:";
-		conf += "T=" + String(var_tapThreshold, HEX) + ",";
-		conf += "W=" + String(var_wakeThreshold, HEX) + ",";
-		conf += "S=" + String(var_smoothing, 2) + ",";
-		conf += "G=" + String(var_freqGate, 2) + ",";
-		conf += "H=" + String(var_freqHyst, 2) + ",";
-		conf += "N=" + String(var_noiseGate, 2) + ",";
-		conf += "B=" + String(var_blindFrames) + ",";
-		conf += "V=" + String(var_spikeValue, 1) + ",";
-		conf += "D=" + String(var_sampleDelay) + ",";
-		conf += "I=" + String(var_reportInterval) + ",";
-		conf += "X=" + String(var_deadband, 2) + ",";
-		conf += "Z=" + String(var_windowSize);
-		broadcastLine(conf);
+		broadcastLine("CONF:T=" + String(var_tapThreshold, HEX));
+		broadcastLine("CONF:W=" + String(var_wakeThreshold, HEX));
+		broadcastLine("CONF:S=" + String(var_smoothing, 2));
+		broadcastLine("CONF:G=" + String(var_freqGate, 2));
+		broadcastLine("CONF:H=" + String(var_freqHyst, 2));
+		broadcastLine("CONF:N=" + String(var_noiseGate, 2));
+		broadcastLine("CONF:B=" + String(var_blindFrames));
+		broadcastLine("CONF:V=" + String(var_spikeValue, 1));
+		broadcastLine("CONF:D=" + String(var_sampleDelay));
+		broadcastLine("CONF:I=" + String(var_reportInterval));
+		broadcastLine("CONF:X=" + String(var_deadband, 2));
+		broadcastLine("CONF:Z=" + String(var_windowSize));
 		return;
 	}
 

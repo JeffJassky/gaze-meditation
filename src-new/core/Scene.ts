@@ -96,7 +96,26 @@ export class Scene {
 				behavior.addEventListener('progress', (e: any) =>
 					this.onBehaviorProgress(behavior, e.detail)
 				)
+				behavior.addEventListener('conditionChange', () =>
+					this.syncBehaviors()
+				)
 				this.behaviors.push(behavior)
+			}
+		})
+	}
+
+	private syncBehaviors() {
+		// Only synchronize if we have multiple active behaviors with durations
+		const holdBehaviors = this.behaviors.filter(b => b.options.duration && b.isActive)
+		if (holdBehaviors.length < 2) return
+
+		const allMet = holdBehaviors.every(b => b.isConditionMet.value)
+
+		holdBehaviors.forEach(b => {
+			if (allMet) {
+				b.resumeProgress()
+			} else {
+				b.pauseProgress()
 			}
 		})
 	}
@@ -154,6 +173,7 @@ export class Scene {
 
 		// 2. Start Behaviors
 		this.behaviors.forEach(b => b.start())
+		this.syncBehaviors()
 
 		// 3. Fallback/Progress Timer (only if forced duration)
 		if (this.config.duration) {
@@ -244,6 +264,8 @@ export class Scene {
 		if (allDone) {
 			console.log(`[Scene] All behaviors complete, completing scene: ${this.id}`)
 			this.complete(true, data)
+		} else {
+			this.syncBehaviors()
 		}
 	}
 
@@ -253,7 +275,14 @@ export class Scene {
 	}
 
 	protected onBehaviorProgress(_behavior: Behavior, detail: { value: number }) {
-		this.progress.value = detail.value * 100
+		if (this.behaviors.length > 1) {
+			const minProgress = Math.min(
+				...this.behaviors.map(b => (b.isActive ? b.progress.value : 1))
+			)
+			this.progress.value = minProgress * 100
+		} else {
+			this.progress.value = detail.value * 100
+		}
 	}
 
 	protected complete(success: boolean, metrics?: any, result?: any) {

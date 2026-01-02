@@ -23,7 +23,7 @@ const props = withDefaults(
 <template>
 	<div
 		v-if="display !== 'none'"
-		class="impact-visualizer fixed inset-0 flex items-center justify-center pointer-events-none z-[100]"
+		class="impact-visualizer fixed inset-x-0 top-1/2 transform translate-y-32 flex items-center justify-center pointer-events-none z-[100]"
 	>
 		<!-- Progress Ring Mode -->
 		<ProgressBar
@@ -42,17 +42,13 @@ const props = withDefaults(
 			<div
 				v-for="i in impactsRequired"
 				:key="i"
-				class="w-4 h-4 rounded-full transition-all duration-500 transform"
-				:class="i <= impactsCount ? 'scale-110' : 'scale-75 opacity-30'"
+				class="w-4 h-4 rounded-full transition-all duration-500 transform border-2"
+				:class="i <= impactsCount ? 'scale-110' : 'scale-90 opacity-50'"
 				:style="{
-					backgroundColor:
-						i <= impactsCount
-							? theme.positiveColor || '#ffffff'
-							: theme.textColor || '#ffffff',
+					backgroundColor: i <= impactsCount ? theme.textColor : 'transparent',
+					borderColor: theme.textColor,
 					boxShadow:
-						i <= impactsCount
-							? `0 0 15px ${theme.positiveColor || '#ffffff'}80`
-							: 'none'
+						i <= impactsCount ? `0 0 15px ${theme.textColor || '#ffffff'}80` : 'none'
 				}"
 			></div>
 		</div>

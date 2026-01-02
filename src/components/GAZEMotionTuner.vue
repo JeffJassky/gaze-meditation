@@ -69,18 +69,28 @@ const toHex = (v: number) => v.toString(16).toUpperCase().padStart(2, '0')
 watch(() => props.accelerometer, (newVal, oldVal) => {
   if (oldVal) {
     oldVal.removeEventListener('config-loaded', onConfigLoaded as EventListener)
+    oldVal.removeEventListener('start', onDeviceStart as EventListener)
   }
   if (newVal) {
     newVal.addEventListener('config-loaded', onConfigLoaded as EventListener)
-    // If already connected, request sync
-    // The device driver auto-requests on start(), but if we mount later:
-    newVal.requestConfig() 
+    newVal.addEventListener('start', onDeviceStart as EventListener)
+    
+    // Only request config if already fully connected and characteristics are ready
+    if (newVal.isConnected()) {
+      newVal.requestConfig()
+    }
   }
 }, { immediate: true })
+
+const onDeviceStart = () => {
+  console.log('Tuner: Device started, requesting config...')
+  props.accelerometer?.requestConfig()
+}
 
 onUnmounted(() => {
   if (props.accelerometer) {
     props.accelerometer.removeEventListener('config-loaded', onConfigLoaded as EventListener)
+    props.accelerometer.removeEventListener('start', onDeviceStart as EventListener)
   }
 })
 

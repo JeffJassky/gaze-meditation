@@ -244,9 +244,31 @@ export const TEST_SESSIONS: Session[] = [
 			{
 				text: 'Move the device.',
 				behavior: {
-					suggestions: [{ type: 'motion:move' }]
-				},
-				duration: 10000
+					suggestions: [
+						{ type: 'eyes:no-blink', duration: 10000 },
+						{ type: 'tongue:out', duration: 10000 },
+						{ type: 'motion:move', duration: 10000 }
+					]
+				}
+			}
+		]
+	},
+	{
+		id: 'test_goon',
+		title: 'Combo',
+		description: 'Tongue out, no blinking, motion',
+		audio: { musicTrack: '/audio/music.mp3' },
+		spiralBackground: '/img/spiral.png',
+		scenes: [
+			{
+				text: 'Move the device.',
+				behavior: {
+					suggestions: [
+						{ type: 'eyes:no-blink', duration: 10000 },
+						{ type: 'tongue:out', duration: 10000 },
+						{ type: 'motion:move', duration: 10000 }
+					]
+				}
 			}
 		]
 	},
@@ -277,7 +299,9 @@ export const TEST_SESSIONS: Session[] = [
 			{
 				text: 'Tap the device 5 times.',
 				behavior: {
-					suggestions: [{ type: 'motion:impact', options: { impacts: 5, display: 'dots' } }]
+					suggestions: [
+						{ type: 'motion:impact', options: { impacts: 5, display: 'dots' } }
+					]
 				}
 			}
 		]
@@ -292,7 +316,9 @@ export const TEST_SESSIONS: Session[] = [
 			{
 				text: 'Tap the device once.',
 				behavior: {
-					suggestions: [{ type: 'motion:impact', options: { impacts: 1, display: 'none' } }]
+					suggestions: [
+						{ type: 'motion:impact', options: { impacts: 1, display: 'none' } }
+					]
 				}
 			}
 		]

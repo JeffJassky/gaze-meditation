@@ -28,6 +28,10 @@ export class Accelerometer extends Device {
 		return this.device !== null && this.device.gatt?.connected === true
 	}
 
+	isConnected(): boolean {
+		return this.device !== null && this.device.gatt?.connected === true && this.rxCharacteristic !== null
+	}
+
 	async requestAccess(): Promise<boolean> {
 		console.log('Requesting Bluetooth Access (Filter by Service UUID)...')
 		try {
@@ -52,22 +56,32 @@ export class Accelerometer extends Device {
 			if (!success) throw new Error('Device not selected')
 		}
 
-		if (this.device && !this.device.gatt?.connected) {
-			this.server = await this.device.gatt!.connect()
-			const service = await this.server.getPrimaryService(SERVICE_UUID)
-			this.characteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID)
-			this.rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID)
+		if (this.device && this.device.gatt) {
+			if (!this.device.gatt.connected) {
+				console.log('Connecting to GATT server...')
+				this.server = await this.device.gatt.connect()
+			} else if (!this.server) {
+				this.server = this.device.gatt as BluetoothRemoteGATTServer
+			}
 
-			await this.characteristic.startNotifications()
-			this.characteristic.addEventListener(
-				'characteristicvaluechanged',
-				this.handleNotifications.bind(this)
-			)
+			// Initialize characteristics if not already present
+			if (!this.rxCharacteristic || !this.characteristic) {
+				console.log('Discovering UART services...')
+				const service = await this.server.getPrimaryService(SERVICE_UUID)
+				this.characteristic = await service.getCharacteristic(TX_CHARACTERISTIC_UUID)
+				this.rxCharacteristic = await service.getCharacteristic(RX_CHARACTERISTIC_UUID)
 
-			this.dispatchEvent(new Event('start'))
+				await this.characteristic.startNotifications()
+				this.characteristic.addEventListener(
+					'characteristicvaluechanged',
+					this.handleNotifications.bind(this)
+				)
 
-			// Auto-sync config
-			setTimeout(() => this.requestConfig(), 500)
+				this.dispatchEvent(new Event('start'))
+
+				// Auto-sync config
+				setTimeout(() => this.requestConfig(), 500)
+			}
 		}
 	}
 
@@ -75,6 +89,9 @@ export class Accelerometer extends Device {
 		if (this.device && this.device.gatt?.connected) {
 			this.device.gatt.disconnect()
 		}
+		this.server = null
+		this.characteristic = null
+		this.rxCharacteristic = null
 	}
 
 	async sendLine(line: string) {
@@ -83,9 +100,20 @@ export class Accelerometer extends Device {
 			return
 		}
 		const encoder = new TextEncoder()
-		// Append newline if not present, though usually better to send exactly what is asked
 		const data = encoder.encode(line + '\n')
-		await this.rxCharacteristic.writeValue(data)
+
+		try {
+			// Try writeWithoutResponse if available (it's faster for UART)
+			// Using cast to any to access newer Web Bluetooth methods not yet in all type defs
+			const char = this.rxCharacteristic as any
+			if (typeof char.writeValueWithoutResponse === 'function') {
+				await char.writeValueWithoutResponse(data)
+			} else {
+				await char.writeValue(data)
+			}
+		} catch (error) {
+			console.error('Failed to send BLE command:', error)
+		}
 	}
 
 	async requestConfig() {
@@ -125,12 +153,16 @@ export class Accelerometer extends Device {
 		// 1. Configuration Sync
 		if (line.startsWith('CONF:')) {
 			const configStr = line.substring(5)
+			// Handle both "K=V" and "K1=V1,K2=V2" (for robustness)
 			const pairs = configStr.split(',')
-			const config: Record<string, any> = {}
+			const config: Record<string, string> = {}
 			pairs.forEach(p => {
 				const [k, v] = p.split('=')
-				if (k && v) config[k] = v
+				if (k !== undefined && v !== undefined) {
+					config[k.trim()] = v.trim()
+				}
 			})
+			// console.log('Accelerometer: Parsed config:', config)
 			this.dispatchEvent(new CustomEvent('config-loaded', { detail: config }))
 			return
 		}
