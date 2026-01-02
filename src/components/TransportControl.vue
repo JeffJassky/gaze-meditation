@@ -10,6 +10,7 @@ const props = defineProps<{
   scenes: Scene[]
   currentIndex: number
   isPlaying: boolean
+  isVisible: boolean
 }>()
 
 const emit = defineEmits<{
@@ -18,21 +19,52 @@ const emit = defineEmits<{
   (e: 'restart'): void
   (e: 'select', index: number): void
   (e: 'menu-toggle', open: boolean): void
+  (e: 'hide'): void
+  (e: 'exit'): void
 }>()
 
 const showMonitor = ref(false)
 const isFullscreen = ref(!!document.fullscreenElement)
+const isSceneSelectorOpen = ref(false)
+const transportRoot = ref<HTMLElement | null>(null)
 
 const updateFullscreenStatus = () => {
   isFullscreen.value = !!document.fullscreenElement
 }
 
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (showMonitor.value || isSceneSelectorOpen.value) {
+      showMonitor.value = false
+      isSceneSelectorOpen.value = false
+      return
+    }
+
+    if (props.isVisible) {
+      emit('hide')
+    } else {
+      emit('exit')
+    }
+  }
+}
+
+const handleClickOutside = (e: MouseEvent) => {
+  if (transportRoot.value && !transportRoot.value.contains(e.target as Node)) {
+    showMonitor.value = false
+    isSceneSelectorOpen.value = false
+  }
+}
+
 onMounted(() => {
   document.addEventListener('fullscreenchange', updateFullscreenStatus)
+  window.addEventListener('keydown', handleKeyDown)
+  window.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', updateFullscreenStatus)
+  window.removeEventListener('keydown', handleKeyDown)
+  window.removeEventListener('click', handleClickOutside)
 })
 
 const toggleFullscreen = () => {
@@ -53,16 +85,24 @@ const progress = computed(() => {
 })
 
 const getSceneDescription = (scene: Scene) => {
+  const suggestions = scene.config.behavior?.suggestions || []
+  const behaviors = suggestions.map(s => {
+    const type = s.type.split(':').pop()?.replace('-', ' ')
+    return type ? type.toUpperCase() : ''
+  }).filter(Boolean).join(', ')
+
   const voice = scene.config.voice
   const text = scene.config.text
   const voiceStr = Array.isArray(voice) ? voice.join(' ') : voice
   const textStr = Array.isArray(text) ? text.join(' ') : text
-  return voiceStr || textStr || 'No description'
+  
+  const description = voiceStr || textStr || 'No description'
+  return behaviors ? `[${behaviors}] ${description}` : description
 }
 </script>
 
 <template>
-  <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4">
+  <div ref="transportRoot" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-4">
     
     <!-- Live Monitor Popover -->
     <Transition
@@ -120,6 +160,7 @@ const getSceneDescription = (scene: Scene) => {
 
       <!-- Jump To -->
       <SceneSelector 
+        v-model:expanded="isSceneSelectorOpen"
         :scenes="scenes"
         :currentIndex="currentIndex"
         placement="top"

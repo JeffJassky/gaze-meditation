@@ -1,5 +1,6 @@
 import { Camera } from './devices/camera/camera'
 import { Microphone } from './devices/microphone/microphone'
+import { Accelerometer } from './devices/accelerometer/accelerometer'
 import { BreathRegion } from './devices/camera/regions/breath'
 import { EyesRegion } from './devices/camera/regions/eyes'
 import { HeadRegion } from './devices/camera/regions/head'
@@ -8,6 +9,7 @@ import { MouthRegion } from './devices/camera/regions/mouth'
 // Singleton Instances
 export const camera = new Camera()
 export const microphone = new Microphone()
+export const accelerometer = new Accelerometer()
 
 // Register Regions
 export const breathRegion = new BreathRegion(camera)

@@ -11,8 +11,10 @@ export interface BehaviorSuggestion {
 		| 'eyes:blink'
 		| 'eyes:no-blink'
 		| 'mouth:relax'
-		| 'togue:out'
+		| 'tongue:out'
 		| 'form:submit'
+		| 'motion:move'
+		| 'motion:impact'
 		| 'button:click'
 		| 'speech:speak'
 		| string

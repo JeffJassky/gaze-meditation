@@ -269,9 +269,9 @@ onUnmounted(() => {
 
 <style scoped>
 .vertical-slider {
-	writing-mode: bt-lr; /* IE/Edge */
-	-webkit-appearance: slider-vertical; /* Webkit */
-	appearance: slider-vertical;
+	writing-mode: vertical-lr;
+	direction: rtl;
+	appearance: auto;
 }
 
 .fade-slide-enter-active,

@@ -1,7 +1,6 @@
-import { ref, type Ref, markRaw } from 'vue'
+import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, mouthRegion } from '../services'
-import TongueOutVisualizer from '../components/scene/visualizers/TongueOutVisualizer.vue'
 
 export interface TongueOutBehaviorOptions extends BehaviorOptions {
 	threshold?: number
@@ -17,10 +16,11 @@ export class TongueOutBehavior extends Behavior<TongueOutBehaviorOptions> {
 			threshold: 0.15,
 			...options
 		})
+		this.updateData({ score: 0, isDetected: false })
 	}
 
 	public get component() {
-		return markRaw(TongueOutVisualizer)
+		return null
 	}
 
 	protected onStart() {
@@ -41,7 +41,3 @@ export class TongueOutBehavior extends Behavior<TongueOutBehaviorOptions> {
 		this.setConditionMet(isDetected)
 	}
 }
-
-
-
-	

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue'
+import { ref, shallowRef, onMounted, watch, computed, provide } from 'vue'
 import {
 	SessionState,
 	type Session,
@@ -20,14 +20,14 @@ import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
 import { speechService } from '../services/speechService'
-import { camera } from '../../src-new/services'
+import { accelerometer } from '../../src-new/services'
 import { playbackSpeed } from '../state/playback'
-import somaticResetFull from '../programs/somatic-relaxaton'
-import theBlueDoor from '../programs/the-blue-door'
-import councilOfFireLong from '../programs/council-of-fire'
+import { useRouter } from 'vue-router'
+import { getSessionById, ALL_SESSIONS } from '../programs'
 
 interface TheaterProps {
-	program: Session
+	program?: Session
+	sessionId?: string
 	subjectId: string
 }
 
@@ -36,11 +36,25 @@ const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
 
-const FULL_SESSIONS: Session[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+const router = useRouter()
 
-const activeSession = shallowRef<Session>(props.program)
+const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s =>
+	[
+		'prog_somatic_reset_extended',
+		'prog_council_fire',
+		'prog_blue_door',
+		'prog_somatic_reset_kinetic'
+	].includes(s.id)
+)
+
+const activeSession = shallowRef<Session | null>(null)
+
+const exitSession = () => {
+	emit('exit')
+	router.push('/sessions')
+}
 const state = ref<SessionState>(SessionState.INITIALIZING)
-const sessionScenes = shallowRef<Scene[]>([]) 
+const sessionScenes = shallowRef<Scene[]>([])
 const sceneIndex = ref(0)
 const score = ref(0)
 const isPaused = ref(false)
@@ -98,7 +112,23 @@ const loadingMessage = ref('Preparing Session')
 const loadingProgress = ref(0)
 const showLoadingContent = ref(false)
 const showPermissionRequest = ref(false)
-const permissionType = ref<'camera' | 'microphone' | 'both'>('both')
+const pendingPermissions = ref({
+	camera: false,
+	microphone: false,
+	accelerometer: false
+})
+
+const permissionLabel = computed(() => {
+	const list = []
+	if (pendingPermissions.value.camera) list.push('Camera')
+	if (pendingPermissions.value.microphone) list.push('Microphone')
+	if (pendingPermissions.value.accelerometer) list.push('GAZE Motion Device')
+
+	if (list.length === 0) return 'Devices'
+	if (list.length === 1) return list[0]
+	if (list.length === 2) return list.join(' & ')
+	return list.slice(0, -1).join(', ') + ' & ' + list[list.length - 1]
+})
 
 const handleScreenClick = (e: MouseEvent) => {
 	if (showPermissionRequest.value) return
@@ -147,6 +177,7 @@ watch(
 provide('resolvedTheme', currentResolvedTheme)
 
 const initSession = async () => {
+	if (!activeSession.value) return
 	console.log('[Theater] Starting initSession')
 	state.value = SessionState.INITIALIZING
 	loadingProgress.value = 0
@@ -158,24 +189,31 @@ const initSession = async () => {
 
 	let needsCamera = false
 	let needsMicrophone = false
+	let needsAccelerometer = false
 
-	activeSession.value.scenes.forEach(s => {
+	activeSession.value!.scenes.forEach(s => {
 		s.behavior?.suggestions?.forEach(sig => {
 			const BehaviorClass = Scene.getBehaviorClass(sig.type)
 			if (BehaviorClass) {
-				if ((BehaviorClass as any).requiredDevices?.includes('camera')) needsCamera = true
-				if ((BehaviorClass as any).requiredDevices?.includes('microphone')) needsMicrophone = true
+				const devices = (BehaviorClass as any).requiredDevices || []
+				if (devices.includes('camera')) needsCamera = true
+				if (devices.includes('microphone')) needsMicrophone = true
+				if (devices.includes('accelerometer')) needsAccelerometer = true
 			}
 		})
 	})
 
 	const needsAudio =
-		activeSession.value.audio?.musicTrack !== 'none' ||
-		activeSession.value.audio?.binaural
+		activeSession.value!.audio?.musicTrack !== 'none' || activeSession.value!.audio?.binaural
 
-	console.log('[Theater] Hardware Requirements:', { needsCamera, needsMicrophone, needsAudio })
+	console.log('[Theater] Hardware Requirements:', {
+		needsCamera,
+		needsMicrophone,
+		needsAccelerometer,
+		needsAudio
+	})
 
-	if (needsCamera || needsMicrophone) {
+	if (needsCamera || needsMicrophone || needsAccelerometer) {
 		try {
 			const camQuery = needsCamera
 				? navigator.permissions.query({ name: 'camera' as any })
@@ -183,16 +221,21 @@ const initSession = async () => {
 			const micQuery = needsMicrophone
 				? navigator.permissions.query({ name: 'microphone' as any })
 				: Promise.resolve(null)
+			const accelGranted = needsAccelerometer ? await accelerometer.isAccessGranted() : true
 
 			const [camStatus, micStatus] = await Promise.all([camQuery, micQuery])
 
 			let missingCam = camStatus?.state === 'prompt'
 			let missingMic = micStatus?.state === 'prompt'
+			let missingAccel = needsAccelerometer && !accelGranted
 
-			if (missingCam || missingMic) {
+			if (missingCam || missingMic || missingAccel) {
 				loadingMessage.value = 'Enable Biofeedback'
-				permissionType.value =
-					missingCam && missingMic ? 'both' : missingCam ? 'camera' : 'microphone'
+				pendingPermissions.value = {
+					camera: missingCam,
+					microphone: missingMic,
+					accelerometer: missingAccel
+				}
 				showPermissionRequest.value = true
 
 				await new Promise<void>(resolve => {
@@ -217,23 +260,25 @@ const initSession = async () => {
 		try {
 			await audioSession.setup()
 			if (
-				activeSession.value.audio?.musicTrack &&
-				activeSession.value.audio.musicTrack !== 'none'
+				activeSession.value!.audio?.musicTrack &&
+				activeSession.value!.audio.musicTrack !== 'none'
 			) {
 				try {
 					await audioSession.musicLooper.start({
-						track: activeSession.value.audio.musicTrack,
+						track: activeSession.value!.audio.musicTrack,
 						volume: 0.8
 					})
 				} catch (e) {
 					console.warn(
-						`[Theater] Failed to start music track: ${activeSession.value.audio.musicTrack}`,
+						`[Theater] Failed to start music track: ${
+							activeSession.value!.audio.musicTrack
+						}`,
 						e
 					)
 				}
 			}
 
-			const bConfig = activeSession.value.audio?.binaural
+			const bConfig = activeSession.value!.audio?.binaural
 			audioSession.binaural.start({
 				carrierFreq: 100,
 				beatFreq: bConfig?.hertz ?? 6,
@@ -295,8 +340,7 @@ const initSession = async () => {
 					'Use headphones for best results.',
 					'To avoid interruptions,',
 					'consider putting your device ~ into do not disturb mode.'
-				],
-				duration: 8000
+				]
 			})
 		)
 	}
@@ -332,7 +376,14 @@ const initSession = async () => {
 	}, 500 / playbackSpeed.value)
 }
 
-const handleGrantAccess = () => {
+const handleGrantAccess = async () => {
+	if (pendingPermissions.value.accelerometer) {
+		try {
+			await accelerometer.requestAccess()
+		} catch (e) {
+			console.warn('Accelerometer access failed', e)
+		}
+	}
 	showPermissionRequest.value = false
 }
 
@@ -402,7 +453,7 @@ const nextScene = (index: number) => {
 			currentScene.value.start({
 				complete: (success, metrics, result) =>
 					triggerReinforcement(success, metrics, result),
-				programId: activeSession.value.id,
+				programId: activeSession.value!.id,
 				previousVoiceText
 			})
 		}
@@ -436,7 +487,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 					setTimeout(() => {
 						nextScene(jumpToIndex)
 					}, cooldown)
-					return 
+					return
 				} else {
 					console.warn(
 						`Scene with ID '${nextSceneId}' not found. Continuing sequentially.`
@@ -484,13 +535,13 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 }
 
 const finishSession = () => {
-	if (activeSession.value.id.includes('initial_training')) {
+	if (activeSession.value!.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
 		const physData = sessionTracker.stopSession()
 		const log: SessionLog = {
 			id: `SES_${Date.now()}`,
 			subjectId: props.subjectId,
-			programId: activeSession.value.id,
+			programId: activeSession.value!.id,
 			startTime: new Date(startTimeRef.value).toISOString(),
 			endTime: new Date().toISOString(),
 			totalScore: score.value,
@@ -508,7 +559,7 @@ const finishSession = () => {
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
-		programId: activeSession.value.id,
+		programId: activeSession.value!.id,
 		startTime: new Date(startTimeRef.value).toISOString(),
 		endTime: new Date().toISOString(),
 		totalScore: score.value,
@@ -516,7 +567,7 @@ const finishSession = () => {
 		physiologicalData: physData
 	}
 	saveSession(log)
-	setTimeout(() => emit('exit'), 3000 / playbackSpeed.value)
+	setTimeout(() => exitSession(), 3000 / playbackSpeed.value)
 }
 
 const handleSessionSelect = async (program: Session) => {
@@ -527,10 +578,13 @@ const handleSessionSelect = async (program: Session) => {
 	metricsRef.value = []
 	startTimeRef.value = Date.now()
 
-	if (activeSession.value.audio?.musicTrack && activeSession.value.audio.musicTrack !== 'none') {
+	if (
+		activeSession.value!.audio?.musicTrack &&
+		activeSession.value!.audio.musicTrack !== 'none'
+	) {
 		try {
 			await audioSession.musicLooper.start({
-				track: activeSession.value.audio.musicTrack,
+				track: activeSession.value!.audio.musicTrack,
 				volume: 0.8
 			})
 		} catch (e) {
@@ -540,7 +594,7 @@ const handleSessionSelect = async (program: Session) => {
 		audioSession.musicLooper.stop(2)
 	}
 
-	const bConfig = activeSession.value.audio?.binaural
+	const bConfig = activeSession.value!.audio?.binaural
 	if (bConfig) {
 		if (audioSession.binaural.isActive) {
 			audioSession.binaural.setBeatFrequency(bConfig.hertz ?? 6)
@@ -554,11 +608,30 @@ const handleSessionSelect = async (program: Session) => {
 		}
 	}
 
-	sessionScenes.value = activeSession.value.scenes.map(s => new Scene(s))
+	sessionScenes.value = activeSession.value!.scenes.map(s => new Scene(s))
 	nextScene(0)
 }
 
 onMounted(() => {
+	// Initialize activeSession
+	if (props.program) {
+		activeSession.value = props.program
+	} else if (props.sessionId) {
+		const found = getSessionById(props.sessionId)
+		if (found) {
+			activeSession.value = found
+		} else {
+			console.error(`Session not found: ${props.sessionId}`)
+			exitSession()
+			return
+		}
+	}
+
+	if (!activeSession.value) {
+		exitSession()
+		return
+	}
+
 	try {
 		document.documentElement
 			.requestFullscreen()
@@ -568,24 +641,9 @@ onMounted(() => {
 	initSession()
 
 	const handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape') emit('exit')
+		if (e.key === 'Escape') exitSession()
 	}
 	window.addEventListener('keydown', handleKeyDown)
-
-	onUnmounted(() => {
-		if (timerRef.value) clearTimeout(timerRef.value)
-		currentScene.value?.stop()
-
-		sessionTracker.stopSession()
-		faceMeshService.stop()
-		camera.stop()
-		audioSession.binaural.stop()
-		audioSession.musicLooper.stop()
-		speechService.stop()
-
-		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-		window.removeEventListener('keydown', handleKeyDown)
-	})
 })
 </script>
 
@@ -599,7 +657,7 @@ onMounted(() => {
 	>
 		<!-- Video Background -->
 		<video
-			v-if="activeSession.videoBackground"
+			v-if="activeSession?.videoBackground"
 			autoplay
 			loop
 			muted
@@ -608,17 +666,17 @@ onMounted(() => {
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		>
 			<source
-				:src="activeSession.videoBackground"
+				:src="activeSession!.videoBackground"
 				type="video/mp4"
 			/>
 		</video>
 
 		<!-- Spiral Background -->
 		<div
-			v-if="activeSession.spiralBackground"
+			v-if="activeSession?.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeSession.spiralBackground})`,
+				backgroundImage: `url(${activeSession!.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -629,10 +687,10 @@ onMounted(() => {
 		></div>
 
 		<div
-			v-if="activeSession.spiralBackground"
+			v-if="activeSession?.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeSession.spiralBackground})`,
+				backgroundImage: `url(${activeSession!.spiralBackground})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -686,13 +744,7 @@ onMounted(() => {
 						<p class="text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
 							This session uses biofeedback. To proceed, we need temporary access to
 							your
-							<span class="text-white font-bold">{{
-								permissionType === 'both'
-									? 'Camera & Microphone'
-									: permissionType === 'camera'
-									? 'Camera'
-									: 'Microphone'
-							}}</span
+							<span class="text-white font-bold">{{ permissionLabel }}</span
 							>. <br /><span class="text-xs opacity-50 block mt-2"
 								>Data is processed locally on your device and is never
 								recorded.</span
@@ -783,6 +835,9 @@ onMounted(() => {
 					:scene="currentScene"
 					:key="currentScene.id"
 					class="pointer-events-auto"
+					:style="{
+						'--fade-duration': `${currentScene.config.fadeOutDuration || 3000}ms`
+					}"
 				/>
 			</Transition>
 		</div>
@@ -792,7 +847,7 @@ onMounted(() => {
 			:state="state"
 			:currentScene="currentScene"
 			:score="score"
-			@exit="emit('exit')"
+			@exit="exitSession"
 			class="z-50"
 		/>
 
@@ -804,11 +859,14 @@ onMounted(() => {
 				:isPlaying="
 					!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE
 				"
+				:isVisible="controlsVisible"
 				@play="handlePlay"
 				@pause="handlePause"
 				@restart="handleRestart"
 				@select="nextScene"
 				@menu-toggle="val => (isMenuOpen = val)"
+				@hide="controlsVisible = false"
+				@exit="exitSession"
 				@mouseenter="isHoveringControls = true"
 				@mouseleave="isHoveringControls = false"
 				@click.stop
@@ -849,7 +907,7 @@ onMounted(() => {
 /* Global styles if needed */
 .scene-enter-active {
 	/* Define fallbacks just in case */
-	--duration-slow: calc(3s / var(--speed-factor, 1));
+	--duration-slow: calc(var(--fade-duration, 3000ms) / var(--speed-factor, 1));
 	--ease-glacial: cubic-bezier(0.19, 1, 0.22, 1);
 
 	transition: opacity var(--duration-slow) var(--ease-glacial),
@@ -864,7 +922,7 @@ onMounted(() => {
 
 .scene-leave-active {
 	/* Define fallbacks just in case */
-	--duration-slow: calc(3s / var(--speed-factor, 1));
+	--duration-slow: calc(var(--fade-duration, 3000ms) / var(--speed-factor, 1));
 	--ease-in-glacial: cubic-bezier(0.75, 0, 1, 1);
 
 	transition: opacity var(--duration-slow) var(--ease-in-glacial),

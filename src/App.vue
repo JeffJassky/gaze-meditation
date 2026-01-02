@@ -1,56 +1,14 @@
 <script setup lang="ts">
-import { ref, markRaw, onMounted } from 'vue'
-import Dashboard from './components/Dashboard.vue'
-import Theater from './components/Theater.vue'
-import DeviceDebug from './components/DeviceDebug.vue'
-import type { Session } from './types'
-
-type View = 'dashboard' | 'theater' | 'debug'
-
-interface ActiveSession {
-	program: Session
-	subjectId: string
-}
-
-const view = ref<View>('dashboard')
-const activeSession = ref<ActiveSession | null>(null)
-const dashboardTab = ref<'home' | 'start' | 'history' | 'users'>('home')
-
-onMounted(() => {
-	if (window.location.pathname === '/device-debug') {
-		view.value = 'debug'
-	}
-})
-
-const startSession = (program: Session, subjectId: string) => {
-	activeSession.value = { program: markRaw(program), subjectId }
-	view.value = 'theater'
-}
-
-const endSession = () => {
-	activeSession.value = null
-	dashboardTab.value = 'start'
-	view.value = 'dashboard'
-}
-
+// No specific setup needed for App.vue as it's now just a router host
 </script>
 
 <template>
 	<div class="w-full h-screen bg-black text-white overflow-hidden">
-		<Dashboard
-			v-if="view === 'dashboard'"
-			:initialTab="dashboardTab"
-			@startSession="startSession"
-		/>
-
-		<Theater
-			v-if="view === 'theater' && activeSession"
-			:program="activeSession.program"
-			:subjectId="activeSession.subjectId"
-			@exit="endSession"
-		/>
-
-		<DeviceDebug v-if="view === 'debug'" />
+		<router-view v-slot="{ Component }">
+			<transition name="fade" mode="out-in">
+				<component :is="Component" />
+			</transition>
+		</router-view>
 	</div>
 </template>
 
@@ -79,5 +37,15 @@ const endSession = () => {
 		opacity: 1;
 		transform: scale(1);
 	}
+}
+
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
 }
 </style>

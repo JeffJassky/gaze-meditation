@@ -1,288 +1,40 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { User, Session, SessionLog } from '../types'
-import { FormFieldType } from '../types'
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService'
 import { audioSession } from '../services/audio'
-import somaticResetFull from '../programs/somatic-relaxaton'
+import { useRouter } from 'vue-router'
+import { ALL_SESSIONS, initialTrainingSession, TEST_SESSIONS } from '../programs'
 import Home from './Home.vue'
 import SessionCard from './SessionCard.vue'
 import SessionDetail from './SessionDetail.vue'
-import theBlueDoor from '../programs/the-blue-door'
-import councilOfFireLong from '../programs/council-of-fire'
-import { initialTrainingSession } from '../programs/tutorial'
-import somaticResetActive from '../programs/kinetic-reset'
-import { heldWithoutRope } from '../programs/held-without-rope'
 
 // Full Sessions
-const FULL_SESSIONS: Session[] = [
-	somaticResetFull,
-	councilOfFireLong,
-	theBlueDoor,
-	somaticResetActive
-]
+const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s => 
+	['prog_somatic_reset_extended', 'prog_council_fire', 'prog_blue_door', 'prog_somatic_reset_kinetic'].includes(s.id)
+)
 
 // Fun & Sexy Sessions
-const FUN_SESSIONS: Session[] = [heldWithoutRope]
+const FUN_SESSIONS: Session[] = ALL_SESSIONS.filter(s => s.id === 'held_without_rope')
 
-// Test Sessions
-const TEST_SESSIONS: Session[] = [
-	{
-		id: 'test_breathe_scene',
-		title: 'Breathe',
-		description: 'Adaptive breath tracking using head pitch.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Just breathe naturally.',
-				behavior: {
-					suggestions: [{ type: 'breathe', duration: 20000 }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_close_eyes',
-		title: 'Close Eyes (Test)',
-		description: 'Scene that waits for you to close your eyes.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Please close your eyes now. The scene will complete when you do.',
-				behavior: {
-					suggestions: [{ type: 'eyes:close' }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_open_eyes',
-		title: 'Open Eyes (Test)',
-		description: 'Scene that waits for you to open your eyes.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Open your eyes.',
-				behavior: {
-					suggestions: [{ type: 'eyes:open' }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_relax_jaw',
-		title: 'Relax Jaw',
-		description: 'Relax your jaw and let your mouth fall open.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Open your mouth and relax your jaw',
-				behavior: {
-					suggestions: [{ type: 'mouth:relax', duration: 5000 }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_blink_scene',
-		title: 'Dont Blink',
-		description: "Stare at the screen. Don't you dare blink.",
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Do not blink',
-				behavior: {
-					suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_directional_gaze_scene',
-		title: 'Direct Your Gaze',
-		description: 'Gaze at one thing - and not the other.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Gently turn your head to the left.',
-				behavior: {
-					suggestions: [{ type: 'head:left' }]
-				}
-			},
-			{
-				text: 'Gently turn your head to the right.',
-				behavior: {
-					suggestions: [{ type: 'head:right' }]
-				}
-			},
-			{
-				text: 'Gently upward.',
-				behavior: {
-					suggestions: [{ type: 'head:up' }]
-				}
-			},
-			{
-				text: 'Down.',
-				behavior: {
-					suggestions: [{ type: 'head:down', duration: 10000 }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_form_scene',
-		title: 'Fill out a Form',
-		description: 'Answer questons in a form.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Please enter your name',
-				behavior: {
-					suggestions: [{ type: 'form:submit' }]
-				},
-				question: 'What is your name?',
-				fields: [{ label: 'Name', name: 'name', type: FormFieldType.TEXT, required: true }],
-				autoContinue: true
-			} as any // Cast to any because FormSceneConfig extends SceneConfig
-		]
-	},
-	{
-		id: 'test_nod_scene',
-		title: 'Nod & Shake your Head',
-		description: 'Nod or shake your head as instructed.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Nod your head twice',
-				behavior: {
-					suggestions: [{ type: 'head:nod', options: { nodsRequired: 2 } }]
-				}
-			},
-			{
-				text: 'Shake your head twice',
-				behavior: {
-					suggestions: [{ type: 'head:shake', options: { nodsRequired: 2 } }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_read_scene',
-		title: 'Read',
-		description: 'Simply read what is shown.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'It lasts 3 seconds, then fades out',
-				duration: 3000,
-				fadeInDuration: 1000,
-				fadeOutDuration: 1000
-			},
-			{
-				text: 'lasts 1 second, then fades out over 5 seconds',
-				duration: 1000,
-				fadeOutDuration: 5000
-			}
-		]
-	},
-	{
-		id: 'test_speech_scene',
-		title: 'Verbal Affirmation',
-		description: 'Speak what you see.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Read this aloud',
-				behavior: {
-					suggestions: [
-						{
-							type: 'speech:speak',
-							options: { targetValue: 'I am reading this.', duration: 3000 }
-						}
-					]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_stillness_scene',
-		title: 'Stay Still',
-		description: 'Stay very... very... still.',
-		audio: { musicTrack: '/audio/music.mp3' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'keep the blue dot centered in the ring.',
-				behavior: {
-					suggestions: [{ type: 'head:still', duration: 20000 }]
-				}
-			}
-		]
-	},
-	{
-		id: 'test_type_scene',
-		title: 'Type',
-		description: 'Type the words you see them.',
-		audio: { musicTrack: 'silence.mp4' },
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: 'Type "test"',
-				behavior: { suggestions: [{ type: 'type', options: { targetPhrase: 'test' } }] }
-			}
-		]
-	},
-	{
-		id: 'test_binaural_audio',
-		title: 'Binaural Audio',
-		description: 'Test of binaural audio (6hz to 3hz)',
-		audio: {
-			binaural: { hertz: 6, volume: 0.5 }
-		},
-		spiralBackground: '/img/spiral.png',
-		scenes: [
-			{
-				text: '6hz binural beats are playing at 50% volume',
-				duration: 5000
-			},
-			{
-				text: 'Slowing down to 3Hz... Deep relaxation.',
-				duration: 5000,
-				audio: {
-					binaural: { hertz: 3, volume: 0.5 }
-				}
-			}
-		]
-	}
-].map(session => ({
-	...session,
-	skipIntro: true
-}))
+const router = useRouter()
 
 interface DashboardProps {
-	// onStartSession: (program: Session, subjectId: string) => void; // Will be an emit
 	initialTab?: 'home' | 'start' | 'history' | 'users'
 }
 
 const props = defineProps<DashboardProps>()
-const emit = defineEmits<{
-	(e: 'startSession', program: Session, subjectId: string): void
-}>()
 
 const users = ref<User[]>([])
 const sessions = ref<SessionLog[]>([])
 const selectedUser = ref<string>('')
 const activeTab = ref<'home' | 'start' | 'history' | 'users'>(props.initialTab || 'home')
+
+// Watch for prop changes to update activeTab when navigating
+watch(() => props.initialTab, (newTab) => {
+	if (newTab) activeTab.value = newTab
+})
+
 const newUserName = ref('')
 const isSidebarOpen = ref(false)
 const isTransitioning = ref(false)
@@ -335,7 +87,7 @@ const handleStartSession = async (program: Session) => {
 	// Start transition
 	isTransitioning.value = true
 
-	// Initialize audio on user gesture to unlock AudioContext (especially for Safari/Chrome autoplay policies)
+	// Initialize audio on user gesture to unlock AudioContext
 	try {
 		await audioSession.setup()
 	} catch (e) {
@@ -344,9 +96,10 @@ const handleStartSession = async (program: Session) => {
 
 	// Wait for fade to complete (1s) before switching view
 	setTimeout(() => {
-		emit('startSession', program, selectedUser.value)
-		// We don't reset isTransitioning here because the component will likely be unmounted/replaced.
-		// If the parent keeps it alive, we might need to reset it, but for now assuming unmount/view switch.
+		router.push({
+			name: 'theater',
+			params: { sessionId: program.id, subjectId: selectedUser.value }
+		})
 	}, 1000)
 }
 
@@ -480,71 +233,56 @@ onMounted(() => {
 			</div>
 
 			<nav class="flex flex-col gap-2">
-				<button
-					@click="
-						() => {
-							activeTab = 'home'
-							isSidebarOpen = false
-						}
-					"
+				<router-link
+					to="/home"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'home'
 							? 'bg-zinc-800 text-cyan-400'
 							: 'hover:bg-zinc-800/50 text-zinc-400'
 					}`"
+					@click="isSidebarOpen = false"
 				>
 					Home
-				</button>
-				<button
-					@click="
-						() => {
-							activeTab = 'start'
-							isSidebarOpen = false
-						}
-					"
+				</router-link>
+				<router-link
+					to="/sessions"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'start'
 							? 'bg-zinc-800 text-cyan-400'
 							: 'hover:bg-zinc-800/50 text-zinc-400'
 					}`"
+					@click="isSidebarOpen = false"
 				>
 					Browse Sessions
-				</button>
-				<button
-					@click="
-						() => {
-							activeTab = 'history'
-							isSidebarOpen = false
-						}
-					"
+				</router-link>
+				<router-link
+					to="/logs"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'history'
 							? 'bg-zinc-800 text-cyan-400'
 							: 'hover:bg-zinc-800/50 text-zinc-400'
 					}`"
+					@click="isSidebarOpen = false"
 				>
 					Data Logs
-				</button>
-				<button
-					@click="
-						() => {
-							activeTab = 'users'
-							isSidebarOpen = false
-						}
-					"
+				</router-link>
+				<router-link
+					to="/subjects"
 					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
 						activeTab === 'users'
 							? 'bg-zinc-800 text-cyan-400'
 							: 'hover:bg-zinc-800/50 text-zinc-400'
 					}`"
+					@click="isSidebarOpen = false"
 				>
 					Subjects
-				</button>
+				</router-link>
 
 				<div class="mt-auto pt-4 border-t border-zinc-800">
-					<a
-						href="/device-debug"
+					<router-link
+						to="/debug"
 						class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-zinc-800/50 text-zinc-500 hover:text-cyan-400 group"
+						@click="isSidebarOpen = false"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -572,7 +310,7 @@ onMounted(() => {
 							/>
 						</svg>
 						Device Debug
-					</a>
+					</router-link>
 				</div>
 			</nav>
 		</aside>

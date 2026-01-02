@@ -4,6 +4,7 @@ import ProgressBar from '@/components/ProgressBar.vue'
 import { type Scene } from '@new/core/Scene'
 import { type ThemeConfig } from '@/types'
 import { DEFAULT_THEME } from '@/theme'
+import { hexToRgba } from '@/utils/themeResolver'
 
 interface Props {
 	scene: Scene
@@ -16,6 +17,10 @@ const props = defineProps<Props>()
 // Theme can come from scene or injected from Theater
 const resolvedTheme = inject<Ref<ThemeConfig>>('resolvedTheme')
 const theme = computed(() => resolvedTheme?.value || props.scene.config.theme || DEFAULT_THEME)
+
+const trackColor = computed(() => {
+	return hexToRgba(theme.value.positiveColor || '#ffffff', 0.8)
+})
 
 // Use the progress and text state from the scene instance
 const progress = computed(() => props.scene.progress.value)
@@ -40,19 +45,23 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 		</div>
 
 		<!-- 2. Progress Layer (z-10) - Back -->
-		<div class="scene-layer progress-layer z-10 pointer-events-none flex items-center justify-center">
+		<div
+			class="scene-layer progress-layer z-10 pointer-events-none flex items-center justify-center"
+		>
 			<ProgressBar
 				v-if="showProgress"
 				:progress="progress"
-				:size="300"
+				:size="150"
 				:stroke-width="8"
 				:fillColor="theme.accentColor || theme.textColor"
-				trackColor="rgba(255,255,255,0.1)"
+				:trackColor="trackColor"
 			/>
 		</div>
 
 		<!-- 3. Behavior Layer (z-20) - Middle -->
-		<div class="scene-layer behavior-layer z-20 pointer-events-auto flex items-center justify-center p-8">
+		<div
+			class="scene-layer behavior-layer z-20 pointer-events-auto flex items-center justify-center p-8"
+		>
 			<div
 				class="scene-content relative flex items-center justify-center"
 				:class="contentClass"
@@ -74,21 +83,30 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 			</div>
 		</div>
 
-		<!-- 4. Text Layer (z-30) - Top -->
-		<div class="scene-layer text-layer z-30 pointer-events-none flex items-center justify-center p-8">
-			<div class="prompt-text relative text-center flex items-center justify-center w-full max-w-4xl">
+		<!-- 4. Text Layer (z-50) - Top -->
+		<div
+			class="scene-layer text-layer z-50 pointer-events-none flex items-center justify-center p-8"
+		>
+			<div
+				class="prompt-text relative text-center flex items-center justify-center w-full max-w-4xl"
+			>
 				<Transition
 					name="glacial"
 					mode="out-in"
 				>
-					<span
+					<div
 						v-if="isTextVisible && activeText"
 						:key="activeText"
-						class="absolute inset-0 flex items-center justify-center px-4 leading-relaxed"
+						class="px-4 leading-relaxed text-line"
 						:style="{ color: theme.secondaryTextColor || theme.textColor }"
 					>
-						<span>{{ activeText }}</span>
-					</span>
+						<span
+							v-for="line in activeText.split('~')"
+							class="text-line"
+						>
+							{{ line.trim() }}&nbsp;
+						</span>
+					</div>
 				</Transition>
 			</div>
 		</div>
@@ -121,6 +139,11 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 	font-size: clamp(1.5rem, 4vw, 2.5rem);
 	font-weight: 500;
 	/* Removed fixed height/margins to allow overlap */
+}
+
+.text-line {
+	display: inline-block;
+	white-space: pre-wrap;
 }
 
 /* Glacial Transition Styles */

@@ -14,18 +14,40 @@ const props = defineProps({
 	placement: {
 		type: String as () => 'top' | 'bottom',
 		required: false
+	},
+	expanded: {
+		type: Boolean,
+		default: false
 	}
 })
 
-const emit = defineEmits<{(e: 'select', index: number): void, (e: 'toggle', expanded: boolean): void}>()
+const emit = defineEmits<{
+	(e: 'select', index: number): void
+	(e: 'toggle', expanded: boolean): void
+	(e: 'update:expanded', val: boolean): void
+}>()
 
-const isExpanded = ref(false)
+const isExpandedInternal = ref(props.expanded)
+
+watch(() => props.expanded, (val) => {
+	isExpandedInternal.value = val
+})
+
+watch(isExpandedInternal, async val => {
+	emit('toggle', val)
+	emit('update:expanded', val)
+	if (val) {
+		await nextTick()
+		scrollToActive()
+	}
+})
 const searchQuery = ref('')
 const placementValue = computed(() => props.placement || 'bottom')
 const scrollContainer = ref<HTMLElement | null>(null)
 
-watch(isExpanded, async val => {
+watch(isExpandedInternal, async val => {
 	emit('toggle', val)
+	emit('update:expanded', val)
 	if (val) {
 		await nextTick()
 		scrollToActive()
@@ -35,7 +57,7 @@ watch(isExpanded, async val => {
 watch(
 	() => props.currentIndex,
 	() => {
-		if (isExpanded.value) {
+		if (isExpandedInternal.value) {
 			scrollToActive()
 		}
 	}
@@ -57,6 +79,16 @@ const getSceneText = (scene: Scene) => {
 	return voiceStr || textStr || ''
 }
 
+const getBehaviorsLabel = (scene: Scene) => {
+	const suggestions = scene.config.behavior?.suggestions || []
+	if (suggestions.length === 0) return 'Scene'
+	return suggestions
+		.map(s => s.type.split(':').pop()?.replace('-', ' '))
+		.filter(Boolean)
+		.join(', ')
+		.toUpperCase()
+}
+
 const filteredScenes = computed(() => {
 	return (props.scenes as Scene[])
 		.map((scene: Scene, originalIndex: number) => ({ scene, originalIndex }))
@@ -74,15 +106,15 @@ const filteredScenes = computed(() => {
 <template>
 	<div class="relative inline-block text-xs font-mono">
 		<button
-			@click="isExpanded = !isExpanded"
+			@click="isExpandedInternal = !isExpandedInternal"
 			class="bg-zinc-900 border border-zinc-700 text-zinc-300 px-3 py-1 rounded shadow hover:bg-zinc-800 transition-colors"
-			:class="{ 'border-cyan-500 text-cyan-400': isExpanded }"
+			:class="{ 'border-cyan-500 text-cyan-400': isExpandedInternal }"
 		>
-			Jump To {{ isExpanded ? '[-]' : '[+]' }}
+			Jump To {{ isExpandedInternal ? '[-]' : '[+]' }}
 		</button>
 
 		<div
-			v-if="isExpanded"
+			v-if="isExpandedInternal"
 			class="absolute left-0 bg-zinc-900/90 border border-zinc-700 p-2 rounded shadow-xl w-64 backdrop-blur-sm max-h-[60vh] flex flex-col z-50"
 			:class="placementValue === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
 		>
@@ -103,7 +135,7 @@ const filteredScenes = computed(() => {
 					@click="
 						() => {
 							emit('select', item.originalIndex)
-							isExpanded = false
+							isExpandedInternal = false
 						}
 					"
 					class="cursor-pointer p-2 hover:bg-zinc-700 rounded mb-1 transition-colors text-left"
@@ -115,7 +147,7 @@ const filteredScenes = computed(() => {
 						<span
 							class="text-cyan-500 text-[10px] font-mono uppercase tracking-wider"
 						>
-							Scene
+							{{ getBehaviorsLabel(item.scene) }}
 						</span>
 						<span class="text-zinc-400">#{{ item.originalIndex + 1 }}</span>
 					</div>

@@ -47,59 +47,14 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 
 
 
-		protected onStart(): void {
-
-
-
-			this.updateData({
-
-
-
-				driftX: 0,
-
-
-
-				driftY: 0,
-
-
-
-				driftRatio: 0,
-
-
-
-				isStable: true,
-
-
-
-				tolerance: this.options.tolerance || 0.05
-
-
-
-			})
-
-
-
-	
-
-
-
-			this.addManagedEventListener(headRegion, 'stillness', this.handleStillness)
-
-
-
-			this.addManagedEventListener(headRegion, 'unstable', this.handleUnstable)
-
-
-
-			camera.start().catch(e => {
-
-				console.warn('[StillnessBehavior] Camera start failed', e)
-
-				this.emitFail('Camera access failed')
-
-			})
-
-		}
+	protected onStart(): void {
+		this.addManagedEventListener(headRegion, 'stillness', this.handleStillness)
+		this.addManagedEventListener(headRegion, 'unstable', this.handleUnstable)
+		camera.start().catch(e => {
+			console.warn('[StillnessBehavior] Camera start failed', e)
+			this.emitFail('Camera access failed')
+		})
+	}
 
 
 

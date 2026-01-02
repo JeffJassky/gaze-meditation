@@ -1,4 +1,4 @@
-import { ref, type Ref, markRaw } from 'vue'
+import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, mouthRegion } from '../services'
 import RelaxJawVisualizer from '../components/scene/visualizers/RelaxJawVisualizer.vue'
@@ -17,6 +17,7 @@ export class RelaxJawBehavior extends Behavior<RelaxJawBehaviorOptions> {
 			threshold: 0.15,
 			...options
 		})
+		this.updateData({ openness: 0, threshold: this.options.threshold! })
 	}
 
 	public get component() {

@@ -1,24 +1,48 @@
 import { markRaw, ref, type Ref } from 'vue'
 import { type SceneConfig, type BehaviorSuggestion } from '@/types'
-import { 
-	NodBehavior, 
-	StillnessBehavior, 
-	BreatheBehavior, 
-	NoBlinkBehavior, 
-	CloseEyesBehavior, 
+import {
+	NodBehavior,
+	StillnessBehavior,
+	NoBlinkBehavior,
+	CloseEyesBehavior,
 	OpenEyesBehavior,
 	SpeechBehavior,
 	TypeBehavior,
 	RelaxJawBehavior,
 	TongueOutBehavior,
-	DirectionalGazeBehavior,
+	LeftGazeBehavior,
+	RightGazeBehavior,
+	UpGazeBehavior,
+	DownGazeBehavior,
 	FormBehavior,
-	Behavior 
+	MotionBehavior,
+	ImpactBehavior,
+	Behavior
 } from '@new/behaviors'
 import SceneView from '@new/components/scene/Scene.vue'
 import { voiceService } from '@/services/voiceService'
 import { playbackSpeed } from '@/state/playback'
 import { calculateDuration } from '@/utils/time'
+
+const BEHAVIOR_REGISTRY: Record<string, any> = {
+	'head:nod': NodBehavior,
+	'head:shake': NodBehavior,
+	'head:still': StillnessBehavior,
+	'eyes:no-blink': NoBlinkBehavior,
+	'eyes:close': CloseEyesBehavior,
+	'eyes:open': OpenEyesBehavior,
+	'speech:speak': SpeechBehavior,
+	type: TypeBehavior,
+	'mouth:relax': RelaxJawBehavior,
+	'tongue:out': TongueOutBehavior,
+	'head:left': LeftGazeBehavior,
+	'head:right': RightGazeBehavior,
+	'head:up': UpGazeBehavior,
+	'head:down': DownGazeBehavior,
+	'form:submit': FormBehavior,
+	'motion:move': MotionBehavior,
+	'motion:impact': ImpactBehavior
+}
 
 export interface SceneContext {
 	complete(success: boolean, metrics?: any, result?: any): void
@@ -32,7 +56,7 @@ export class Scene {
 	public behaviors: Behavior[] = []
 	public isActive = false
 	public progress: Ref<number> = ref(0) // 0-100
-	
+
 	// Reactive properties for the view
 	public activeText = ref('')
 	public isTextVisible = ref(false)
@@ -63,9 +87,15 @@ export class Scene {
 			const behavior = this.createBehavior(suggestion)
 			if (behavior) {
 				// Connect behavior events
-				behavior.addEventListener('success', (e: any) => this.onBehaviorSuccess(behavior, e.detail))
-				behavior.addEventListener('fail', (e: any) => this.onBehaviorFail(behavior, e.detail))
-				behavior.addEventListener('progress', (e: any) => this.onBehaviorProgress(behavior, e.detail))
+				behavior.addEventListener('success', (e: any) =>
+					this.onBehaviorSuccess(behavior, e.detail)
+				)
+				behavior.addEventListener('fail', (e: any) =>
+					this.onBehaviorFail(behavior, e.detail)
+				)
+				behavior.addEventListener('progress', (e: any) =>
+					this.onBehaviorProgress(behavior, e.detail)
+				)
 				this.behaviors.push(behavior)
 			}
 		})
@@ -75,79 +105,21 @@ export class Scene {
 		const options = {
 			duration: suggestion.duration,
 			...suggestion.options,
-			isExplicitDuration: suggestion.duration !== undefined && suggestion.duration !== Infinity
+			isExplicitDuration:
+				suggestion.duration !== undefined && suggestion.duration !== Infinity
 		}
 
-		const BehaviorClass = Scene.getBehaviorClass(suggestion.type)
-		if (!BehaviorClass) {
+		const entry = BEHAVIOR_REGISTRY[suggestion.type]
+		if (!entry) {
 			console.warn(`[Scene] Unknown behavior type: ${suggestion.type}`)
 			return null
 		}
 
-		switch (suggestion.type) {
-			case 'head:nod':
-				return new NodBehavior({ ...options, type: 'YES' })
-			case 'head:shake':
-				return new NodBehavior({ ...options, type: 'NO' })
-			case 'speech:speak':
-				return new SpeechBehavior({ ...options, targetValue: options.targetValue || options.value })
-			case 'type':
-				return new TypeBehavior({ ...options, targetPhrase: options.targetPhrase || options.value })
-			case 'directional-gaze':
-				return new DirectionalGazeBehavior({ 
-					...options, 
-					direction: options.direction || (suggestion.type.split(':')[1] as any) 
-				})
-			case 'form':
-			case 'form:submit':
-				return new (BehaviorClass as any)({ 
-					...options, 
-					question: (this.config as any).question || '', 
-					fields: (this.config as any).fields || [] 
-				})
-			default:
-				if (suggestion.type.startsWith('head:') && BehaviorClass === DirectionalGazeBehavior) {
-					return new DirectionalGazeBehavior({ ...options, direction: suggestion.type.split(':')[1] as any })
-				}
-				return new (BehaviorClass as any)(options)
-		}
+		return new entry(options)
 	}
 
-	public static getBehaviorClass(type: string): typeof Behavior | null {
-		switch (type) {
-			case 'head:nod':
-			case 'head:shake':
-				return NodBehavior
-			case 'head:still':
-				return StillnessBehavior
-			case 'breathe':
-				return BreatheBehavior
-			case 'eyes:no-blink':
-				return NoBlinkBehavior
-			case 'eyes:close':
-				return CloseEyesBehavior
-			case 'eyes:open':
-				return OpenEyesBehavior
-			case 'speech:speak':
-				return SpeechBehavior
-			case 'type':
-				return TypeBehavior
-			case 'mouth:relax':
-				return RelaxJawBehavior
-			case 'tongue:out':
-				return TongueOutBehavior
-			case 'directional-gaze':
-			case 'head:left':
-			case 'head:right':
-			case 'head:up':
-			case 'head:down':
-				return DirectionalGazeBehavior
-			case 'form':
-			case 'form:submit':
-				return FormBehavior
-			default:
-				return null
-		}
+	public static getBehaviorClass(type: string): any {
+		return BEHAVIOR_REGISTRY[type] || null
 	}
 
 	public async start(context: SceneContext) {
@@ -168,7 +140,9 @@ export class Scene {
 		const voiceText = this.config.voice
 		const displayText = this.config.text
 
-		const voicePromise = voiceText ? this.playVoiceSequence(voiceText, context) : Promise.resolve()
+		const voicePromise = voiceText
+			? this.playVoiceSequence(voiceText, context)
+			: Promise.resolve()
 		const textPromise = displayText ? this.playTextSequence(displayText) : Promise.resolve()
 
 		// Wait for both sequences
@@ -186,13 +160,16 @@ export class Scene {
 			this.progressIntervalId = setInterval(() => {
 				if (!this.isActive) return
 				const elapsed = Date.now() - this.startTime
-				const p = Math.min(100, (elapsed / (this.config.duration! / playbackSpeed.value)) * 100)
-				
+				const p = Math.min(
+					100,
+					(elapsed / (this.config.duration! / playbackSpeed.value)) * 100
+				)
+
 				if (this.behaviors.length === 0) {
 					this.progress.value = p
 				}
 
-				if (elapsed >= (this.config.duration! / playbackSpeed.value)) {
+				if (elapsed >= this.config.duration! / playbackSpeed.value) {
 					if (this.behaviors.length === 0) this.complete(true)
 				}
 			}, 32)
@@ -201,15 +178,16 @@ export class Scene {
 
 	private async playVoiceSequence(voice: string | string[], context: SceneContext) {
 		const voiceText = Array.isArray(voice) ? voice.join(' ') : voice
-		return voiceService.playVoice(voiceText, context.programId, { 
-			previousText: context.previousVoiceText 
+		return voiceService.playVoice(voiceText, context.programId, {
+			previousText: context.previousVoiceText
 		})
 	}
 
 	private async playTextSequence(text: string | string[]) {
-		const rawText = Array.isArray(text) ? text.join(' ~ ') : text
-		const segments: string[] = rawText.split('~').map(s => s.trim()).filter(s => s)
-		
+		const segments: string[] = (Array.isArray(text) ? text : [text])
+			.map(s => s.trim())
+			.filter(s => s)
+
 		if (!segments.length) return
 
 		for (let i = 0; i < segments.length; i++) {
@@ -227,14 +205,14 @@ export class Scene {
 			const durationMs = (Math.max(2500, baseDuration) + 1000) / playbackSpeed.value
 
 			await this.wait(durationMs)
-			
+
 			if (i < segments.length - 1) {
 				this.isTextVisible.value = false
 				// Wait for cooldown (2s) to allow full glacial fade out before next segment
 				await this.wait(this.cooldown)
 			}
 		}
-		
+
 		// Stay visible for a bit after last segment if no behaviors
 		if (this.isActive && this.behaviors.length === 0) {
 			await this.wait(1000 / playbackSpeed.value)

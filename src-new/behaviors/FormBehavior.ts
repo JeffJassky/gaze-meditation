@@ -16,6 +16,13 @@ export class FormBehavior extends Behavior<FormBehaviorOptions> {
 			failOnTimeout: false,
 			...options
 		})
+		this.updateData({
+			question: this.options.question,
+			fields: this.options.fields,
+			initialData: this.initFormData(),
+			autoContinue: this.options.autoContinue,
+			onSubmit: (data: Record<string, any>) => this.handleSubmit(data)
+		})
 	}
 
 	public get component() {
@@ -35,14 +42,7 @@ export class FormBehavior extends Behavior<FormBehaviorOptions> {
 	}
 
 	protected onStart() {
-		const formData = this.initFormData()
-		this.updateData({
-			question: this.options.question,
-			fields: this.options.fields,
-			initialData: formData,
-			autoContinue: this.options.autoContinue,
-			onSubmit: (data: Record<string, any>) => this.handleSubmit(data)
-		})
+		// Data already initialized in constructor
 	}
 
 	protected onStop() {

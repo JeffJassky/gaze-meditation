@@ -51,7 +51,8 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 		return {
 			...this.data,
 			progress: this.progress.value * 100, // Visualizers usually expect 0-100
-			isConditionMet: this.isConditionMet.value
+			isConditionMet: this.isConditionMet.value,
+			isHolding: this.isConditionMet.value
 		}
 	}
 

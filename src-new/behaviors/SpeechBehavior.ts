@@ -1,4 +1,4 @@
-import { ref, type Ref, markRaw, watch } from 'vue'
+import { markRaw, watch } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { speechService } from '@/services/speechService'
 import SpeechVisualizer from '../components/scene/visualizers/SpeechVisualizer.vue'
@@ -17,20 +17,17 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 			failOnTimeout: true,
 			...options
 		})
+		this.updateData({ 
+			words: this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false })), 
+			isComplete: false 
+		})
 	}
 
 	public get component() {
 		return markRaw(SpeechVisualizer)
 	}
 
-	private initWords() {
-		return this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false }))
-	}
-
 	protected async onStart() {
-		const words = this.initWords()
-		this.updateData({ words, isComplete: false })
-
 		await speechService.init()
 		speechService.resetTranscript()
 		
@@ -50,33 +47,56 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 	}
 
 	private handleTranscript(transcript: string) {
-		const normalizedTranscript = transcript.toLowerCase()
+		const normalizedTranscript = transcript.toLowerCase().replace(/[^\w\s]|_/g, ' ')
 		const targetWords = this.options.targetValue.split(' ')
+		const currentWords = (this.data.words as { text: string; isSpoken: boolean }[]) || []
+
+		console.log(`[SpeechBehavior] Transcript: "${normalizedTranscript}"`)
 
 		let searchIndex = 0
 		let allFound = true
-		
-		const newWords = targetWords.map(word => {
-			const cleanWord = word.toLowerCase().replace(/[^\w\s]|_/g, '')
-			if (!cleanWord) return { text: word, isSpoken: true }
 
-			const foundIndex = normalizedTranscript.indexOf(cleanWord, searchIndex)
-			if (foundIndex !== -1) {
-				searchIndex = foundIndex + cleanWord.length
-				return { text: word, isSpoken: true }
-			} else {
-				allFound = false
-				return { text: word, isSpoken: false }
+		for (let i = 0; i < targetWords.length; i++) {
+			const word = targetWords[i]
+			const cleanWord = word?.toLowerCase().replace(/[^\w\s]|_/g, '')
+			const status = currentWords[i]
+
+			if (!status) continue
+
+			if (!cleanWord) {
+				status.isSpoken = true
+				continue
 			}
-		})
 
-		this.updateData({ words: newWords })
+			// Search for the word only AFTER the last found word's position
+			const searchArea = normalizedTranscript.substring(searchIndex)
+			const regex = new RegExp(`\\b${cleanWord}\\b`)
+			const match = searchArea.match(regex)
 
-		if (allFound) {
+			if (match && match.index !== undefined) {
+				// Word found in the correct relative order
+				status.isSpoken = true
+				searchIndex += match.index + match[0].length
+				console.log(`[SpeechBehavior] Match: "${cleanWord}" at rel index ${match.index}. Total searchIndex: ${searchIndex}`)
+			} else {
+				// If not found in current transcript, check if it was already spoken in a previous update
+				if (!status.isSpoken) {
+					allFound = false
+					// Restore strict order: stop checking further words if this one hasn't been spoken yet.
+					break 
+				}
+			}
+		}
+
+		this.updateData({ words: [...currentWords] })
+
+		console.log(`[SpeechBehavior] allFound: ${allFound}, isComplete: ${this.data.isComplete}`)
+
+		if (allFound && !this.data.isComplete) {
+			console.log('[SpeechBehavior] Phrase complete - triggering success')
 			this.updateData({ isComplete: true })
-			setTimeout(() => {
-				this.emitSuccess({ transcript })
-			}, 500)
+			// Trigger success immediately to avoid race conditions with multiple transcript updates
+			this.emitSuccess({ transcript })
 		}
 	}
 }

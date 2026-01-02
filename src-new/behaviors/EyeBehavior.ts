@@ -1,5 +1,7 @@
+import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { eyesRegion, camera } from '../services'
+import BlinkVisualizer from '../components/scene/visualizers/BlinkVisualizer.vue'
 
 export interface EyeBehaviorOptions extends BehaviorOptions {
 	// ...
@@ -14,10 +16,11 @@ export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
 			failOnTimeout: false, // Reaching the end of duration is success
 			...options
 		})
+		this.updateData({ openness: 100 })
 	}
 
 	public get component() {
-		return null
+		return markRaw(BlinkVisualizer)
 	}
 
 	protected onStart(): void {
@@ -49,6 +52,7 @@ export class CloseEyesBehavior extends Behavior<EyeBehaviorOptions> {
 			failOnTimeout: true,
 			...options
 		})
+		this.updateData({ openness: 100 })
 	}
 
 	public get component() {
@@ -84,6 +88,7 @@ export class OpenEyesBehavior extends Behavior<EyeBehaviorOptions> {
 			failOnTimeout: true,
 			...options
 		})
+		this.updateData({ openness: 0 })
 	}
 
 	public get component() {
