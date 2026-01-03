@@ -321,6 +321,23 @@ const initSession = async () => {
 				}
 			}
 
+			// Preload & Validate Soundboard
+			soundboardErrors.value.clear()
+			if (activeSession.value!.audio?.soundboard) {
+				const loadPromises = activeSession.value!.audio.soundboard.map(async sample => {
+					try {
+						await audioSession.loadBuffer(sample.path)
+					} catch (e) {
+						console.error(`[Theater] Failed to load soundboard sample: ${sample.id}`, e)
+						soundboardErrors.value.add(sample.id)
+					}
+				})
+				// We don't necessarily await this strictly before starting, 
+				// but it's better to know errors early.
+				// Let's await it to ensure status is ready when UI shows up.
+				await Promise.allSettled(loadPromises)
+			}
+
 			const bConfig = activeSession.value!.audio?.binaural
 			audioSession.binaural.start({
 				carrierFreq: 100,
@@ -461,6 +478,7 @@ const transitionToScene = (index: number, cooldown: number) => {
 
 const activeFxStops = ref<Set<(fade?: number) => void>>(new Set())
 const activeSoundboardStops = ref(new Map<string, (fade?: number) => void>())
+const soundboardErrors = ref<Set<string>>(new Set())
 
 const getSoundboardSample = (id: string) => {
 	return activeSession.value?.audio?.soundboard?.find(s => s.id === id)
@@ -469,6 +487,42 @@ const getSoundboardSample = (id: string) => {
 const isLoopingSample = (id: string) => {
 	const sample = getSoundboardSample(id)
 	return sample?.loop === true
+}
+
+const activeSoundboardIds = computed(() => Array.from(activeSoundboardStops.value.keys()))
+
+const toggleSoundboardSample = (id: string) => {
+	if (soundboardErrors.value.has(id)) return // Don't play errored samples
+
+	if (activeSoundboardStops.value.has(id)) {
+		// Stop
+		const stop = activeSoundboardStops.value.get(id)
+		const sample = getSoundboardSample(id)
+		stop?.(sample?.fadeOutDuration ?? 0.5)
+		activeSoundboardStops.value.delete(id)
+	} else {
+		// Start
+		const sample = getSoundboardSample(id)
+		if (sample) {
+			playOneShot(
+				audioSession,
+				sample.path,
+				'fx',
+				sample.volume ?? 1,
+				sample.loop ?? false,
+				sample.fadeInDuration ?? 0
+			)
+				.then(control => {
+					activeSoundboardStops.value.set(id, control.stop)
+					control.promise.then(() => {
+						if (activeSoundboardStops.value.get(id) === control.stop) {
+							activeSoundboardStops.value.delete(id)
+						}
+					})
+				})
+				.catch(e => console.warn(`Failed to manual start ${id}`, e))
+		}
+	}
 }
 
 const getExpectedLoopState = (targetIndex: number): Set<string> => {
@@ -1064,6 +1118,9 @@ onMounted(() => {
 					!isPaused && state !== SessionState.FINISHED && state !== SessionState.IDLE
 				"
 				:isVisible="controlsVisible"
+				:soundboardSamples="activeSession?.audio?.soundboard || []"
+				:activeSoundboardIds="activeSoundboardIds"
+				:soundboardErrors="soundboardErrors"
 				@play="handlePlay"
 				@pause="handlePause"
 				@restart="handleRestart"
@@ -1071,6 +1128,7 @@ onMounted(() => {
 				@menu-toggle="val => (isMenuOpen = val)"
 				@hide="controlsVisible = false"
 				@exit="exitSession"
+				@toggle-soundboard="toggleSoundboardSample"
 				@mouseenter="isHoveringControls = true"
 				@mouseleave="isHoveringControls = false"
 				@click.stop

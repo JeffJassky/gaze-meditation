@@ -2,6 +2,17 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { audioSession } from '../services/audio'
 import type { AudioBusName } from '../services/audio/types'
+import type { SoundboardSample } from '../types'
+
+const props = defineProps<{
+	soundboardSamples?: SoundboardSample[]
+	activeSoundboardIds?: string[]
+	soundboardErrors?: Set<string>
+}>()
+
+const emit = defineEmits<{
+	(e: 'toggle-soundboard', id: string): void
+}>()
 
 const updateInterval = ref<number | null>(null)
 const isHovering = ref(false)
@@ -23,6 +34,9 @@ const binauralState = ref({
 	beat: 0,
 	volume: 0
 })
+
+const isActive = (id: string) => props.activeSoundboardIds?.includes(id)
+const isError = (id: string) => props.soundboardErrors?.has(id)
 
 const syncState = () => {
 	if (!audioSession.ctx) return
@@ -259,6 +273,52 @@ onUnmounted(() => {
 								<span>Vol</span>
 								<span>{{ binauralState.volume }}</span>
 							</div>
+						</div>
+					</div>
+
+					<!-- Soundboard -->
+					<div
+						v-if="soundboardSamples && soundboardSamples.length > 0"
+						class="border-t border-zinc-700 pt-3 mt-2"
+					>
+						<div class="font-bold text-white text-[10px] tracking-wider mb-2">SOUNDBOARD</div>
+						<div class="grid grid-cols-3 gap-2">
+							<button
+								v-for="sample in soundboardSamples"
+								:key="sample.id"
+								@click="emit('toggle-soundboard', sample.id)"
+								class="aspect-square relative flex flex-col items-center justify-center p-1 rounded transition-all duration-200 border border-transparent leading-tight overflow-hidden"
+								:class="[
+									isError(sample.id)
+										? 'bg-red-900/40 text-red-500 border-red-500/50 cursor-not-allowed'
+										: isActive(sample.id)
+											? 'bg-cyan-500/20 text-cyan-400 border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
+											: 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+								]"
+								:disabled="isError(sample.id)"
+							>
+								<!-- Fade In Duration -->
+								<div v-if="sample.fadeInDuration" class="absolute top-0.5 left-1 text-[7px] opacity-60 font-mono">
+									{{ sample.fadeInDuration }}s
+								</div>
+
+								<!-- Fade Out Duration -->
+								<div v-if="sample.fadeOutDuration" class="absolute top-0.5 right-1 text-[7px] opacity-60 font-mono text-right">
+									{{ sample.fadeOutDuration }}s
+								</div>
+
+								<!-- Main Label -->
+								<div class="text-[9px] font-bold uppercase break-all px-1 text-center mb-0.5">
+									{{ sample.id }}
+								</div>
+
+								<!-- Sample Type Label -->
+								<div class="text-[7px] opacity-70 font-medium">
+									<template v-if="sample.loop === true">LOOP ∞</template>
+									<template v-else-if="typeof sample.loop === 'number' && sample.loop > 0">LOOP {{ sample.loop }}X</template>
+									<template v-else>ONE SHOT</template>
+								</div>
+							</button>
 						</div>
 					</div>
 				</div>

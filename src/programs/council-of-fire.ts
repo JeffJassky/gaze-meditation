@@ -94,7 +94,8 @@ export const councilOfFireLong: Session = {
 			voice: `You may close them now and let them rest.`,
 			text: 'Close your eyes',
 			behavior: {
-				suggestions: [{ type: 'eyes:close' }]
+				suggestions: [{ type: 'eyes:close' }],
+				success: {}
 			}
 		},
 

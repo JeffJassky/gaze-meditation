@@ -4,6 +4,7 @@ import SceneSelector from './SceneSelector.vue'
 import AudioDebugPanel from './AudioDebugPanel.vue'
 import SessionLiveMonitor from './SessionLiveMonitor.vue'
 import { type Scene } from '../../src-new/core/Scene'
+import { type SoundboardSample } from '../types'
 import { playbackSpeed } from '../state/playback'
 
 const props = defineProps<{
@@ -11,6 +12,9 @@ const props = defineProps<{
   currentIndex: number
   isPlaying: boolean
   isVisible: boolean
+  soundboardSamples?: SoundboardSample[]
+  activeSoundboardIds?: string[]
+  soundboardErrors?: Set<string>
 }>()
 
 const emit = defineEmits<{
@@ -21,6 +25,7 @@ const emit = defineEmits<{
   (e: 'menu-toggle', open: boolean): void
   (e: 'hide'): void
   (e: 'exit'): void
+  (e: 'toggle-soundboard', id: string): void
 }>()
 
 const showMonitor = ref(false)
@@ -211,7 +216,12 @@ const getSceneDescription = (scene: Scene) => {
 
       <div class="h-6 w-px bg-zinc-700"></div>
 
-      <AudioDebugPanel />
+      <AudioDebugPanel 
+        :soundboardSamples="soundboardSamples"
+        :activeSoundboardIds="activeSoundboardIds"
+        :soundboardErrors="soundboardErrors"
+        @toggle-soundboard="(id) => emit('toggle-soundboard', id)"
+      />
     </div>
 
     <!-- Progress -->
