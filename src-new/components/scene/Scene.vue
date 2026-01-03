@@ -104,7 +104,7 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 							v-for="line in activeText.split('~')"
 							class="text-line"
 						>
-							{{ line.trim() }}&nbsp;
+							{{ line.trim() }}
 						</span>
 					</div>
 				</Transition>

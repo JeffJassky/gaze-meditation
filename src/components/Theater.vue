@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef, onMounted, watch, computed, provide } from 'vue'
+import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue'
 import {
 	SessionState,
 	type Session,
@@ -19,7 +19,9 @@ import { getSceneEffectiveTheme } from '../utils/themeResolver' // Import theme 
 import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
+import { playOneShot } from '../services/audio/oneShot'
 import { speechService } from '../services/speechService'
+import { voiceService } from '../services/voiceService'
 import { accelerometer } from '../../src-new/services'
 import { playbackSpeed } from '../state/playback'
 import { useRouter } from 'vue-router'
@@ -28,10 +30,12 @@ import { getSessionById, ALL_SESSIONS } from '../programs'
 interface TheaterProps {
 	program?: Session
 	sessionId?: string
-	subjectId: string
+	subjectId?: string
 }
 
-const props = defineProps<TheaterProps>()
+const props = withDefaults(defineProps<TheaterProps>(), {
+	subjectId: 'guest'
+})
 const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
@@ -49,10 +53,49 @@ const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s =>
 
 const activeSession = shallowRef<Session | null>(null)
 
+const cleanupSession = (fadeDuration: number = 0.5) => {
+	// Stop scene progression
+	if (timerRef.value) {
+		clearTimeout(timerRef.value)
+		timerRef.value = null
+	}
+	if (transitionTimerRef.value) {
+		clearTimeout(transitionTimerRef.value)
+		transitionTimerRef.value = null
+	}
+	isTransitioningBetweenScenes.value = false
+	
+	if (currentScene.value) {
+		currentScene.value.stop()
+	}
+
+	// Ensure all audio is stopped
+	audioSession.binaural.stop(fadeDuration)
+	audioSession.musicLooper.stop(fadeDuration)
+	speechService.stop()
+	voiceService.stop()
+	
+	// Stop hardware
+	faceMeshService.stop()
+	accelerometer.stop()
+	
+	activeFxStops.value.forEach(stop => stop(fadeDuration))
+	activeFxStops.value.clear()
+
+	activeSoundboardStops.value.forEach(stop => stop(fadeDuration))
+	activeSoundboardStops.value.clear()
+}
+
 const exitSession = () => {
 	emit('exit')
+	cleanupSession(0.5)
 	router.push('/sessions')
 }
+
+onUnmounted(() => {
+	cleanupSession(0.5)
+})
+
 const state = ref<SessionState>(SessionState.INITIALIZING)
 const sessionScenes = shallowRef<Scene[]>([])
 const sceneIndex = ref(0)
@@ -388,6 +431,8 @@ const handleGrantAccess = async () => {
 }
 
 const showBeginButton = ref(false)
+const isTransitioningBetweenScenes = ref(false)
+const transitionTimerRef = ref<number | null>(null)
 
 const handleBegin = () => {
 	try {
@@ -398,8 +443,66 @@ const handleBegin = () => {
 	showBeginButton.value = false
 }
 
+const transitionToScene = (index: number, cooldown: number) => {
+	currentScene.value?.stop()
+
+	const rawFade = currentScene.value?.config.fadeOutDuration || 3000
+	const fadeMs = rawFade / playbackSpeed.value
+
+	isTransitioningBetweenScenes.value = true
+
+	if (transitionTimerRef.value) clearTimeout(transitionTimerRef.value)
+
+	transitionTimerRef.value = window.setTimeout(() => {
+		isTransitioningBetweenScenes.value = false
+		nextScene(index)
+	}, fadeMs + cooldown)
+}
+
+const activeFxStops = ref<Set<(fade?: number) => void>>(new Set())
+const activeSoundboardStops = ref(new Map<string, (fade?: number) => void>())
+
+const getSoundboardSample = (id: string) => {
+	return activeSession.value?.audio?.soundboard?.find(s => s.id === id)
+}
+
+const isLoopingSample = (id: string) => {
+	const sample = getSoundboardSample(id)
+	return sample?.loop === true
+}
+
+const getExpectedLoopState = (targetIndex: number): Set<string> => {
+	const activeLoops = new Set<string>()
+	
+	// Iterate from start to target index to build state
+	for (let i = 0; i <= targetIndex; i++) {
+		const scene = sessionScenes.value[i]
+		if (scene && scene.config.audio?.soundboard) {
+			scene.config.audio.soundboard.forEach(evt => {
+				if (!isLoopingSample(evt.id)) return // Only track loops
+				
+				if (evt.event === 'start') {
+					activeLoops.add(evt.id)
+				} else if (evt.event === 'stop') {
+					activeLoops.delete(evt.id)
+				}
+			})
+		}
+	}
+	return activeLoops
+}
+
 const nextScene = (index: number) => {
 	console.log('[Theater] nextScene:', index)
+
+	// Cancel any pending transitions if manually triggered or re-triggered
+	if (transitionTimerRef.value) {
+		clearTimeout(transitionTimerRef.value)
+		transitionTimerRef.value = null
+	}
+	isTransitioningBetweenScenes.value = false
+
+	const isSequential = index === sceneIndex.value + 1
 
 	if (index === 0) {
 		sessionTracker.startSession()
@@ -429,6 +532,107 @@ const nextScene = (index: number) => {
 			if (b.hertz !== undefined) audioSession.binaural.setBeatFrequency(b.hertz)
 			if (b.volume !== undefined) audioSession.binaural.setVolume(b.volume)
 		}
+	}
+
+	// ==========================================
+	// Soundboard State Reconciliation (NLE Style)
+	// ==========================================
+	
+	const expectedLoops = getExpectedLoopState(index)
+	const currentActiveIDs = Array.from(activeSoundboardStops.value.keys())
+
+	// 1. Stop sounds that shouldn't be playing
+	currentActiveIDs.forEach(id => {
+		const isLoop = isLoopingSample(id)
+		
+		// If it's a loop and NOT expected -> Stop it
+		if (isLoop && !expectedLoops.has(id)) {
+			const stop = activeSoundboardStops.value.get(id)
+			const sample = getSoundboardSample(id)
+			stop?.(sample?.fadeOutDuration ?? 0.5)
+			activeSoundboardStops.value.delete(id)
+		} 
+		// If it's a One-Shot and we JUMPED -> Stop it (clean slate)
+		else if (!isLoop && !isSequential) {
+			const stop = activeSoundboardStops.value.get(id)
+			stop?.(0.5) // Quick fade for cut one-shots
+			activeSoundboardStops.value.delete(id)
+		}
+	})
+
+	// 2. Start expected loops that aren't playing
+	expectedLoops.forEach(id => {
+		if (!activeSoundboardStops.value.has(id)) {
+			const sample = getSoundboardSample(id)
+			if (sample) {
+				playOneShot(
+					audioSession,
+					sample.path,
+					'fx',
+					sample.volume ?? 1,
+					sample.loop ?? false,
+					sample.fadeInDuration ?? 0
+				).then(control => {
+					activeSoundboardStops.value.set(id, control.stop)
+					control.promise.then(() => {
+						if (activeSoundboardStops.value.get(id) === control.stop) {
+							activeSoundboardStops.value.delete(id)
+						}
+					})
+				}).catch(e => console.warn(`Failed to start loop ${id}`, e))
+			}
+		}
+	})
+
+	// 3. Trigger One-Shots for this specific scene
+	// (Only if they are defined in THIS scene)
+	if (currentScene.value?.config.audio?.soundboard) {
+		currentScene.value.config.audio.soundboard.forEach(evt => {
+			if (!isLoopingSample(evt.id)) {
+				if (evt.event === 'start') {
+					const sample = getSoundboardSample(evt.id)
+					if (sample) {
+						playOneShot(
+							audioSession,
+							sample.path,
+							'fx',
+							sample.volume ?? 1,
+							sample.loop ?? false,
+							sample.fadeInDuration ?? 0
+						).then(control => {
+							activeSoundboardStops.value.set(evt.id, control.stop)
+							control.promise.then(() => {
+								if (activeSoundboardStops.value.get(evt.id) === control.stop) {
+									activeSoundboardStops.value.delete(evt.id)
+								}
+							})
+						}).catch(e => console.warn(`Failed to play one-shot ${evt.id}`, e))
+					}
+				} else if (evt.event === 'stop') {
+					// Explicit stop for one-shot?
+					const stop = activeSoundboardStops.value.get(evt.id)
+					stop?.(0.5)
+					activeSoundboardStops.value.delete(evt.id)
+				}
+			}
+		})
+	}
+
+	// Handle FX (Legacy / Direct)
+	if (currentScene.value?.config.audio?.fx) {
+		const fx = currentScene.value.config.audio.fx
+		playOneShot(
+			audioSession,
+			fx.path,
+			'fx',
+			fx.volume ?? 1,
+			fx.loop ?? false
+		)
+			.then(control => {
+				activeFxStops.value.add(control.stop)
+				control.promise.then(() => activeFxStops.value.delete(control.stop))
+			})
+			.catch(e => console.warn('Failed to play FX', e))
 	}
 
 	if (timerRef.value) clearTimeout(timerRef.value)
@@ -510,26 +714,18 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 			score.value += points
 			state.value = SessionState.REINFORCING_POS
 
-			setTimeout(() => {
-				nextScene(sceneIndex.value + 1)
-			}, cooldown)
+			transitionToScene(sceneIndex.value + 1, cooldown)
 		} else {
-			setTimeout(() => {
-				nextScene(sceneIndex.value + 1)
-			}, cooldown)
+			transitionToScene(sceneIndex.value + 1, cooldown)
 		}
 	} else {
 		if (isNegEnabled) {
 			score.value -= 50
 			state.value = SessionState.REINFORCING_NEG
 
-			setTimeout(() => {
-				nextScene(sceneIndex.value)
-			}, cooldown)
+			transitionToScene(sceneIndex.value, cooldown)
 		} else {
-			setTimeout(() => {
-				nextScene(sceneIndex.value)
-			}, cooldown)
+			transitionToScene(sceneIndex.value, cooldown)
 		}
 	}
 }
@@ -555,6 +751,13 @@ const finishSession = () => {
 	state.value = SessionState.FINISHED
 	audioSession.binaural.stop(3)
 	audioSession.musicLooper.stop(3)
+	
+	activeFxStops.value.forEach(stop => stop(3))
+	// activeFxStops.value.clear() // Allow onUnmounted to stop if needed
+
+	activeSoundboardStops.value.forEach(stop => stop(3))
+	// activeSoundboardStops.value.clear() // Allow onUnmounted to stop if needed
+
 	const physData = sessionTracker.stopSession()
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
@@ -829,7 +1032,8 @@ onMounted(() => {
 				<component
 					v-if="
 						(state === SessionState.INSTRUCTING || state === SessionState.VALIDATING) &&
-						currentScene
+						currentScene &&
+						!isTransitioningBetweenScenes
 					"
 					:is="currentScene.component"
 					:scene="currentScene"

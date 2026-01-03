@@ -45,15 +45,6 @@ const searchQuery = ref('')
 const placementValue = computed(() => props.placement || 'bottom')
 const scrollContainer = ref<HTMLElement | null>(null)
 
-watch(isExpandedInternal, async val => {
-	emit('toggle', val)
-	emit('update:expanded', val)
-	if (val) {
-		await nextTick()
-		scrollToActive()
-	}
-})
-
 watch(
 	() => props.currentIndex,
 	() => {
@@ -65,7 +56,7 @@ watch(
 
 const scrollToActive = () => {
 	if (!scrollContainer.value) return
-	const activeItem = scrollContainer.value.querySelector('.bg-cyan-900/50')
+	const activeItem = scrollContainer.value.querySelector('.active-scene')
 	if (activeItem) {
 		activeItem.scrollIntoView({ behavior: 'instant', block: 'center' })
 	}
@@ -140,7 +131,7 @@ const filteredScenes = computed(() => {
 					"
 					class="cursor-pointer p-2 hover:bg-zinc-700 rounded mb-1 transition-colors text-left"
 					:class="{
-						'bg-cyan-900/50 border border-cyan-700': item.originalIndex === currentIndex
+						'bg-cyan-900/50 border border-cyan-700 active-scene': item.originalIndex === currentIndex
 					}"
 				>
 					<div class="font-bold flex justify-between items-center mb-1">

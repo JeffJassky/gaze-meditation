@@ -7,10 +7,36 @@ export const councilOfFireLong: Session = {
 		'A deep hypnotic journey of ancestral recognition, calm authority, and steadiness.',
 	tags: ['confidence'],
 	audio: {
-		musicTrack: 'audio/music.mp3',
-		binaural: { hertz: 12 }
+		musicTrack: '/audio/music.mp3',
+		binaural: { hertz: 12 },
+		soundboard: [
+			{
+				id: 'wind',
+				path: '/sessions/prog_council_fire/audio/fx/MA_Beison_Winter_Wind_at_the_Edge_of_the_Forest_3_Long_with_Birds.mp3',
+				volume: 1.25,
+				loop: true,
+				fadeInDuration: 5,
+				fadeOutDuration: 5
+			},
+			{
+				id: 'drums',
+				path: '/sessions/prog_council_fire/audio/fx/drums.mp3',
+				volume: 3,
+				loop: true,
+				fadeInDuration: 5,
+				fadeOutDuration: 5
+			},
+			{
+				id: 'fire',
+				path: '/sessions/prog_council_fire/audio/fx/fire.mp3',
+				volume: 1,
+				loop: true,
+				fadeInDuration: 3,
+				fadeOutDuration: 3
+			}
+		]
 	},
-	spiralBackground: 'img/spiral.png',
+	spiralBackground: '/img/spiral.png',
 	scenes: [
 		// ============================================================
 		// PHASE 1: THE UNTETHERING - Building the Yes-Set
@@ -18,7 +44,7 @@ export const councilOfFireLong: Session = {
 
 		{
 			voice: `Welcome. You are here now. You are breathing. Your heart is beating. These things are already true.`,
-			text: ''
+			text: 'Welcome'
 		},
 
 		{
@@ -54,9 +80,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Allow your blinks to come slowly now. Heavy. Unhurried. Like waves returning to shore.`,
 			text: 'Stillness',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 20000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 20000 }]
+			}
 		},
 
 		{
@@ -67,9 +93,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `You may close them now and let them rest.`,
 			text: 'Close your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:close' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:close' }]
+			}
 		},
 
 		{
@@ -80,9 +106,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `And when it feels natural, allow your eyes to open again.`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			}
 		},
 
 		{
@@ -93,9 +119,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Now, allow yourself to rest your eyes closed.`,
 			text: 'Close your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:close' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:close' }]
+			}
 		},
 
 		{
@@ -109,8 +135,7 @@ export const councilOfFireLong: Session = {
 		// ============================================================
 
 		{
-			voice: `Now, imagine that you are standing at the edge of a forest.`,
-			text: ''
+			voice: `Now, imagine that you are standing at the edge of a forest.`
 		},
 
 		{
@@ -120,9 +145,11 @@ export const councilOfFireLong: Session = {
 
 		{
 			voice: `It's night time. The air against your skin is cold and clean. You can almost taste it. Sharp and ancient. Like water from deep stone.`,
-			text: ''
+			text: '',
+			audio: {
+				soundboard: [{ event: 'start', id: 'wind' }]
+			}
 		},
-
 		{
 			voice: `Above you, stars are beginning to appear. So many you could never count them. They've been here for longer than cities have existed.`,
 			text: ''
@@ -136,9 +163,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Let your gaze lower. As if looking down at this ground.`,
 			text: 'Lower your gaze',
-            behavior: {
-                suggestions: [{ type: 'head:down' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:down' }]
+			}
 		},
 
 		{
@@ -174,9 +201,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Your jaw softens. Your breath deepens without trying. Centuries fall away. Fading like fog.`,
 			text: 'Soften your jaw',
-            behavior: {
-                suggestions: [{ type: 'mouth:relax', duration: 15000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'mouth:relax', duration: 15000 }]
+			}
 		},
 
 		{
@@ -202,9 +229,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `You walk in silence. Breath matching footsteps. Footsteps matching heartbeat.`,
 			text: 'Stillness',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 25000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 25000 }]
+			}
 		},
 
 		{
@@ -228,7 +255,10 @@ export const councilOfFireLong: Session = {
 
 		{
 			voice: `Slow. Rhythmic. Like the pulse of the earth itself.`,
-			text: ''
+			text: '',
+			audio: {
+				soundboard: [{ event: 'start', id: 'drums' }]
+			}
 		},
 
 		{
@@ -323,9 +353,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `When you feel ready, step into the circle.`,
 			text: 'Are you ready?',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			}
 		},
 
 		// ============================================================
@@ -335,15 +365,19 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `The fire burns at the center. You can feel the warmth beginning to reach your face. Your chest. Your hands. Warm. Welcoming.`,
 			text: '',
-			audio: { binaural: { hertz: 5 } }
+			audio: {
+				binaural: { hertz: 5 },
+				soundboard: [
+					{ event: 'start', id: 'fire' },
+					{ event: 'stop', id: 'wind' },
+					{ event: 'stop', id: 'drums' }
+				]
+			}
 		},
 
 		{
 			voice: `Let your eyes rest on the flames. Watching them move. Ancient. Hypnotic. Alive.`,
-			text: 'Watch the flames',
-            behavior: {
-                suggestions: [{ type: 'eyes:no-blink', duration: 15000 }]
-            }
+			text: 'Watch the flames'
 		},
 
 		{
@@ -362,9 +396,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Turn your head gently to the left. Observing them.`,
 			text: 'Look left',
-            behavior: {
-                suggestions: [{ type: 'head:left' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:left' }]
+			}
 		},
 
 		{
@@ -375,9 +409,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `Turn gently to the right. Meeting more eyes.`,
 			text: 'Look right',
-            behavior: {
-                suggestions: [{ type: 'head:right' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:right' }]
+			}
 		},
 
 		{
@@ -413,9 +447,9 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `You move to it and sit. Your posture settling naturally. Spine straight. Shoulders easy. Breath deep.`,
 			text: 'Take your seat',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 20000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 20000 }]
+			}
 		},
 
 		{
@@ -570,12 +604,17 @@ export const councilOfFireLong: Session = {
 		{
 			voice: `You stand from the fire. Slowly. Carrying nothing that doesn't serve you. Leaving nothing that does.`,
 			text: '',
-			audio: { binaural: { hertz: 7 } }
+			audio: {
+				binaural: { hertz: 7 }
+			}
 		},
 
 		{
 			voice: `The Elders do not say goodbye. They simply hold your gaze. One by one. A silent acknowledgment that you will return. That you have always been welcome here. That this place is your home. This is inside of you.`,
-			text: ''
+			text: '',
+			audio: {
+				soundboard: [{ event: 'stop', id: 'fire' }]
+			}
 		},
 
 		{
@@ -627,7 +666,10 @@ export const councilOfFireLong: Session = {
 
 		{
 			voice: `One. Beginning to return now. The forest growing distant. The fire becoming a memory you can access whenever you choose.`,
-			text: '1'
+			text: '1',
+			audio: {
+				soundboard: [{ event: 'stop', id: 'wind' }]
+			}
 		},
 
 		{

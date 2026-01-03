@@ -14,13 +14,13 @@ export class EyesRegion extends CameraRegion {
 	private minOpen = 0.15
 	private maxOpen = 0.35
 	private blinkThreshold = 0.2
-	
+
 	// Adaptive Openness Logic
 	private baselineOpenness = 0.3 // approximate starting avg
 	private isInitialized = false
 	private readonly CLOSE_THRESHOLD = -0.04 // Deviation from baseline
 	private readonly OPEN_THRESHOLD = -0.035 // Deviation to return to open
-	
+
 	// Blink State
 	private blinkStart: number | null = null
 	private blinkDuration = 100 // ms
@@ -44,7 +44,11 @@ export class EyesRegion extends CameraRegion {
 	update(face: Face, timestamp: number) {
 		this.frameCount++
 		if (this.frameCount % 100 === 0) {
-			console.log('[EyesRegion] Heartbeat', { ear: this.ear.toFixed(3), norm: this.openNormalized.toFixed(3), isOpen: this.isOpen })
+			console.log('[EyesRegion] Heartbeat', {
+				ear: this.ear.toFixed(3),
+				norm: this.openNormalized.toFixed(3),
+				isOpen: this.isOpen
+			})
 		}
 		const k = face.keypoints
 		// Left Eye
@@ -58,7 +62,7 @@ export class EyesRegion extends CameraRegion {
 		const rEAR = rH > 0 ? rV / rH : 0
 
 		const rawEar = (lEAR + rEAR) / 2
-		
+
 		// Pitch Compensation
 		// When head tilts up/down, 2D EAR reduces due to foreshortening.
 		// We scale it back up based on the cosine of the pitch angle.
@@ -68,11 +72,14 @@ export class EyesRegion extends CameraRegion {
 		// Amplified compensation: secant squared (1 / cos^2)
 		// This provides a much steeper correction curve for extreme tilts.
 		const compensation = 1 / Math.pow(Math.cos(clampedPitch), 2)
-		
+
 		this.ear = rawEar * compensation
-		
+
 		// Normalize
-		this.openNormalized = Math.max(0, Math.min(1, (this.ear - this.minOpen) / (this.maxOpen - this.minOpen)))
+		this.openNormalized = Math.max(
+			0,
+			Math.min(1, (this.ear - this.minOpen) / (this.maxOpen - this.minOpen))
+		)
 
 		// 1. Blink Detection (Fast, normalized check)
 		if (this.openNormalized < this.blinkThreshold) {
@@ -81,7 +88,9 @@ export class EyesRegion extends CameraRegion {
 			} else if (timestamp - this.blinkStart >= this.blinkDuration) {
 				if (!this.blinkDetected) {
 					this.blinkDetected = true
-					this.dispatchEvent(new CustomEvent('blink', { detail: { start: this.blinkStart } }))
+					this.dispatchEvent(
+						new CustomEvent('blink', { detail: { start: this.blinkStart } })
+					)
 				}
 			}
 		} else {
@@ -91,7 +100,8 @@ export class EyesRegion extends CameraRegion {
 
 		// 2. Open/Close State (Adaptive)
 		if (!this.isInitialized) {
-			if (this.ear > 0.15) { // Sanity check for "eyes exist and aren't fully closed"
+			if (this.ear > 0.15) {
+				// Sanity check for "eyes exist and aren't fully closed"
 				this.baselineOpenness = this.ear
 				this.lastEar = this.ear
 				this.isInitialized = true
@@ -99,17 +109,20 @@ export class EyesRegion extends CameraRegion {
 		} else {
 			const deviation = this.ear - this.baselineOpenness
 			const FORCE_OPEN_THRESHOLD = 0.3 // Normalized value that is definitely "Open"
-			
+
 			// Determine State
 			if (this.isOpen) {
-				if (this.openNormalized < FORCE_OPEN_THRESHOLD && deviation < this.CLOSE_THRESHOLD) {
-					console.log('[EyesRegion] Closing eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
+				if (
+					this.openNormalized < FORCE_OPEN_THRESHOLD &&
+					deviation < this.CLOSE_THRESHOLD
+				) {
+					// console.log('[EyesRegion] Closing eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
 					this.isOpen = false
 					this.dispatchEvent(new CustomEvent('close'))
 				}
 			} else {
 				if (this.openNormalized > FORCE_OPEN_THRESHOLD || deviation > this.OPEN_THRESHOLD) {
-					console.log('[EyesRegion] Opening eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
+					// console.log('[EyesRegion] Opening eyes detected', { ear: this.ear, norm: this.openNormalized, dev: deviation })
 					this.isOpen = true
 					this.dispatchEvent(new CustomEvent('open'))
 				}
@@ -122,8 +135,11 @@ export class EyesRegion extends CameraRegion {
 
 			if (this.isOpen && !this.blinkDetected && this.smoothedDEar < -0.003) {
 				const now = Date.now()
-				if (now - this.lastDroopTime > 300) { // Debounce
-					this.dispatchEvent(new CustomEvent('droop', { detail: { delta: this.smoothedDEar } }))
+				if (now - this.lastDroopTime > 300) {
+					// Debounce
+					this.dispatchEvent(
+						new CustomEvent('droop', { detail: { delta: this.smoothedDEar } })
+					)
 					this.lastDroopTime = now
 				}
 			}
@@ -132,7 +148,7 @@ export class EyesRegion extends CameraRegion {
 			// Use Case 1: Rapid Widening
 			if (this.ear > this.baselineOpenness) {
 				this.baselineOpenness = this.lerp(this.baselineOpenness, this.ear, 0.1)
-			} 
+			}
 			// Use Case 2: Stable "Open" State (or Recovery from Wide)
 			else if (this.isOpen) {
 				this.baselineOpenness = this.lerp(this.baselineOpenness, this.ear, 0.005)
@@ -140,29 +156,33 @@ export class EyesRegion extends CameraRegion {
 		}
 
 		// Gaze Calculation
-		const nose = k[1]; const midEye = k[168]
-		const leftOuter = k[33]; const rightOuter = k[263]
+		const nose = k[1]
+		const midEye = k[168]
+		const leftOuter = k[33]
+		const rightOuter = k[263]
 		if (nose && midEye && leftOuter && rightOuter) {
 			const iod = Math.hypot(rightOuter.x - leftOuter.x, rightOuter.y - leftOuter.y)
 			if (iod > 0) {
 				const yaw = (-1 * (nose.x - midEye.x)) / iod
 				const pitch = (nose.y - midEye.y) / iod
-				
+
 				this.gazeX = this.map(yaw, this.gazeMinX, this.gazeMaxX, window.innerWidth)
 				this.gazeY = this.map(pitch, this.gazeMinY, this.gazeMaxY, window.innerHeight)
 			}
 		}
 
-		this.dispatchEvent(new CustomEvent('update', {
-			detail: {
-				ear: this.ear,
-				open: this.openNormalized,
-				blink: this.blinkDetected,
-				isOpen: this.isOpen,
-				gaze: { x: this.gazeX, y: this.gazeY },
-				face: face
-			}
-		}))
+		this.dispatchEvent(
+			new CustomEvent('update', {
+				detail: {
+					ear: this.ear,
+					open: this.openNormalized,
+					blink: this.blinkDetected,
+					isOpen: this.isOpen,
+					gaze: { x: this.gazeX, y: this.gazeY },
+					face: face
+				}
+			})
+		)
 
 		this.lastEar = this.ear
 	}
@@ -172,7 +192,7 @@ export class EyesRegion extends CameraRegion {
 		this.minOpen = min
 		this.maxOpen = max
 	}
-	
+
 	private lerp(start: number, end: number, amt: number) {
 		return (1 - amt) * start + amt * end
 	}
@@ -191,7 +211,7 @@ export class EyesRegion extends CameraRegion {
 		const top = face.keypoints[10]
 		const chin = face.keypoints[152]
 		if (!top || !chin) return 0
-		
+
 		const dy = chin.y - top.y
 		const dz = (chin.z || 0) - (top.z || 0)
 		return Math.atan2(dz, dy)

@@ -7,10 +7,10 @@ export const theBlueDoor: Session = {
 		'A journey to a place of inner peace and beauty. Installs a permanent anchor for peace.',
 	tags: ['peace', 'beauty'],
 	audio: {
-		musicTrack: 'audio/music.mp3',
+		musicTrack: '/audio/music.mp3',
 		binaural: { hertz: 12 }
 	},
-	spiralBackground: 'img/spiral.png',
+	spiralBackground: '/img/spiral.png',
 	scenes: [
 		// ============================================================
 		// SECTION 1: WELCOME / SETTLING
@@ -72,9 +72,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Keep your eyes open... Soft but steady... Notice what begins to happen.`,
 			text: 'Hold your gaze',
-            behavior: {
-                suggestions: [{ type: 'eyes:no-blink', duration: 15000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:no-blink', duration: 15000 }]
+			},
 			audio: { binaural: { hertz: 10 } }
 		},
 
@@ -93,9 +93,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Allow your blinks to come slowly now... Heavy... Unhurried... Like waves returning to shore.`,
 			text: 'Stillness',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 20000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 20000 }]
+			}
 		},
 
 		{
@@ -106,9 +106,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `And as you exhale, allow your eyelids to gently drop... Settling closed like a warm blanket... allowing natural breath to return.`,
 			text: 'Breathe out',
-            behavior: {
-                suggestions: [{ type: 'eyes:close', duration: 5000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:close', duration: 5000 }]
+			},
 			audio: { binaural: { hertz: 9 } }
 		},
 
@@ -133,9 +133,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `And when it feels natural, allow your eyes to open again.`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			}
 		},
 
 		{
@@ -146,27 +146,27 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Open your eyes again... Feeling softer than before... Maybe more relaxed.`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			},
 			audio: { binaural: { hertz: 10 } }
 		},
 
 		{
 			voice: `Let them close again... Relaxing deeper...`,
 			text: 'Close your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:close', duration: 5000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:close', duration: 5000 }]
+			},
 			audio: { binaural: { hertz: 8 } }
 		},
 
 		{
 			voice: `Perfect... One more time... Open your eyes gently... Just enough to allow the light to come through.`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			},
 			audio: { binaural: { hertz: 9 } }
 		},
 
@@ -177,9 +177,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Let them close now... Feeling deeper... more restful...`,
 			text: 'Close your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:close', duration: 5000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:close', duration: 5000 }]
+			},
 			audio: { binaural: { hertz: 7 } }
 		},
 
@@ -232,9 +232,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Nine... Allowing tension to leave your jaw... Letting space between your teeth... The muscles of your face softening.`,
 			text: 'Soften your jaw',
-            behavior: {
-                suggestions: [{ type: 'mouth:relax', duration: 8000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'mouth:relax', duration: 8000 }]
+			},
 			audio: { binaural: { hertz: 6 } }
 		},
 
@@ -251,9 +251,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Six... Leaving the surface world far above you... The air is still and quiet... The room is still...`,
 			text: 'Stillness',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 8000 }]
-            },
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 8000 }]
+			},
 			audio: { binaural: { hertz: 5 } }
 		},
 
@@ -708,9 +708,9 @@ export const theBlueDoor: Session = {
 		{
 			voice: `Open your eyes now... Slowly... Gently...`,
 			text: 'Open your eyes',
-            behavior: {
-                suggestions: [{ type: 'eyes:open' }]
-            },
+			behavior: {
+				suggestions: [{ type: 'eyes:open' }]
+			},
 			audio: { binaural: { hertz: 12 } }
 		},
 

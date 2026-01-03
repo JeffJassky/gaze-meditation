@@ -66,6 +66,10 @@ export class Scene {
 	private progressIntervalId: any = null
 	private activeTimer: number | null = null
 	private startTime = 0
+	
+	// State for coordinating media and behaviors
+	private isMediaSequenceComplete = false
+	private pendingBehaviorResult: any = null
 
 	constructor(config: SceneConfig) {
 		this.config = {
@@ -165,11 +169,24 @@ export class Scene {
 		const textPromise = displayText ? this.playTextSequence(displayText) : Promise.resolve()
 
 		// Wait for both sequences
-		Promise.all([voicePromise, textPromise]).then(() => {
-			if (this.behaviors.length === 0 && !this.config.duration) {
-				this.complete(true)
-			}
-		})
+		Promise.all([voicePromise, textPromise])
+			.then(() => {
+				console.log(`[Scene] Media sequence complete: ${this.id}`)
+				this.isMediaSequenceComplete = true
+				if (this.behaviors.length > 0) {
+					const allBehaviorsDone = this.behaviors.every(b => !b.isActive)
+					console.log(`[Scene] Checking behaviors: count=${this.behaviors.length}, allDone=${allBehaviorsDone}`)
+					if (allBehaviorsDone) {
+						console.log('[Scene] Media done, behaviors already done. Completing.')
+						this.complete(true, this.pendingBehaviorResult)
+					}
+				} else if (!this.config.duration) {
+					this.complete(true)
+				}
+			})
+			.catch(e => {
+				console.error('[Scene] Media sequence failed', e)
+			})
 
 		// 2. Start Behaviors
 		this.behaviors.forEach(b => b.start())
@@ -262,8 +279,13 @@ export class Scene {
 		console.log(`[Scene] Behavior success: ${behavior.constructor.name}`, data)
 		const allDone = this.behaviors.every(b => !b.isActive)
 		if (allDone) {
-			console.log(`[Scene] All behaviors complete, completing scene: ${this.id}`)
-			this.complete(true, data)
+			this.pendingBehaviorResult = data
+			if (this.isMediaSequenceComplete) {
+				console.log(`[Scene] All behaviors complete, completing scene: ${this.id}`)
+				this.complete(true, data)
+			} else {
+				console.log('[Scene] Behaviors complete, waiting for media...')
+			}
 		} else {
 			this.syncBehaviors()
 		}
@@ -281,6 +303,11 @@ export class Scene {
 			)
 			this.progress.value = minProgress * 100
 		} else {
+			// Log every ~60 updates to avoid spam, or check if value changed significantly?
+			// Just logging raw for now to see if it fires AT ALL
+			if (Math.random() < 0.05) {
+				console.log(`[Scene Debug] onBehaviorProgress: ${detail.value}`)
+			}
 			this.progress.value = detail.value * 100
 		}
 	}

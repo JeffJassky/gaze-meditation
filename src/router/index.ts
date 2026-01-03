@@ -38,7 +38,7 @@ const routes = [
     component: DeviceDebug
   },
   {
-    path: '/theater/:sessionId/:subjectId',
+    path: '/theater/:sessionId/:subjectId?',
     name: 'theater',
     component: Theater,
     props: true

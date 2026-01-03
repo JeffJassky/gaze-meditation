@@ -80,7 +80,10 @@ void processCommand(String cmd);
 
 void setup()
 {
-	Serial.begin(9600);
+	if (DEBUG_MONITOR)
+	{
+		Serial.begin(9600);
+	}
 
 	// DISABLE LED to save power (prevent brownout)
 	pinMode(LED_RED, OUTPUT);
@@ -175,6 +178,8 @@ void loop()
 	{
 		isSleeping = true;
 		broadcastLine("STATUS: Sleeping...");
+		// LOW POWER: Drop IMU ODR to 12.5Hz
+		myIMU.writeRegister(0x10, 0x10);
 	}
 
 	// ==========================================
@@ -196,6 +201,10 @@ void loop()
 
 		// ... REALLY WOKE UP ...
 		digitalWrite(LED_RED, LOW); // ON = Awake
+
+		// HIGH POWER: Restore IMU ODR to 416Hz
+		myIMU.writeRegister(0x10, 0x60);
+
 		isSleeping = false;
 		lastMotionTime = millis();
 		broadcastLine("STATUS: Awake!");

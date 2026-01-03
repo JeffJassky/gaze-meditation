@@ -23,6 +23,20 @@ export interface BehaviorSuggestion {
 	failBehavor?: 'pause' | 'reset' // How to handle the duration timer when the suggestion fails
 }
 
+export interface SoundboardSample {
+	id: string
+	path: string
+	volume?: number // default 1
+	loop?: boolean | number // default false
+	fadeInDuration?: number // default 0
+	fadeOutDuration?: number // default 0.5
+}
+
+export interface SoundboardEvent {
+	event: 'start' | 'stop'
+	id: string
+}
+
 export interface SceneConfig {
 	id?: string // Used for condtitional jumps / branching
 	theme?: ThemeConfig // visual theming for the scene
@@ -31,6 +45,12 @@ export interface SceneConfig {
 	duration?: number // Forced duration, by default, it's dynamic based on the text, voice audio duration, or maybe dependent on challenge completion
 	audio?: {
 		binaural?: SessionBinauralConfig
+		fx?: {
+			path: string
+			volume?: number
+			loop?: boolean | number
+		}
+		soundboard?: SoundboardEvent[]
 	}
 	behavior?: {
 		suggestions?: BehaviorSuggestion[]
@@ -120,6 +140,7 @@ export interface Session {
 	audio?: {
 		musicTrack?: string // Simulated audio track name
 		binaural?: SessionBinauralConfig
+		soundboard?: SoundboardSample[]
 	}
 	videoBackground?: string
 	spiralBackground?: string

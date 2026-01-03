@@ -6,10 +6,10 @@ export const somaticResetActive: Session = {
 	description: 'A rapid-fire, high-engagement journey to silence.',
 	tags: ['alert', 'focus'],
 	audio: {
-		musicTrack: 'audio/music.mp3',
+		musicTrack: '/audio/music.mp3',
 		binaural: { hertz: 12 } // Alpha (Alert Relaxation)
 	},
-	spiralBackground: 'img/spiral.png', // Faster visual to match pace
+	spiralBackground: '/img/spiral.png', // Faster visual to match pace
 	scenes: [
 		// --- Phase 1: The Engagement (Immediate Action) ---
 		{
@@ -22,21 +22,21 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Look LEFT.',
-            behavior: {
-                suggestions: [{ type: 'head:left', duration: 3000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:left', duration: 3000 }]
+			}
 		},
 		{
 			text: 'Look RIGHT.',
-            behavior: {
-                suggestions: [{ type: 'head:right', duration: 3000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:right', duration: 3000 }]
+			}
 		},
 		{
 			text: 'Look UP.',
-            behavior: {
-                suggestions: [{ type: 'head:up', duration: 3000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:up', duration: 3000 }]
+			}
 		},
 		{
 			text: 'Center.',
@@ -44,9 +44,9 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Are you focused? Nod YES.',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			}
 		},
 
 		// --- Phase 2: The Eye Lock (Physiological Strain) ---
@@ -59,27 +59,27 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: '20... 19... 18... Stare.',
-            behavior: {
-                suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
+			}
 		},
 		{
 			text: ['15... 14... Eyes watering.', '10... 9... Burn is good.']
 		},
 		{
 			text: '5... 4... 3... 2... 1...',
-            behavior: {
-                suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'eyes:no-blink', duration: 5000 }]
+			}
 		},
 		{
 			text: 'CLOSE.'
 		},
 		{
 			text: 'Instant relief.',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 5000 }]
+			}
 		},
 
 		// --- Phase 3: The Rapid Fire Visualization (Overload) ---
@@ -100,9 +100,9 @@ export const somaticResetActive: Session = {
 
 		{
 			text: 'DROP YOUR JAW.',
-            behavior: {
-                suggestions: [{ type: 'mouth:relax', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'mouth:relax', duration: 5000 }]
+			}
 		},
 
 		// --- Phase 4: The Dissociation (The "Open-Eye" Trance) ---
@@ -115,9 +115,9 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Try it. Nod if you can feel the confusion.',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			}
 		},
 		{
 			text: [
@@ -137,18 +137,18 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Look at your left shoulder (Eyes only).',
-            behavior: {
-                suggestions: [{ type: 'head:left', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:left', duration: 5000 }]
+			}
 		},
 		{
 			text: 'Drop that shoulder.'
 		},
 		{
 			text: 'Look at your right shoulder (Eyes only).',
-            behavior: {
-                suggestions: [{ type: 'head:right', duration: 5000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:right', duration: 5000 }]
+			}
 		},
 		{
 			text: 'Drop that shoulder.'
@@ -159,9 +159,9 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Are your shoulders down? Nod.',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			}
 		},
 
 		// --- Phase 6: The Quick Anchor ---
@@ -176,9 +176,9 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Total stillness. 10 seconds.',
-            behavior: {
-                suggestions: [{ type: 'head:still', duration: 10000 }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:still', duration: 10000 }]
+			}
 		},
 
 		// --- Phase 7: The Exit ---
@@ -187,9 +187,9 @@ export const somaticResetActive: Session = {
 		},
 		{
 			text: 'Ready to go? Nod.',
-            behavior: {
-                suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
-            }
+			behavior: {
+				suggestions: [{ type: 'head:nod', options: { nodsRequired: 1 } }]
+			}
 		},
 		{
 			text: 'Good work.'
