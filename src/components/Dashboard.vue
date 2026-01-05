@@ -31,16 +31,15 @@ import { heldWithoutRope } from '../programs/held-without-rope'
 
 // Full Programs
 const FULL_PROGRAMS: Program[] = [
-	somaticResetFull,
+	// somaticResetFull,
 	councilOfFireLong,
 	theBlueDoor,
-	somaticResetActive
+	// somaticResetActive
+	heldWithoutRope
 ]
 
 // Fun & Sexy Programs
-const FUN_PROGRAMS: Program[] = [
-	heldWithoutRope
-]
+const FUN_PROGRAMS: Program[] = [heldWithoutRope]
 
 // Test Programs
 const TEST_PROGRAMS: Program[] = [

@@ -9,9 +9,10 @@ import { DirectionalGazeInstruction } from '../instructions'
 export const heldWithoutRope: Program = {
 	id: 'held_without_rope',
 	title: 'Held Without Rope',
+	tags: ['Sensory', 'Surrender'],
 	isAdult: true,
 	description:
-		'A 25-minute session exploring sensation, surrender, and the feeling of being held by nothing but attention and words.',
+		'Explore the sensation, surrender, and the feeling of being held by nothing but attention and words.',
 	audio: { musicTrack: '/audio/music.mp3' },
 	spiralBackground: '/img/spiral.png',
 	instructions: [
@@ -20,7 +21,7 @@ export const heldWithoutRope: Program = {
 		// ═══════════════════════════════════════════════════════════════════════════
 
 		new ReadInstruction({
-			voice: `You're here again, back in this space. Your body already resting somewhere — sitting, lying down, however you've arranged yourself...Already breathing, already present, already beginning to settle.`,
+			voice: `You're here again, back in this space. Your body already resting somewhere — sitting, lying down, however you've arranged yourself...`,
 			text: 'Welcome back',
 			audio: {
 				binaural: {
@@ -40,20 +41,8 @@ export const heldWithoutRope: Program = {
 			text: ''
 		}),
 
-		new NodInstruction({
-			voice: `Do you want to be hypnotized right now? Not later, not in theory, but right now, in this moment. If so, nod your head yes.`,
-			prompt: 'Nod yes',
-			type: 'YES'
-		}),
-
-		new NodInstruction({
-			voice: `And would you like to follow along and see what happens?`,
-			prompt: 'Nod yes again.',
-			type: 'YES'
-		}),
-
 		new ReadInstruction({
-			voice: `Good. Place your hands on your lap now, palms down, resting comfortably. Not gripping anything, not holding anything... Just hands resting.`,
+			voice: `Let's start with your bands. Place them on your lap now, palms down, resting comfortably. Not gripping anything, not holding anything... Just hands resting.`,
 			text: ''
 		}),
 

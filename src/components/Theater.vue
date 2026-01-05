@@ -26,6 +26,7 @@ import { playbackSpeed } from '../state/playback'
 import somaticResetFull from '../programs/somatic-relaxaton'
 import theBlueDoor from '../programs/the-blue-door'
 import councilOfFireLong from '../programs/council-of-fire'
+import { heldWithoutRope } from '../programs/held-without-rope'
 
 interface TheaterProps {
 	program: Program
@@ -37,7 +38,7 @@ const emit = defineEmits<{
 	(e: 'exit'): void
 }>()
 
-const FULL_PROGRAMS: Program[] = [somaticResetFull, theBlueDoor, councilOfFireLong]
+const FULL_PROGRAMS: Program[] = [theBlueDoor, councilOfFireLong, heldWithoutRope]
 
 const activeProgram = shallowRef<Program>(props.program)
 const state = ref<SessionState>(SessionState.INITIALIZING)

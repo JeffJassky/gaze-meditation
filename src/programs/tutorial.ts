@@ -12,7 +12,7 @@ import { RelaxJawInstruction } from '../instructions/RelaxJawInstruction'
 export const initialTrainingProgram: Program = {
 	id: 'initial_training_short',
 	title: 'Gaze Tutorial',
-	description: 'Get started with Gaze in less than 5 minutes.',
+	description: 'Get started with Gaze in less than 10 minutes.',
 	audio: { musicTrack: '/audio/music.mp3' },
 	spiralBackground: '/img/spiral.png',
 	instructions: [
