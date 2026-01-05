@@ -13,7 +13,7 @@ export class EyesRegion extends CameraRegion {
 	// Calibration & Adaptation
 	private minOpen = 0.15
 	private maxOpen = 0.35
-	private blinkThreshold = 0.2
+	private blinkThreshold = 0.1
 
 	// Adaptive Openness Logic
 	private baselineOpenness = 0.3 // approximate starting avg
@@ -23,7 +23,7 @@ export class EyesRegion extends CameraRegion {
 
 	// Blink State
 	private blinkStart: number | null = null
-	private blinkDuration = 100 // ms
+	private minBlinkDuration = 100 // ms
 
 	private lastEar = 0
 	private lastDroopTime = 0
@@ -81,19 +81,31 @@ export class EyesRegion extends CameraRegion {
 			Math.min(1, (this.ear - this.minOpen) / (this.maxOpen - this.minOpen))
 		)
 
-		// 1. Blink Detection (Fast, normalized check)
+		// 1. Blink Detection
 		if (this.openNormalized < this.blinkThreshold) {
+			// Eye is closed or closing
 			if (this.blinkStart === null) {
+				// Start of a potential blink
 				this.blinkStart = timestamp
-			} else if (timestamp - this.blinkStart >= this.blinkDuration) {
-				if (!this.blinkDetected) {
-					this.blinkDetected = true
-					this.dispatchEvent(
-						new CustomEvent('blink', { detail: { start: this.blinkStart } })
-					)
-				}
+			} else if (timestamp - this.blinkStart >= this.minBlinkDuration) {
+				// It's a confirmed blink (not a twitch)
+				this.blinkDetected = true
 			}
 		} else {
+			// Eye is open
+			if (this.blinkDetected && this.blinkStart !== null) {
+				// This marks the END of a blink
+				const duration = timestamp - this.blinkStart
+				this.dispatchEvent(
+					new CustomEvent('blink', {
+						detail: {
+							start: this.blinkStart,
+							duration: duration
+						}
+					})
+				)
+			}
+			// Reset for next blink
 			this.blinkStart = null
 			this.blinkDetected = false
 		}

@@ -79,6 +79,115 @@ const duration = computed(() => {
 			</div>
 		</div>
 
+		<!-- Biometrics Summary (If Available) -->
+		<div v-if="session.biometrics" class="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 space-y-6">
+			<h3 class="text-sm uppercase tracking-widest text-center mb-6 opacity-80 text-zinc-400">
+				Physiological Depth Summary
+			</h3>
+
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+				<!-- Stillness -->
+				<div class="space-y-2">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+						<span>Stillness</span>
+						<span class="text-emerald-400">+{{ (session.biometrics.stillness.improvement * 100).toFixed(0) }}%</span>
+					</div>
+					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+						<!-- Background Bar (Start) -->
+						<div
+							class="absolute top-0 left-0 h-full bg-zinc-600"
+							:style="{ width: `${session.biometrics.stillness.start * 100}%` }"
+						></div>
+						<!-- Foreground Bar (Best) -->
+						<div
+							class="absolute top-0 left-0 h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+							:style="{ width: `${session.biometrics.stillness.best * 100}%` }"
+						></div>
+					</div>
+				</div>
+
+				<!-- Visual Focus (Inv Blink Rate) -->
+				<div class="space-y-2">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+						<span>Visual Focus</span>
+						<span class="text-blue-400">+{{ (session.biometrics.blinkRate.improvement * 100).toFixed(0) }}%</span>
+					</div>
+					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+						<div
+							class="absolute top-0 left-0 h-full bg-zinc-600"
+							:style="{ width: `${Math.min(100, (session.biometrics.blinkRate.start / 30) * 100)}%` }"
+						></div>
+						<div
+							class="absolute top-0 left-0 h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+							:style="{ width: `${Math.min(100, (session.biometrics.blinkRate.best / 30) * 100)}%` }"
+						></div>
+					</div>
+					<div class="flex justify-between text-[10px] opacity-40 text-zinc-400">
+						<span>Start: {{ session.biometrics.blinkRate.start.toFixed(1) }} BPM</span>
+						<span>Best: {{ session.biometrics.blinkRate.best.toFixed(1) }} BPM</span>
+					</div>
+				</div>
+
+				<!-- Blink Speed -->
+				<div class="space-y-2">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+						<span>Blink Duration</span>
+						<span class="text-rose-400">+{{ (session.biometrics.blinkSpeed.improvement * 100).toFixed(0) }}%</span>
+					</div>
+					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+						<div
+							class="absolute top-0 left-0 h-full bg-zinc-600"
+							:style="{ width: `${Math.min(100, (session.biometrics.blinkSpeed.start / 300) * 100)}%` }"
+						></div>
+						<div
+							class="absolute top-0 left-0 h-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]"
+							:style="{ width: `${Math.min(100, (session.biometrics.blinkSpeed.best / 300) * 100)}%` }"
+						></div>
+					</div>
+					<div class="flex justify-between text-[10px] opacity-40 text-zinc-400">
+						<span>Start: {{ session.biometrics.blinkSpeed.start.toFixed(0) }} ms</span>
+						<span>Best: {{ session.biometrics.blinkSpeed.best.toFixed(0) }} ms</span>
+					</div>
+				</div>
+
+				<!-- Facial Relaxation -->
+				<div class="space-y-2">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+						<span>Facial Release</span>
+						<span class="text-purple-400">+{{ (session.biometrics.relaxation.improvement * 100).toFixed(0) }}%</span>
+					</div>
+					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+						<div
+							class="absolute top-0 left-0 h-full bg-zinc-600"
+							:style="{ width: `${session.biometrics.relaxation.start * 100}%` }"
+						></div>
+						<div
+							class="absolute top-0 left-0 h-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+							:style="{ width: `${session.biometrics.relaxation.best * 100}%` }"
+						></div>
+					</div>
+				</div>
+
+				<!-- Eye Droop -->
+				<div class="space-y-2">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+						<span>Gaze Softening</span>
+						<span class="text-orange-400">{{ (session.biometrics.eyeDroop.start * 100).toFixed(0) }}% -> {{ (session.biometrics.eyeDroop.best * 100).toFixed(0) }}%</span>
+					</div>
+					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+						<div
+							class="absolute top-0 left-0 h-full bg-zinc-600"
+							:style="{ width: `${session.biometrics.eyeDroop.start * 100}%` }"
+						></div>
+						<div
+							class="absolute top-0 left-0 h-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+							:style="{ width: `${session.biometrics.eyeDroop.best * 100}%` }"
+						></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div v-if="metrics.length === 0" class="text-center text-zinc-600 py-8">
 			No physiological data recorded for this session.
 		</div>

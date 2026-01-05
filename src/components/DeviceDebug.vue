@@ -40,6 +40,8 @@ const currentMetrics = ref({
 	breathSignal: 0,
 	breathRate: 0,
 	blinkDetected: false,
+	blinkRate: 0,
+	avgBlinkDuration: 0,
 	chinDist: 0,
 	baselineChinDist: 0,
 	tongueMetric: 0,
@@ -48,6 +50,8 @@ const currentMetrics = ref({
 })
 
 const history = ref<(typeof currentMetrics.value)[]>([])
+const blinkRateHistory = ref<number[]>([]) // Timestamps for BPM calc
+const blinkDurationHistory = ref<{timestamp: number, duration: number}[]>([]) // For avg duration calc
 
 // Additional Discrete State
 const transcript = ref('')
@@ -127,6 +131,14 @@ onMounted(async () => {
     eyeState.value.isDrooping = e.detail.isOpen && e.detail.open < 0.6 && !e.detail.blink
     
     faceDetected.value = true 
+  })
+
+  rEyes.addEventListener('blink', (e: any) => {
+      // This listener now ONLY records the event. Calculation is done in the loop.
+      const now = Date.now()
+      const duration = e.detail.duration
+      blinkRateHistory.value.push(now)
+      blinkDurationHistory.value.push({ timestamp: now, duration })
   })
   
   rHead.addEventListener('pose', (e: any) => {
@@ -330,7 +342,28 @@ const loop = () => {
 	const now = Date.now()
 	currentMetrics.value.timestamp = now
 
-	// Push copy to history
+    // --- Continuous Blink Metric Calculation ---
+    const cutoff = now - 60000 // 60s window
+
+    // Prune and Calculate Rate
+    blinkRateHistory.value = blinkRateHistory.value.filter(t => t > cutoff)
+    if (blinkRateHistory.value.length > 0) {
+        const elapsed = Math.min(60000, now - (blinkRateHistory.value[0] || now))
+        currentMetrics.value.blinkRate = elapsed > 1000 ? (blinkRateHistory.value.length / elapsed) * 60000 : 0
+    } else {
+        currentMetrics.value.blinkRate = 0
+    }
+
+    // Prune and Calculate Average Duration
+    blinkDurationHistory.value = blinkDurationHistory.value.filter(item => item.timestamp > cutoff)
+    if (blinkDurationHistory.value.length > 0) {
+        const totalDuration = blinkDurationHistory.value.reduce((sum, item) => sum + item.duration, 0)
+        currentMetrics.value.avgBlinkDuration = totalDuration / blinkDurationHistory.value.length
+    } else {
+        currentMetrics.value.avgBlinkDuration = 0
+    }
+
+	// Push copy to history for graphing
 	history.value.push({ ...currentMetrics.value })
 	if (history.value.length > HISTORY_SIZE) {
 		history.value.shift()
@@ -544,6 +577,36 @@ const formatTime = (ms: number) => {
 					>
 					<span>Source: EyesRegion</span>
 				</div>
+			</div>
+
+			<!-- 2b. Blink Rate -->
+			<div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col gap-4">
+				<div class="flex justify-between items-center">
+					<h2 class="text-sm uppercase font-bold text-teal-400">Blink Rate</h2>
+					<span class="text-xs text-zinc-500">{{ currentMetrics.blinkRate.toFixed(1) }} BPM</span>
+				</div>
+				<div class="relative h-[60px] w-full bg-black/50 rounded border border-zinc-800/50">
+					<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-full" preserveAspectRatio="none">
+						<!-- Rate Range 0-60 BPM -->
+						<path :d="createPath('blinkRate', 60)" fill="none" stroke="#2dd4bf" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+					</svg>
+				</div>
+				<div class="text-[10px] text-zinc-600">Rolling 60s average</div>
+			</div>
+
+			<!-- 2c. Blink Duration -->
+			<div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 flex flex-col gap-4">
+				<div class="flex justify-between items-center">
+					<h2 class="text-sm uppercase font-bold text-teal-400">Avg Blink Duration</h2>
+					<span class="text-xs text-zinc-500">{{ currentMetrics.avgBlinkDuration.toFixed(0) }} ms</span>
+				</div>
+				<div class="relative h-[60px] w-full bg-black/50 rounded border border-zinc-800/50">
+					<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-full" preserveAspectRatio="none">
+						<!-- Duration Range 0-500 ms -->
+						<path :d="createPath('avgBlinkDuration', 500)" fill="none" stroke="#14b8a6" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+					</svg>
+				</div>
+				<div class="text-[10px] text-zinc-600">Rolling 60s average</div>
 			</div>
 
 			<!-- 3. Head Pitch (Nod) -->

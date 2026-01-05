@@ -178,6 +178,24 @@ export interface SessionLog {
 	totalScore: number
 	metrics: SessionMetric[]
 	physiologicalData: PhysiologicalSnapshot[]
+	biometrics?: BiometricSummary
+}
+
+export interface BiometricSummary {
+	blinkRate: { start: number; best: number; improvement: number }
+	blinkSpeed: { start: number; best: number; improvement: number }
+	stillness: { start: number; best: number; improvement: number }
+	relaxation: { start: number; best: number; improvement: number } // Combined jaw/face relaxation? Or just Mouth?
+	eyeDroop: { start: number; best: number; improvement: number }
+}
+
+export interface SessionReport {
+	durationMs: number
+	scenesCompleted: number
+	totalScenes: number
+	suggestionsCompleted: number
+	points: number
+	biometrics?: BiometricSummary
 }
 
 export interface UserCalibration {

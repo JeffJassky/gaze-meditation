@@ -5,7 +5,8 @@ import {
 	type Session,
 	type SessionLog,
 	type SessionMetric,
-	type ThemeConfig
+	type ThemeConfig,
+	type SessionReport
 } from '../types'
 import { DEFAULT_THEME } from '../theme'
 import { Scene } from '../../src-new/core/Scene'
@@ -52,6 +53,7 @@ const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s =>
 )
 
 const activeSession = shallowRef<Session | null>(null)
+const sessionReport = ref<SessionReport | undefined>(undefined)
 
 const cleanupSession = (fadeDuration: number = 0.5) => {
 	// Stop scene progression
@@ -218,6 +220,7 @@ watch(
 )
 
 provide('resolvedTheme', currentResolvedTheme)
+provide('sessionReport', sessionReport)
 
 const initSession = async () => {
 	if (!activeSession.value) return
@@ -787,7 +790,7 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 const finishSession = () => {
 	if (activeSession.value!.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
-		const physData = sessionTracker.stopSession()
+		const { snapshots: physData } = sessionTracker.stopSession()
 		const log: SessionLog = {
 			id: `SES_${Date.now()}`,
 			subjectId: props.subjectId,
@@ -802,6 +805,29 @@ const finishSession = () => {
 		return
 	}
 
+	// Calculate Report
+	const successfulSceneIds = new Set(
+		metricsRef.value.filter(m => m.success).map(m => m.sceneId)
+	)
+
+	const suggestionsCompleted = sessionScenes.value.filter(
+		s =>
+			s.config.behavior?.suggestions &&
+			s.config.behavior.suggestions.length > 0 &&
+			successfulSceneIds.has(s.id)
+	).length
+
+	const { snapshots: physData, summary: biometricSummary } = sessionTracker.stopSession()
+
+	sessionReport.value = {
+		durationMs: Date.now() - startTimeRef.value,
+		scenesCompleted: metricsRef.value.length, // Only count scenes we have metrics for (visited)
+		totalScenes: sessionScenes.value.length,
+		suggestionsCompleted,
+		points: score.value,
+		biometrics: biometricSummary
+	}
+
 	state.value = SessionState.FINISHED
 	audioSession.binaural.stop(3)
 	audioSession.musicLooper.stop(3)
@@ -812,7 +838,7 @@ const finishSession = () => {
 	activeSoundboardStops.value.forEach(stop => stop(3))
 	// activeSoundboardStops.value.clear() // Allow onUnmounted to stop if needed
 
-	const physData = sessionTracker.stopSession()
+	// const physData = sessionTracker.stopSession() // ALREADY STOPPED ABOVE
 	const log: SessionLog = {
 		id: `SES_${Date.now()}`,
 		subjectId: props.subjectId,
@@ -821,10 +847,11 @@ const finishSession = () => {
 		endTime: new Date().toISOString(),
 		totalScore: score.value,
 		metrics: metricsRef.value,
-		physiologicalData: physData
+		physiologicalData: physData,
+		biometrics: biometricSummary
 	}
 	saveSession(log)
-	setTimeout(() => exitSession(), 3000 / playbackSpeed.value)
+	setTimeout(() => exitSession(), 10000 / playbackSpeed.value)
 }
 
 const handleSessionSelect = async (program: Session) => {
@@ -833,6 +860,7 @@ const handleSessionSelect = async (program: Session) => {
 	activeSession.value = program
 	score.value = 0
 	metricsRef.value = []
+	sessionReport.value = undefined
 	startTimeRef.value = Date.now()
 
 	if (

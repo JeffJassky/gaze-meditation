@@ -8,13 +8,14 @@ class SessionTracker {
 	private startTime: number = 0
 	private intervalId: number | null = null
 	private isTracking = false
+	private isInitialized = false
 	
 	// Data storage
 	private snapshots: PhysiologicalSnapshot[] = []
 	
 	// Temporary buffers for rolling calculations
 	private blinkTimes: number[] = [] // Timestamps of blink starts
-	private blinkDurations: number[] = [] // Durations of recent blinks in ms
+	private blinkDurations: { timestamp: number; duration: number }[] = [] // Durations of recent blinks in ms
 	
 	// Blink Logic
 	private wasBlinking = false
@@ -51,9 +52,10 @@ class SessionTracker {
 				// Blink End
 				this.wasBlinking = false
 				const duration = now - this.blinkStartTimestamp
-				if (duration > 50 && duration < 1000) { // Filter noise
-					this.blinkDurations.push(duration)
-					this.pruneOldDurations()
+				// Allow long blinks (eye closures) by removing the upper duration cap
+				if (duration > 50) { 
+					this.blinkDurations.push({ timestamp: now, duration: duration })
+					this.pruneOldDurations(now)
 				}
 			}
 		})
@@ -77,7 +79,7 @@ class SessionTracker {
 		}, 500)
 	}
 
-	public stopSession(): PhysiologicalSnapshot[] {
+	public stopSession(): { snapshots: PhysiologicalSnapshot[], summary?: any } {
 		this.isTracking = false
 		if (this.intervalId) {
 			clearInterval(this.intervalId)
@@ -87,11 +89,111 @@ class SessionTracker {
 		breathAnalyzer.stop()
 		postureAnalyzer.stop()
 		
-		return [...this.snapshots]
+		const summary = this.calculateBiometricSummary()
+
+		return { 
+			snapshots: [...this.snapshots],
+			summary
+		}
 	}
 
 	public get history() {
 		return this.snapshots
+	}
+	
+	private calculateBiometricSummary() {
+		if (this.snapshots.length < 10) return undefined // Not enough data
+
+		// Helper to get average of a key over a slice
+		const getAvg = (data: PhysiologicalSnapshot[], key: keyof PhysiologicalSnapshot) => {
+			if (data.length === 0) return 0
+			const sum = data.reduce((acc, curr) => acc + (curr[key] as number), 0)
+			return sum / data.length
+		}
+
+		// 1. Define Windows
+		// Baseline: First 60 seconds (or 20% of session if short)
+		// We sample at 2Hz (every 500ms), so 60s = 120 samples
+		const baselineCount = Math.min(120, Math.floor(this.snapshots.length * 0.2))
+		const baselineData = this.snapshots.slice(0, baselineCount)
+
+		// 2. Calculate Baselines
+		const baseline = {
+			blinkRate: getAvg(baselineData, 'blinkRate'),
+			blinkSpeed: getAvg(baselineData, 'blinkSpeed'),
+			stillness: getAvg(baselineData, 'stillness'),
+			tension: getAvg(baselineData, 'browRaise'),
+			eyeOpenness: getAvg(baselineData, 'eyeOpenness')
+		}
+
+		// 3. Find "Deepest State" (Best 30s Window)
+		// 30s = 60 samples
+		const windowSize = 60
+		let bestWindow = { ...baseline }
+		let maxCoherenceScore = -Infinity
+
+		// We slide through the session (skipping the very start to allow for settling)
+		for (let i = baselineCount; i <= this.snapshots.length - windowSize; i++) {
+			const window = this.snapshots.slice(i, i + windowSize)
+			
+			const avgStillness = getAvg(window, 'stillness') // Higher is better (0-1)
+			const avgBlinkRate = getAvg(window, 'blinkRate') // Lower is better
+			const avgTension = getAvg(window, 'browRaise')   // Lower is better
+
+			// Normalize metrics to 0-1 scores for comparison
+			const blinkScore = Math.max(0, 1 - (avgBlinkRate / 30))
+			const tensionScore = Math.max(0, 1 - avgTension)
+
+			// Coherence Score (Simple weighted sum)
+			const score = (avgStillness * 0.4) + (blinkScore * 0.3) + (tensionScore * 0.3)
+
+			if (score > maxCoherenceScore) {
+				maxCoherenceScore = score
+				bestWindow = {
+					blinkRate: avgBlinkRate,
+					blinkSpeed: getAvg(window, 'blinkSpeed'),
+					stillness: avgStillness,
+					tension: avgTension,
+					eyeOpenness: getAvg(window, 'eyeOpenness')
+				}
+			}
+		}
+
+		// 4. Calculate Improvements (Percentage Change)
+		const safePct = (base: number, best: number, isHigherBetter: boolean) => {
+			if (base === 0) return isHigherBetter ? (best > 0 ? 1 : 0) : (best < 0 ? 1 : 0);
+			const diff = isHigherBetter ? best - base : base - best
+			return diff / base
+		}
+
+		return {
+			blinkRate: {
+				start: baseline.blinkRate,
+				best: bestWindow.blinkRate,
+				improvement: safePct(baseline.blinkRate, bestWindow.blinkRate, false)
+			},
+			blinkSpeed: {
+				start: baseline.blinkSpeed,
+				best: bestWindow.blinkSpeed,
+				// For blink speed (duration), longer can be better (more relaxed), so isHigherBetter = true
+				improvement: safePct(baseline.blinkSpeed, bestWindow.blinkSpeed, true)
+			},
+			stillness: {
+				start: baseline.stillness,
+				best: bestWindow.stillness,
+				improvement: safePct(baseline.stillness, bestWindow.stillness, true)
+			},
+			relaxation: {
+				start: baseline.tension,
+				best: bestWindow.tension,
+				improvement: safePct(baseline.tension, bestWindow.tension, false)
+			},
+			eyeDroop: {
+				start: baseline.eyeOpenness,
+				best: bestWindow.eyeOpenness,
+				improvement: safePct(baseline.eyeOpenness, bestWindow.eyeOpenness, false)
+			}
+		}
 	}
 	
 	private resetBuffers() {
@@ -111,18 +213,19 @@ class SessionTracker {
 		this.blinkTimes = this.blinkTimes.filter(t => now - t < window)
 	}
 
-	private pruneOldDurations() {
-		// Keep durations from last 60 seconds (approx) - actually just keep last N samples might be easier, 
-		// but let's stick to time or count. Let's keep last 20 blinks for average speed.
-		if (this.blinkDurations.length > 20) {
-			this.blinkDurations = this.blinkDurations.slice(this.blinkDurations.length - 20)
-		}
+	private pruneOldDurations(now: number) {
+		const window = 60000
+		this.blinkDurations = this.blinkDurations.filter(item => now - item.timestamp < window)
 	}
 
 	private sample() {
 		const now = Date.now()
 		const elapsed = now - this.startTime
 		this.liveMetrics.elapsedTime = elapsed
+
+		// Prune old data on each sample to ensure live metrics are accurate
+		this.pruneOldBlinks(now)
+		this.pruneOldDurations(now)
 
 		// Update Buffers
 		const yaw = faceMeshService.debugData.headYaw
@@ -166,12 +269,6 @@ class SessionTracker {
 	}
 	
 	private calculateBlinkRate(now: number) {
-		this.pruneOldBlinks(now)
-		// Extrapolate if less than 1 minute passed? Or just raw count?
-		// Raw count over last minute is standard "Blinks Per Minute".
-		// If < 1 min has passed, we can project, but it might be noisy. 
-		// Let's just return Count for now, but maybe scaled if < 10s? No, strictly "Blinks in last 60s".
-		// Actually, if we are at second 10 and have 2 blinks, rate is 12. 
 		const secondsActive = Math.min((now - this.startTime) / 1000, 60)
 		if (secondsActive < 5) {
 			this.liveMetrics.blinkRate = 0 // Too early
@@ -188,7 +285,7 @@ class SessionTracker {
 			this.liveMetrics.blinkSpeed = 0
 			return
 		}
-		const sum = this.blinkDurations.reduce((a, b) => a + b, 0)
+		const sum = this.blinkDurations.reduce((acc, item) => acc + item.duration, 0)
 		this.liveMetrics.blinkSpeed = sum / this.blinkDurations.length
 	}
 }
