@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import type { User, Session, SessionLog } from '../types'
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService'
+import { historyApi, type SessionRun } from '../services/history'
 import { audioSession } from '../services/audio'
 import { useRouter } from 'vue-router'
+import { auth } from '../state/auth'
 import { ALL_SESSIONS, initialTrainingSession, TEST_SESSIONS } from '../programs'
 import Home from './Home.vue'
 import SessionCard from './SessionCard.vue'
@@ -20,7 +22,7 @@ const FUN_SESSIONS: Session[] = ALL_SESSIONS.filter(s => s.id === 'held_without_
 const router = useRouter()
 
 interface DashboardProps {
-	initialTab?: 'home' | 'start' | 'history' | 'users'
+	initialTab?: 'home' | 'start' | 'history'
 }
 
 const props = defineProps<DashboardProps>()
@@ -28,7 +30,126 @@ const props = defineProps<DashboardProps>()
 const users = ref<User[]>([])
 const sessions = ref<SessionLog[]>([])
 const selectedUser = ref<string>('')
-const activeTab = ref<'home' | 'start' | 'history' | 'users'>(props.initialTab || 'home')
+const activeTab = ref<'home' | 'start' | 'history'>(props.initialTab || 'home')
+
+// Map programId -> human-readable title
+const getSessionTitle = (programId: string) => {
+	return ALL_SESSIONS.find(s => s.id === programId)?.title || programId
+}
+
+// Completion = scenes with a metric that succeeded / total scenes in the program
+const getSessionCompleteness = (s: SessionLog) => {
+	const prog = ALL_SESSIONS.find(p => p.id === s.programId)
+	const total = prog?.scenes.length || s.metrics.length || 1
+	const done = s.metrics.length
+	return Math.min(100, Math.round((done / total) * 100))
+}
+
+const getSessionDuration = (s: SessionLog) => {
+	if (!s.endTime) return '—'
+	const ms = new Date(s.endTime).getTime() - new Date(s.startTime).getTime()
+	const mins = Math.floor(ms / 60000)
+	const secs = Math.floor((ms % 60000) / 1000)
+	return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// Remote history (from Mongo via /history) for the signed-in user.
+const remoteRuns = ref<SessionRun[]>([])
+const historyLoading = ref(false)
+const historyError = ref<string | null>(null)
+
+async function loadHistory() {
+	if (!auth.state.user) {
+		remoteRuns.value = []
+		return
+	}
+	historyLoading.value = true
+	historyError.value = null
+	try {
+		const res = await historyApi.list({ limit: 100 })
+		remoteRuns.value = res.items
+	} catch (err) {
+		historyError.value = (err as Error).message
+		console.warn('[Dashboard] failed to load history', err)
+	} finally {
+		historyLoading.value = false
+	}
+}
+
+// Unified row shape for the history table — remote runs take priority,
+// with a local fallback so offline/logged-out users still see their runs.
+interface HistoryRow {
+	id: string
+	programId: string
+	title: string
+	startTime: string
+	endTime: string | null
+	totalScore: number
+	completeness: number
+	durationMs: number
+	raw: SessionRun | SessionLog
+	isRemote: boolean
+}
+
+const historyRows = computed<HistoryRow[]>(() => {
+	if (auth.state.user && remoteRuns.value.length > 0) {
+		return remoteRuns.value.map((r) => ({
+			id: r.id,
+			programId: r.programId,
+			title: r.programTitle || getSessionTitle(r.programId),
+			startTime: r.startTime,
+			endTime: r.endTime,
+			totalScore: r.totalScore,
+			completeness: r.completeness,
+			durationMs: r.durationMs,
+			raw: r,
+			isRemote: true,
+		}))
+	}
+	// Local fallback
+	return sessions.value
+		.filter((s) => s.subjectId === (auth.state.user?.id || selectedUser.value))
+		.map((s) => {
+			const dur = s.endTime
+				? new Date(s.endTime).getTime() - new Date(s.startTime).getTime()
+				: 0
+			return {
+				id: s.id,
+				programId: s.programId,
+				title: getSessionTitle(s.programId),
+				startTime: s.startTime,
+				endTime: s.endTime || null,
+				totalScore: s.totalScore,
+				completeness: getSessionCompleteness(s),
+				durationMs: dur,
+				raw: s,
+				isRemote: false,
+			}
+		})
+})
+
+function formatDuration(ms: number): string {
+	if (!ms) return '—'
+	const mins = Math.floor(ms / 60000)
+	const secs = Math.floor((ms % 60000) / 1000)
+	return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// A SessionRun → SessionLog-ish shape so <SessionDetail> can render it
+// without having to be taught a new prop type.
+function runAsSessionLog(r: SessionRun): SessionLog {
+	return {
+		id: r.id,
+		subjectId: r.owner,
+		programId: r.programId,
+		startTime: r.startTime,
+		endTime: r.endTime || undefined,
+		totalScore: r.totalScore,
+		metrics: r.metrics,
+		physiologicalData: r.physiologicalData,
+		biometrics: r.biometrics || undefined,
+	}
+}
 
 // Watch for prop changes to update activeTab when navigating
 watch(() => props.initialTab, (newTab) => {
@@ -61,9 +182,26 @@ const refreshData = () => {
 	users.value = getUsers()
 	sessions.value = getSessions().reverse() // Newest first
 
-	const firstUser = users.value[0]
-	if (users.value.length > 0 && firstUser) {
-		selectedUser.value = firstUser.id
+	// Tie the local "subject" identity to the signed-in auth user so the
+	// selector can go away entirely. If no auth user yet, fall back to the
+	// first seeded local user.
+	const authUser = auth.state.user
+	if (authUser) {
+		let localUser = users.value.find(u => u.id === authUser.id)
+		if (!localUser) {
+			localUser = {
+				id: authUser.id,
+				name: authUser.username,
+				totalScore: 0,
+				history: [],
+			}
+			saveUser(localUser)
+			users.value = getUsers()
+		}
+		selectedUser.value = authUser.id
+	} else {
+		const firstUser = users.value[0]
+		if (firstUser) selectedUser.value = firstUser.id
 	}
 }
 
@@ -136,184 +274,139 @@ const getSessionAccuracy = (s: SessionLog) => {
 onMounted(() => {
 	seedDatabase()
 	refreshData()
+	loadHistory()
+})
+
+// Re-sync subject + reload history whenever the signed-in user changes.
+watch(() => auth.state.user?.id, () => {
+	refreshData()
+	loadHistory()
+})
+
+// Reload history when the user navigates back to the history tab so a
+// just-completed session shows up without a manual refresh.
+watch(() => activeTab.value, (tab) => {
+	if (tab === 'history') loadHistory()
 })
 </script>
 
 <template>
 	<div
-		class="dashboard h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex flex-col md:flex-row relative overflow-hidden"
+		class="dashboard h-screen bg-zinc-950 text-zinc-200 font-sans selection:bg-cyan-900 selection:text-white flex flex-col relative overflow-hidden"
 	>
-		<!-- Mobile Header -->
+		<!-- Top Header / Nav -->
 		<header
-			class="md:hidden flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900"
+			class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-30"
 		>
-			<div class="flex flex-col">
-				<h1 class="text-xl font-bold tracking-tighter text-white">GAZE</h1>
-				<p class="text-[10px] text-zinc-500 uppercase tracking-widest">v2.1</p>
-			</div>
-			<button
-				@click="isSidebarOpen = !isSidebarOpen"
-				class="p-2 text-zinc-400 hover:text-white transition-colors"
-			>
-				<svg
-					v-if="!isSidebarOpen"
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-6 w-6"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M4 6h16M4 12h16m-7 6h7"
-					/>
-				</svg>
-				<svg
-					v-else
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-6 w-6"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M6 18L18 6M6 6l12 12"
-					/>
-				</svg>
-			</button>
-		</header>
-
-		<!-- Mobile Overlay -->
-		<div
-			v-if="isSidebarOpen"
-			@click="isSidebarOpen = false"
-			class="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
-		></div>
-
-		<!-- Sidebar -->
-		<aside
-			:class="`fixed md:static inset-y-0 left-0 w-64 border-r border-zinc-800 bg-zinc-900 md:bg-zinc-900/50 p-6 flex flex-col gap-8 z-50 transform transition-transform duration-300 ease-in-out ${
-				isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-			}`"
-		>
-			<div class="hidden md:block">
-				<h1 class="text-2xl font-bold tracking-tighter text-white mb-1">GAZE</h1>
-				<p class="text-xs text-zinc-500 uppercase tracking-widest">Interactive Hypnosis</p>
-			</div>
-
-			<!-- Subject Selection -->
-			<div class="space-y-2">
-				<label class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider"
-					>Active Subject</label
-				>
-				<select
-					class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-xs text-white focus:ring-1 focus:ring-cyan-500 outline-none appearance-none cursor-pointer"
-					v-model="selectedUser"
-				>
-					<option value="">-- Choose Subject --</option>
-					<option
-						v-for="u in users"
-						:key="u.id"
-						:value="u.id"
-					>
-						{{ u.name }}
-					</option>
-				</select>
-				<p
-					v-if="users.length === 0"
-					class="text-[10px] text-red-400/80 leading-tight"
-				>
-					No subjects found. Create one in 'Subjects' tab.
-				</p>
-			</div>
-
-			<nav class="flex flex-col gap-2">
-				<router-link
-					to="/home"
-					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-						activeTab === 'home'
-							? 'bg-zinc-800 text-cyan-400'
-							: 'hover:bg-zinc-800/50 text-zinc-400'
-					}`"
-					@click="isSidebarOpen = false"
-				>
-					Home
-				</router-link>
-				<router-link
-					to="/sessions"
-					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-						activeTab === 'start'
-							? 'bg-zinc-800 text-cyan-400'
-							: 'hover:bg-zinc-800/50 text-zinc-400'
-					}`"
-					@click="isSidebarOpen = false"
-				>
-					Browse Sessions
-				</router-link>
-				<router-link
-					to="/logs"
-					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-						activeTab === 'history'
-							? 'bg-zinc-800 text-cyan-400'
-							: 'hover:bg-zinc-800/50 text-zinc-400'
-					}`"
-					@click="isSidebarOpen = false"
-				>
-					Data Logs
-				</router-link>
-				<router-link
-					to="/subjects"
-					:class="`text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-						activeTab === 'users'
-							? 'bg-zinc-800 text-cyan-400'
-							: 'hover:bg-zinc-800/50 text-zinc-400'
-					}`"
-					@click="isSidebarOpen = false"
-				>
-					Subjects
-				</router-link>
-
-				<div class="mt-auto pt-4 border-t border-zinc-800">
-					<router-link
-						to="/debug"
-						class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-zinc-800/50 text-zinc-500 hover:text-cyan-400 group"
-						@click="isSidebarOpen = false"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="18"
-							height="18"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="text-zinc-600 group-hover:text-cyan-500 transition-colors"
-						>
-							<path d="M20 7h-9" />
-							<path d="M14 17H5" />
-							<circle
-								cx="17"
-								cy="17"
-								r="3"
-							/>
-							<circle
-								cx="7"
-								cy="7"
-								r="3"
-							/>
-						</svg>
-						Device Debug
+			<div class="max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
+				<div class="flex items-center gap-6 md:gap-8 min-w-0">
+					<router-link to="/home" class="font-semibold tracking-tight text-white whitespace-nowrap">
+						GAZE
 					</router-link>
+					<nav class="hidden md:flex gap-1">
+						<router-link
+							to="/home"
+							:class="[
+								'px-3 py-1.5 rounded-lg text-sm transition',
+								activeTab === 'home' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
+							]"
+						>
+							Home
+						</router-link>
+						<router-link
+							to="/sessions"
+							:class="[
+								'px-3 py-1.5 rounded-lg text-sm transition',
+								activeTab === 'start' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
+							]"
+						>
+							Browse Sessions
+						</router-link>
+						<router-link
+							v-if="auth.state.user"
+							to="/studio/sessions"
+							class="px-3 py-1.5 rounded-lg text-sm transition text-zinc-400 hover:text-white"
+						>
+							Studio
+						</router-link>
+					</nav>
 				</div>
-			</nav>
-		</aside>
+
+				<div class="flex items-center gap-3">
+					<router-link
+						to="/logs"
+						:class="[
+							'hidden md:inline px-3 py-1.5 rounded-lg text-sm transition',
+							activeTab === 'history' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'
+						]"
+					>
+						History
+					</router-link>
+
+					<template v-if="auth.state.user">
+						<router-link
+							to="/account"
+							class="hidden md:inline text-sm text-zinc-400 hover:text-white transition"
+						>
+							{{ auth.state.user.username }}
+						</router-link>
+						<button
+							type="button"
+							class="hidden md:inline text-sm text-zinc-500 hover:text-white transition"
+							@click="auth.logout().then(() => router.push('/login'))"
+						>
+							Sign out
+						</button>
+					</template>
+					<template v-else>
+						<router-link to="/login" class="hidden md:inline text-sm text-zinc-400 hover:text-white transition">
+							Sign in
+						</router-link>
+						<router-link
+							to="/register"
+							class="hidden md:inline text-sm px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/20 transition"
+						>
+							Create account
+						</router-link>
+					</template>
+
+					<button
+						@click="isSidebarOpen = !isSidebarOpen"
+						class="md:hidden p-2 text-zinc-400 hover:text-white transition-colors"
+						aria-label="Toggle menu"
+					>
+						<svg v-if="!isSidebarOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+						</svg>
+						<svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<!-- Mobile dropdown menu -->
+			<div
+				v-if="isSidebarOpen"
+				class="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-4 flex flex-col gap-2"
+			>
+				<router-link to="/home" @click="isSidebarOpen = false" :class="['px-3 py-2 rounded-lg text-sm', activeTab === 'home' ? 'bg-zinc-800 text-white' : 'text-zinc-400']">Home</router-link>
+				<router-link to="/sessions" @click="isSidebarOpen = false" :class="['px-3 py-2 rounded-lg text-sm', activeTab === 'start' ? 'bg-zinc-800 text-white' : 'text-zinc-400']">Browse Sessions</router-link>
+				<router-link to="/logs" @click="isSidebarOpen = false" :class="['px-3 py-2 rounded-lg text-sm', activeTab === 'history' ? 'bg-zinc-800 text-white' : 'text-zinc-400']">History</router-link>
+				<router-link v-if="auth.state.user" to="/studio/sessions" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-zinc-400">Studio</router-link>
+				<router-link to="/debug" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-zinc-500">Device Debug</router-link>
+				<div class="border-t border-zinc-800 mt-2 pt-2 flex flex-col gap-1">
+					<template v-if="auth.state.user">
+						<router-link to="/account" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-zinc-400">{{ auth.state.user.username }}</router-link>
+						<button type="button" class="text-left px-3 py-2 rounded-lg text-sm text-zinc-500" @click="auth.logout().then(() => router.push('/login'))">Sign out</button>
+					</template>
+					<template v-else>
+						<router-link to="/login" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-zinc-300">Sign in</router-link>
+						<router-link to="/register" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-cyan-300">Create account</router-link>
+					</template>
+				</div>
+			</div>
+		</header>
 
 		<!-- Main Content -->
 		<main class="flex-1 p-6 md:p-12 overflow-y-auto">
@@ -495,117 +588,71 @@ onMounted(() => {
 				v-else-if="activeTab === 'history'"
 				class="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
 			>
-				<h2 class="text-3xl font-light text-white mb-6 text-center">Session Logs</h2>
+				<h2 class="text-3xl font-light text-white mb-6 text-center">History</h2>
+				<div v-if="historyError" class="mb-4 text-xs text-red-400/80 text-center">
+					{{ historyError }}
+				</div>
 				<div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
 					<table class="w-full text-left text-sm">
 						<thead class="bg-zinc-800/50 text-zinc-400 uppercase text-xs font-medium">
 							<tr>
-								<th class="px-6 py-4">Session ID</th>
-								<th class="px-6 py-4">Subject</th>
+								<th class="px-6 py-4">Session</th>
 								<th class="px-6 py-4">Date</th>
+								<th class="px-6 py-4 text-right">Duration</th>
+								<th class="px-6 py-4 text-right">Completeness</th>
 								<th class="px-6 py-4 text-right">Score</th>
-								<th class="px-6 py-4 text-right">Accuracy</th>
 							</tr>
 						</thead>
 						<tbody class="divide-y divide-zinc-800">
 							<template
-								v-for="s in sessions"
-								:key="s.id"
+								v-for="row in historyRows"
+								:key="row.id"
 							>
 								<tr
-									@click="toggleExpand(s.id)"
+									@click="toggleExpand(row.id)"
 									class="hover:bg-zinc-800/30 cursor-pointer transition-colors"
-									:class="expandedSessionId === s.id ? 'bg-zinc-800/20' : ''"
+									:class="expandedSessionId === row.id ? 'bg-zinc-800/20' : ''"
 								>
-									<td class="px-6 py-4 font-mono text-zinc-500">{{ s.id }}</td>
 									<td class="px-6 py-4 text-white font-medium">
-										{{ getSubjectName(s.subjectId) }}
+										{{ row.title }}
 									</td>
 									<td class="px-6 py-4 text-zinc-400">
-										{{ new Date(s.startTime).toLocaleString() }}
+										{{ new Date(row.startTime).toLocaleString() }}
 									</td>
-									<td class="px-6 py-4 text-right font-mono text-cyan-400">
-										{{ s.totalScore }}
+									<td class="px-6 py-4 text-right font-mono text-zinc-400">
+										{{ formatDuration(row.durationMs) }}
 									</td>
 									<td class="px-6 py-4 text-right text-zinc-400">
-										{{ getSessionAccuracy(s) }}%
+										{{ row.completeness }}%
+									</td>
+									<td class="px-6 py-4 text-right font-mono text-cyan-400">
+										{{ row.totalScore }}
 									</td>
 								</tr>
 								<tr
-									v-if="expandedSessionId === s.id"
+									v-if="expandedSessionId === row.id"
 									class="bg-zinc-900/50"
 								>
-									<td
-										colspan="5"
-										class="p-4"
-									>
-										<SessionDetail :session="s" />
+									<td colspan="5" class="p-4">
+										<SessionDetail
+											:session="row.isRemote ? runAsSessionLog(row.raw as SessionRun) : (row.raw as SessionLog)"
+										/>
 									</td>
 								</tr>
 							</template>
 						</tbody>
 					</table>
 					<div
-						v-if="sessions.length === 0"
+						v-if="historyLoading && historyRows.length === 0"
 						class="p-8 text-center text-zinc-500"
 					>
-						No session data available.
+						Loading…
 					</div>
-				</div>
-			</div>
-
-			<div
-				v-else-if="activeTab === 'users'"
-				class="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
-			>
-				<h2 class="text-3xl font-light text-white mb-6 text-center">Subject Management</h2>
-
-				<div
-					class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl mb-8 flex flex-col md:flex-row gap-4 items-center md:items-end"
-				>
-					<div class="w-full flex-1">
-						<label
-							class="text-xs uppercase font-bold text-zinc-500 tracking-wider block mb-2 text-center"
-							>New Subject Name</label
-						>
-						<input
-							type="text"
-							class="w-full bg-black border border-zinc-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none"
-							placeholder="e.g. John Doe"
-							v-model="newUserName"
-						/>
-					</div>
-					<button
-						@click="handleCreateUser"
-						class="bg-zinc-100 text-black font-bold px-6 py-3 rounded-lg hover:bg-cyan-400 transition-colors"
-					>
-						Create Subject
-					</button>
-				</div>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 					<div
-						v-for="u in users"
-						:key="u.id"
-						class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl flex flex-col justify-between"
+						v-else-if="historyRows.length === 0"
+						class="p-8 text-center text-zinc-500"
 					>
-						<div>
-							<h3 class="text-lg font-bold text-white text-left">{{ u.name }}</h3>
-							<p class="text-xs text-zinc-500 font-mono mt-1 text-left">{{ u.id }}</p>
-						</div>
-						<div
-							class="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-end"
-						>
-							<div>
-								<div class="text-xs text-zinc-500 uppercase text-left">
-									Total Score
-								</div>
-								<div class="text-2xl font-mono text-cyan-400">
-									{{ u.totalScore }}
-								</div>
-							</div>
-							<div class="text-xs text-zinc-400">{{ u.history.length }} Sessions</div>
-						</div>
+						No history yet. Finish a session to see it here.
 					</div>
 				</div>
 			</div>

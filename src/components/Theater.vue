@@ -16,6 +16,7 @@ import TransportControl from './TransportControl.vue'
 import ProgressBar from './ProgressBar.vue'
 import SessionCard from './SessionCard.vue'
 import { saveSession } from '../services/storageService'
+import { historyApi } from '../services/history'
 import { getSceneEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
@@ -787,6 +788,37 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 	}
 }
 
+const persistRun = (log: SessionLog, extras: { report?: SessionReport | null } = {}) => {
+	// Local cache (offline fallback).
+	saveSession(log)
+	// Canonical persistence: POST to /history. Fire-and-forget so a server
+	// hiccup never blocks session teardown. Errors are logged, not thrown.
+	const prog = activeSession.value!
+	const totalScenes = prog.scenes.length
+	const scenesCompleted = log.metrics.length
+	historyApi
+		.create({
+			programId: log.programId,
+			programTitle: prog.title,
+			startTime: log.startTime,
+			endTime: log.endTime,
+			totalScore: log.totalScore,
+			scenesCompleted,
+			totalScenes,
+			completeness: totalScenes
+				? Math.min(100, Math.round((scenesCompleted / totalScenes) * 100))
+				: 0,
+			durationMs: log.endTime
+				? new Date(log.endTime).getTime() - new Date(log.startTime).getTime()
+				: 0,
+			metrics: log.metrics,
+			physiologicalData: log.physiologicalData,
+			biometrics: log.biometrics ?? null,
+			report: extras.report ?? null,
+		})
+		.catch((err) => console.warn('[Theater] failed to persist session run', err))
+}
+
 const finishSession = () => {
 	if (activeSession.value!.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
@@ -801,7 +833,7 @@ const finishSession = () => {
 			metrics: metricsRef.value,
 			physiologicalData: physData
 		}
-		saveSession(log)
+		persistRun(log)
 		return
 	}
 
@@ -850,7 +882,7 @@ const finishSession = () => {
 		physiologicalData: physData,
 		biometrics: biometricSummary
 	}
-	saveSession(log)
+	persistRun(log, { report: sessionReport.value })
 	setTimeout(() => exitSession(), 10000 / playbackSpeed.value)
 }
 

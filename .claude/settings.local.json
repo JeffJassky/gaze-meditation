@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npm audit:*)",
+      "Bash(lsof -iTCP:27017 -sTCP:LISTEN)",
+      "Bash(grep:*)",
+      "Bash(git rm:*)"
+    ]
+  }
+}

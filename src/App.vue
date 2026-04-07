@@ -3,7 +3,7 @@
 </script>
 
 <template>
-	<div class="w-full h-screen bg-black text-white overflow-hidden">
+	<div class="w-full min-h-screen bg-black text-white">
 		<router-view v-slot="{ Component }">
 			<transition
 				name="fade"
