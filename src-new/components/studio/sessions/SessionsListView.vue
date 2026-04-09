@@ -160,6 +160,7 @@ function formatDate(iso: string): string {
 						<option value="t4a">t4a</option>
 						<option value="t4f">t4f</option>
 						<option value="t4m">t4m</option>
+						<option value="t4t">t4t</option>
 						<option value="unspecified">unspecified</option>
 					</select>
 

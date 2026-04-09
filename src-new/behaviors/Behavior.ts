@@ -3,15 +3,35 @@ import { ref, reactive, type Ref } from 'vue'
 export interface BehaviorOptions {
 	duration?: number // Optional duration (ms) for the behavior to be active or held
 	failOnTimeout?: boolean // If true (default), triggers emitFail on timeout. If false, triggers emitSuccess (useful for 'hold' behaviors like Stillness)
-	isExplicitDuration?: boolean // If true, indicates the duration was explicitly provided by the user/config
 	failBehavior?: 'pause' | 'reset' // How to handle progress when behavior is interrupted. Defaults to 'pause'.
 }
 
 export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOptions> extends EventTarget {
 	public static readonly requiredDevices: string[] = []
+	/**
+	 * Execution model for this behavior:
+	 *
+	 *   - 'hold'    : user must maintain a state for `duration` ms. The
+	 *                 runtime uses progress accumulation — isProgressActive
+	 *                 pauses on fail conditions, resumes on success, and
+	 *                 emitSuccess fires when accumulated time reaches
+	 *                 the target. No simple timeout.
+	 *   - 'trigger' : user must perform a single action. The runtime uses
+	 *                 a simple setTimeout — if `duration` elapses without
+	 *                 a success event, emit fail. The event listeners
+	 *                 themselves emit success on the first trigger.
+	 *
+	 * Defaults to 'trigger' since that's the more common case; hold
+	 * behaviors explicitly override it to 'hold'.
+	 */
+	public static readonly kind: 'hold' | 'trigger' = 'trigger'
 	public options: TOptions
 	public isActive = false
-	public hasExplicitDuration = false
+	public readonly kind: 'hold' | 'trigger'
+	/** @deprecated use `kind === 'hold'` — kept for backward compatibility with Scene.vue's progress gate. */
+	public get hasExplicitDuration(): boolean {
+		return this.kind === 'hold'
+	}
 	public accumulatedTime = 0
 
 	// Reactive State for UI
@@ -36,7 +56,10 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 
 	constructor(options: TOptions) {
 		super()
-		this.hasExplicitDuration = options.isExplicitDuration === true
+		// Read the execution model from the subclass's static `kind` field.
+		// Scene.createBehavior no longer needs to know or inject anything —
+		// each behavior class declares its own model.
+		this.kind = (this.constructor as typeof Behavior).kind
 		this.options = {
 			failOnTimeout: true, // Default to "Active Task" mode (must complete in time)
 			failBehavior: 'pause',
@@ -127,8 +150,12 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 		this.lastTick = Date.now()
 
 		// 1. Completion Timer
-		// Only start if NOT using explicit duration (which manages its own progress/success)
-		if (this.options.duration && !this.hasExplicitDuration) {
+		// Hold behaviors run on progress accumulation (handled in the
+		// interval below) and never use a simple timeout. Trigger
+		// behaviors use a plain setTimeout — when it fires, handleTimeout
+		// emits success or fail based on `failOnTimeout`. Triggers with
+		// no duration wait indefinitely for an event.
+		if (this.kind === 'trigger' && this.options.duration && Number.isFinite(this.options.duration)) {
 			this.timeoutId = setTimeout(() => {
 				this.handleTimeout()
 			}, this.options.duration)
@@ -142,8 +169,12 @@ export abstract class Behavior<TOptions extends BehaviorOptions = BehaviorOption
 			const delta = now - this.lastTick
 			this.lastTick = now
 
-			// Built-in Time-based Progress Accumulation
-			if (this.isProgressActive && this.options.duration) {
+			// Built-in Time-based Progress Accumulation — hold behaviors only.
+			if (
+				this.kind === 'hold' &&
+				this.isProgressActive &&
+				this.options.duration
+			) {
 				this.accumulatedTime += delta
 				const progress = Math.min(1, this.accumulatedTime / this.options.duration)
 				this.emitProgress(progress)

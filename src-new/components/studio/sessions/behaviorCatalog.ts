@@ -36,7 +36,18 @@ export interface BehaviorDefinition {
 	label: string
 	category: 'Head' | 'Eyes' | 'Mouth' | 'Body' | 'Input'
 	description: string
-	/** Config fields specific to this behavior (in addition to duration/failBehavor). */
+	/**
+	 * Semantic model for this behavior:
+	 *
+	 *   - 'hold'    : user must maintain a state for `duration` ms. The
+	 *                 duration is a required hold time; reaching the end
+	 *                 is success, breaking the state is fail.
+	 *   - 'trigger' : user must perform a single action. The duration is
+	 *                 an OPTIONAL timeout — leave it empty to wait
+	 *                 indefinitely. The first matching event is success.
+	 */
+	kind: 'hold' | 'trigger'
+	/** Config fields specific to this behavior (in addition to duration/failBehavior). */
 	fields: BehaviorOptionField[]
 }
 
@@ -76,6 +87,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'head:still',
 		label: 'Hold head still',
 		category: 'Head',
+		kind: 'hold',
 		description: 'User must keep their head motionless for the duration.',
 		fields: [toleranceField],
 	},
@@ -83,6 +95,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'head:nod',
 		label: 'Nod head',
 		category: 'Head',
+		kind: 'trigger',
 		description: 'Detects a nodding motion.',
 		fields: [
 			{
@@ -98,30 +111,33 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 			},
 		],
 	},
-	{ type: 'head:left', label: 'Look left', category: 'Head', description: 'Gaze to the left.', fields: [] },
-	{ type: 'head:right', label: 'Look right', category: 'Head', description: 'Gaze to the right.', fields: [] },
-	{ type: 'head:up', label: 'Look up', category: 'Head', description: 'Gaze upward.', fields: [] },
-	{ type: 'head:down', label: 'Look down', category: 'Head', description: 'Gaze downward.', fields: [] },
+	{ type: 'head:left', label: 'Look left', category: 'Head', kind: 'trigger', description: 'Gaze to the left.', fields: [] },
+	{ type: 'head:right', label: 'Look right', category: 'Head', kind: 'trigger', description: 'Gaze to the right.', fields: [] },
+	{ type: 'head:up', label: 'Look up', category: 'Head', kind: 'trigger', description: 'Gaze upward.', fields: [] },
+	{ type: 'head:down', label: 'Look down', category: 'Head', kind: 'trigger', description: 'Gaze downward.', fields: [] },
 
 	// --- Eyes ---
 	{
 		type: 'eyes:close',
 		label: 'Close eyes',
 		category: 'Eyes',
-		description: 'User must keep their eyes closed.',
+		kind: 'trigger',
+		description: 'Succeeds the first time the user closes their eyes.',
 		fields: [thresholdField(0.2, 'Closed threshold', 'Eye openness below this counts as closed.')],
 	},
 	{
 		type: 'eyes:open',
-		label: 'Keep eyes open',
+		label: 'Open eyes',
 		category: 'Eyes',
-		description: 'User must keep their eyes open.',
+		kind: 'trigger',
+		description: 'Succeeds the first time the user opens their eyes.',
 		fields: [thresholdField(0.4, 'Open threshold', 'Eye openness above this counts as open.')],
 	},
 	{
 		type: 'eyes:blink',
 		label: 'Blink',
 		category: 'Eyes',
+		kind: 'trigger',
 		description: 'Detects a blink.',
 		fields: [],
 	},
@@ -129,6 +145,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'eyes:no-blink',
 		label: "Don't blink",
 		category: 'Eyes',
+		kind: 'hold',
 		description: 'User must avoid blinking for the duration.',
 		fields: [],
 	},
@@ -138,6 +155,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'mouth:relax',
 		label: 'Relax jaw',
 		category: 'Mouth',
+		kind: 'trigger',
 		description: 'Detects relaxed / slightly open jaw.',
 		fields: [thresholdField(0.15, 'Openness threshold', 'Jaw openness required to count as relaxed.')],
 	},
@@ -145,6 +163,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'tongue:out',
 		label: 'Stick tongue out',
 		category: 'Mouth',
+		kind: 'trigger',
 		description: 'Detects tongue protruding.',
 		fields: [thresholdField(0.15)],
 	},
@@ -154,6 +173,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'motion:move',
 		label: 'Move',
 		category: 'Body',
+		kind: 'trigger',
 		description: 'Any accelerometer motion satisfies the condition.',
 		fields: [],
 	},
@@ -161,6 +181,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'motion:impact',
 		label: 'Impact / strike',
 		category: 'Body',
+		kind: 'trigger',
 		description: 'Counts physical impacts (taps) via accelerometer.',
 		fields: [
 			{
@@ -191,6 +212,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'button:click',
 		label: 'Click button',
 		category: 'Input',
+		kind: 'trigger',
 		description: 'Waits for the user to click the on-screen button.',
 		fields: [],
 	},
@@ -198,6 +220,7 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'speech:speak',
 		label: 'Speak phrase',
 		category: 'Input',
+		kind: 'trigger',
 		description: "Detects the user speaking the target phrase.",
 		fields: [
 			{
@@ -213,9 +236,40 @@ export const BEHAVIOR_CATALOG: BehaviorDefinition[] = [
 		type: 'form:submit',
 		label: 'Submit form',
 		category: 'Input',
+		kind: 'trigger',
 		description: 'Waits for form submission. Configure fields on the scene.',
 		fields: [],
 	},
+	{
+		type: 'type',
+		label: 'Type phrase',
+		category: 'Input',
+		kind: 'trigger',
+		description: "Waits for the user to type the target phrase.",
+		fields: [
+			{
+				key: 'targetPhrase',
+				label: 'Target phrase',
+				type: 'text',
+				help: 'The text the user must type. Case- and punctuation-insensitive.',
+				default: '',
+			},
+		],
+	},
+]
+
+/**
+ * A curated subset of behavior types surfaced as one-click chips in the
+ * scene editor. Ordered by expected usage frequency. The full catalog is
+ * still available via the "+ Add" dropdown for the long tail.
+ */
+export const FEATURED_BEHAVIORS: string[] = [
+	'head:still',
+	'eyes:close',
+	'eyes:open',
+	'eyes:no-blink',
+	'mouth:relax',
+	'button:click',
 ]
 
 /** Map for O(1) lookup by type string. */

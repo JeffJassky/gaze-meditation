@@ -1,14 +1,33 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
-import { su } from '@new/components/ui/studioUi'
-import { VOICES_KEY } from './voicesKey'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 /**
- * SceneTextPanel edits the "what the user sees and hears" parts of a scene:
- * on-screen text and spoken voice lines. Both fields accept multiple lines;
- * the stored shape is `string | string[]` matching the existing SceneConfig.
+ * Pure text fields for a scene: voice (spoken narration) and on-screen text.
+ * Typography differentiates the two — no labels, no borders, no field
+ * backgrounds. Voice reads as serif dialogue; on-screen text reads as a
+ * stage direction (italic, dim, indented). Everything chrome-related
+ * (voice chip, counters) lives one level up in SceneStackItem so the text
+ * surface itself is truly bare.
+ *
+ * Storage shape is unchanged: `string | string[]`. Multi-line input gets
+ * normalized to an array on set so the runtime can treat each line as a beat.
  */
 const config = defineModel<Record<string, unknown>>({ required: true })
+defineProps<{
+	/** Optional override for the voice textarea color (scene.theme.textColor). */
+	voiceColor?: string
+	/** Optional override for the on-screen text color (scene.theme.secondaryTextColor). */
+	textColor?: string
+}>()
+const emit = defineEmits<{
+	advance: []
+	/**
+	 * User hit backspace/delete on an empty scene (both voice and text
+	 * textareas are empty). The parent should remove this scene and focus
+	 * the previous scene's last non-empty field.
+	 */
+	deleteBackward: []
+}>()
 
 function toText(v: unknown): string {
 	if (Array.isArray(v)) return v.join('\n')
@@ -16,11 +35,6 @@ function toText(v: unknown): string {
 	return ''
 }
 
-/**
- * Normalize multiline input: if more than one non-empty line, store as an
- * array so the runtime treats each line as a separate beat; otherwise store
- * as a plain string.
- */
 function fromText(v: string): string | string[] {
 	const lines = v.split('\n').map((l) => l.trimEnd())
 	const meaningful = lines.filter((l) => l.length > 0)
@@ -36,49 +50,96 @@ const voiceModel = computed({
 	set: (v) => (config.value.voice = fromText(v)),
 })
 
-// Per-scene ElevenLabs voice override. Falls back to the session-level
-// default when unset. Injected voices list is optional.
-const voicesState = inject(VOICES_KEY, undefined)
-const voiceOverrideId = computed({
-	get: () => (config.value.elevenlabsVoiceId as string | undefined) ?? '',
-	set: (v: string) => {
-		if (v) config.value.elevenlabsVoiceId = v
-		else delete (config.value as Record<string, unknown>).elevenlabsVoiceId
-	},
+// --- Autosize ---------------------------------------------------------------
+const voiceRef = ref<HTMLTextAreaElement | null>(null)
+const textRef = ref<HTMLTextAreaElement | null>(null)
+
+function autosize(el: HTMLTextAreaElement | null) {
+	if (!el) return
+	el.style.height = 'auto'
+	el.style.height = el.scrollHeight + 'px'
+}
+
+onMounted(() => {
+	nextTick(() => {
+		autosize(voiceRef.value)
+		autosize(textRef.value)
+	})
 })
+
+watch(voiceModel, () => nextTick(() => autosize(voiceRef.value)))
+watch(textModel, () => nextTick(() => autosize(textRef.value)))
+
+// Enter advances to the next field: voice → on-screen text → new scene.
+// Shift+Enter still inserts a literal newline for intentional multi-line beats.
+function onVoiceEnter(e: KeyboardEvent) {
+	if (e.shiftKey) return
+	e.preventDefault()
+	textRef.value?.focus()
+}
+function onTextEnter(e: KeyboardEvent) {
+	if (e.shiftKey) return
+	e.preventDefault()
+	emit('advance')
+}
+
+// Backspace collapses upward through the scene structure:
+//   text (empty) + backspace  →  focus voice (cursor at end)
+//   voice (empty, text also empty) + backspace  →  delete the whole scene
+//     and focus the previous scene's last non-empty field
+// Anything else: default textarea behaviour.
+function placeCaretAtEnd(el: HTMLTextAreaElement | null) {
+	if (!el) return
+	const len = el.value.length
+	el.setSelectionRange(len, len)
+}
+function onTextBackspace(e: KeyboardEvent) {
+	if (textModel.value.length === 0) {
+		e.preventDefault()
+		voiceRef.value?.focus()
+		nextTick(() => placeCaretAtEnd(voiceRef.value))
+	}
+}
+function onVoiceBackspace(e: KeyboardEvent) {
+	if (voiceModel.value.length === 0 && textModel.value.length === 0) {
+		e.preventDefault()
+		emit('deleteBackward')
+	}
+}
 </script>
 
 <template>
-	<div :class="su.subCard">
-		<h3 :class="[su.h3, 'mb-3']">Text & voice</h3>
-		<div class="grid gap-3">
-			<div>
-				<label :class="su.label">On-screen text</label>
-				<textarea
-					v-model="textModel"
-					:class="[su.textarea, 'min-h-[80px]']"
-					placeholder="Line 1\nLine 2 (blank between paragraphs)" />
-			</div>
-			<div>
-				<label :class="su.label">Voice (spoken)</label>
-				<textarea
-					v-model="voiceModel"
-					:class="[su.textarea, 'min-h-[80px]']"
-					placeholder="What the narrator says" />
-			</div>
+	<div>
+		<!-- Voice: the hero. Serif dialogue, no chrome. -->
+		<textarea
+			ref="voiceRef"
+			v-model="voiceModel"
+			data-field="voice"
+			placeholder="What the narrator says…"
+			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-1 text-zinc-100 placeholder-zinc-700 font-serif text-[17px] leading-[1.6] min-h-[2em]"
+			:style="{
+				'field-sizing': 'content',
+				...(voiceColor ? { color: voiceColor } : {}),
+			}"
+			@input="autosize(voiceRef)"
+			@keydown.enter="onVoiceEnter"
+			@keydown.backspace="onVoiceBackspace"
+			@keydown.delete="onVoiceBackspace" />
 
-			<div v-if="voicesState?.enabled.value">
-				<label :class="su.label">Scene voice override (ElevenLabs)</label>
-				<select v-model="voiceOverrideId" :class="su.select">
-					<option value="">— use session default —</option>
-					<option
-						v-for="v in voicesState.voices.value"
-						:key="v.voice_id"
-						:value="v.voice_id">
-						{{ v.name }}{{ v.category ? ` (${v.category})` : '' }}
-					</option>
-				</select>
-			</div>
-		</div>
+		<!-- On-screen text: subordinate stage direction. Italic, dim, indented. -->
+		<textarea
+			ref="textRef"
+			v-model="textModel"
+			data-field="text"
+			placeholder="On-screen text…"
+			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-0.5 mt-1 text-zinc-500 placeholder-zinc-700 placeholder:italic italic text-[16px] leading-[1.6] min-h-[1.5em]"
+			:style="{
+				'field-sizing': 'content',
+				...(textColor ? { color: textColor } : {}),
+			}"
+			@input="autosize(textRef)"
+			@keydown.enter="onTextEnter"
+			@keydown.backspace="onTextBackspace"
+			@keydown.delete="onTextBackspace" />
 	</div>
 </template>

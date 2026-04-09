@@ -7,9 +7,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<div
-		class="max-w-4xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32 px-6"
-	>
+	<div class="max-w-4xl mx-auto space-y-16 pb-32 px-6">
 		<!-- Hero Section -->
 		<header class="flex flex-col items-center text-center space-y-4 pt-16">
 			<h2 class="text-7xl font-bold tracking-tighter text-white">GAZE</h2>

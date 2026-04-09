@@ -8,7 +8,11 @@
       "Bash(npm audit:*)",
       "Bash(lsof -iTCP:27017 -sTCP:LISTEN)",
       "Bash(grep:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git stash:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)"
     ]
   }
 }

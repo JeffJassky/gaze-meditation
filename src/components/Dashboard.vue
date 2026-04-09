@@ -418,7 +418,7 @@ watch(() => activeTab.value, (tab) => {
 
 			<div
 				v-if="activeTab === 'start'"
-				class="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+				class="max-w-4xl mx-auto space-y-8"
 			>
 				<header class="text-center">
 					<h2 class="text-3xl font-light text-white mb-2">Select a Session</h2>
@@ -586,7 +586,7 @@ watch(() => activeTab.value, (tab) => {
 
 			<div
 				v-else-if="activeTab === 'history'"
-				class="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500"
+				class="max-w-6xl mx-auto"
 			>
 				<h2 class="text-3xl font-light text-white mb-6 text-center">History</h2>
 				<div v-if="historyError" class="mb-4 text-xs text-red-400/80 text-center">

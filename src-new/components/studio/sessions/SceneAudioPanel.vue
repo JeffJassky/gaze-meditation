@@ -72,9 +72,7 @@ const fxAssetId = computed({
 </script>
 
 <template>
-	<div :class="su.subCard">
-		<h3 :class="[su.h3, 'mb-3']">Audio</h3>
-
+	<div>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 			<div>
 				<label :class="su.label">Binaural Hz</label>

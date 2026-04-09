@@ -9,6 +9,7 @@ export interface EyeBehaviorOptions extends BehaviorOptions {
 
 export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
 	public static override readonly requiredDevices = ['camera']
+	public static override readonly kind = 'hold' as const
 
 	constructor(options: EyeBehaviorOptions) {
 		super({

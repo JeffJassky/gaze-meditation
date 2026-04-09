@@ -20,7 +20,7 @@ export interface BehaviorSuggestion {
 		| string
 	options?: any // Other configuration options for the behavior (such as tolerance, etc)
 	duration?: number // The duration the behavior must be held for
-	failBehavor?: 'pause' | 'reset' // How to handle the duration timer when the suggestion fails
+	failBehavior?: 'pause' | 'reset' // How to handle the duration timer when the suggestion fails (defaults to 'pause')
 }
 
 export interface SoundboardSample {

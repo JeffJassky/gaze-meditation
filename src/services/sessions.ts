@@ -14,6 +14,7 @@ export type SessionAudience =
 	| 't4a'
 	| 't4f'
 	| 't4m'
+	| 't4t'
 	| 'unspecified'
 
 export interface SessionAsset {

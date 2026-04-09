@@ -38,9 +38,7 @@ function setTint(patch: { color?: string; opacity?: number }) {
 </script>
 
 <template>
-	<div :class="su.subCard">
-		<h3 :class="[su.h3, 'mb-3']">Theme (overrides session defaults)</h3>
-
+	<div>
 		<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
 			<div v-for="[key, label] in THEME_KEYS" :key="key">
 				<label :class="su.label">{{ label }}</label>

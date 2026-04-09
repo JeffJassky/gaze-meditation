@@ -13,6 +13,8 @@ export interface VoicesState {
 	error: Ref<string | null>
 	/** True when the signed-in user has an ElevenLabs key configured. */
 	enabled: Ref<boolean>
+	/** Session-level voice id (used as the fallback when a scene has no override). */
+	sessionVoiceId: Ref<string | undefined>
 }
 
 export const VOICES_KEY: InjectionKey<VoicesState> = Symbol('elevenlabs-voices')

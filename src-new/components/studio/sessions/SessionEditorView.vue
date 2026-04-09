@@ -1,20 +1,28 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute } from 'vue-router'
 import StudioShell from '@new/components/ui/StudioShell.vue'
-import { su } from '@new/components/ui/studioUi'
-import SessionDetailsPanel from './SessionDetailsPanel.vue'
-import SessionAssetsPanel from './SessionAssetsPanel.vue'
-import SceneList from './SceneList.vue'
-import { sessionsApi, type SessionDoc } from '@/services/sessions'
+import StudioEditorToolbar from './StudioEditorToolbar.vue'
+import SessionMetaDrawer from './SessionMetaDrawer.vue'
+import SceneStack, { type FocusRequest } from './SceneStack.vue'
+import SceneInspector from './SceneInspector.vue'
+import SessionLivePreview from './SessionLivePreview.vue'
+import { useSceneSelection } from './composables/useSceneSelection'
+import { useSceneHistory } from './composables/useSceneHistory'
+import { useSoftDelete } from './composables/useSoftDelete'
+import { useStudioShortcuts } from './composables/useStudioShortcuts'
+import ToastStack from './ToastStack.vue'
+import { sessionsApi, type SceneBlock, type SessionDoc } from '@/services/sessions'
 import { listElevenLabsVoices, type ElevenLabsVoice } from '@/services/elevenlabs'
 import { auth } from '@/state/auth'
 import { VOICES_KEY } from './voicesKey'
 
 /**
- * Top-level session editor. Loads a session, holds it in a reactive ref, and
- * passes slices down to focused sub-panels via v-model. Save is explicit and
- * pushes the whitelisted fields back to the API in one shot.
+ * Top-level session editor — three-pane shell.
+ *
+ * Loads a session, holds it in a reactive ref, and routes slices into the
+ * left rail / center stage / right inspector. Save is explicit and pushes
+ * the whitelisted fields back to the API in one shot.
  *
  * Dirty tracking is a cheap JSON-diff against the last-saved snapshot —
  * plenty fast for session-sized payloads and avoids a lot of ceremony.
@@ -26,12 +34,28 @@ const snapshot = ref<string>('')
 const loading = ref(true)
 const saving = ref(false)
 const error = ref<string | null>(null)
+const metaDrawerOpen = ref(false)
+const justSaved = ref(false)
+const focusRequest = ref<FocusRequest | null>(null)
 
 const dirty = computed(() =>
 	session.value ? JSON.stringify(session.value) !== snapshot.value : false,
 )
 
-const audioAssets = computed(() => session.value?.assets.filter((a) => a.kind === 'audio') ?? [])
+const audioAssets = computed(
+	() => session.value?.assets.filter((a) => a.kind === 'audio') ?? [],
+)
+
+// Selection model — wraps a writable computed view of session.scenes so the
+// composable can react to scene mutations even when session itself is null.
+const scenesRef = computed<SceneBlock[]>({
+	get: () => session.value?.scenes ?? [],
+	set: (v) => {
+		if (session.value) session.value.scenes = v
+	},
+})
+const selection = useSceneSelection(scenesRef)
+const history = useSceneHistory(session)
 
 // --- ElevenLabs voices (provided to all descendants via inject) -------------
 const voices = ref<ElevenLabsVoice[]>([])
@@ -54,19 +78,33 @@ async function loadVoices() {
 	}
 }
 
+const sessionVoiceId = computed(() => session.value?.elevenlabsVoiceId ?? undefined)
 provide(VOICES_KEY, {
 	voices,
 	loading: voicesLoading,
 	error: voicesError,
 	enabled: voicesEnabled,
+	sessionVoiceId,
 })
 
 async function load() {
 	loading.value = true
 	error.value = null
 	try {
-		session.value = await sessionsApi.get(String(route.params.id))
+		const doc = await sessionsApi.get(String(route.params.id))
+		// Seed an empty session with a starter scene so the writer always has
+		// somewhere to type. Not saved until the user actually hits Save, so a
+		// pristine untouched session won't get written back with a blank scene.
+		if (doc.scenes.length === 0) {
+			doc.scenes = [
+				{ id: crypto.randomUUID(), type: 'scene', label: '', config: {} },
+			]
+		}
+		session.value = doc
 		snapshot.value = JSON.stringify(session.value)
+		// Select the first scene so the inspector and preview have something
+		// to render immediately.
+		if (doc.scenes[0]) selection.select(doc.scenes[0].id)
 	} catch (e) {
 		error.value = (e as Error).message
 	} finally {
@@ -97,6 +135,13 @@ async function save() {
 		})
 		session.value = updated
 		snapshot.value = JSON.stringify(updated)
+		// Reset history baseline so undo can't cross the save boundary —
+		// crossing it would silently re-dirty the doc against the server.
+		history.reset()
+		justSaved.value = true
+		setTimeout(() => {
+			justSaved.value = false
+		}, 1500)
 	} catch (e) {
 		error.value = (e as Error).message
 	} finally {
@@ -116,6 +161,126 @@ async function togglePublish() {
 		error.value = (e as Error).message
 	}
 }
+
+function duplicateSelected() {
+	if (!session.value) return
+	const i = selection.selectedIndex.value
+	const src = session.value.scenes[i]
+	if (!src) return
+	const copy: SceneBlock = {
+		id: crypto.randomUUID(),
+		type: src.type,
+		label: src.label,
+		config: JSON.parse(JSON.stringify(src.config)),
+	}
+	const next = session.value.scenes.slice()
+	next.splice(i + 1, 0, copy)
+	session.value.scenes = next
+	selection.select(copy.id)
+}
+
+function deleteSelected() {
+	if (!session.value) return
+	const i = selection.selectedIndex.value
+	if (i < 0) return
+	removeSceneAt(i)
+}
+
+function duplicateAt(i: number) {
+	if (!session.value) return
+	const src = session.value.scenes[i]
+	if (!src) return
+	const copy: SceneBlock = {
+		id: crypto.randomUUID(),
+		type: src.type,
+		label: src.label,
+		config: JSON.parse(JSON.stringify(src.config)),
+	}
+	const next = session.value.scenes.slice()
+	next.splice(i + 1, 0, copy)
+	session.value.scenes = next
+	selection.select(copy.id)
+}
+
+const softDelete = useSoftDelete((scene, index) => {
+	if (!session.value) return
+	const next = session.value.scenes.slice()
+	// Clamp the original index in case the array shrank further while the
+	// toast was open (other deletes, undo/redo, etc.).
+	const insertAt = Math.max(0, Math.min(index, next.length))
+	next.splice(insertAt, 0, scene)
+	session.value.scenes = next
+	selection.select(scene.id)
+})
+
+function removeSceneAt(i: number) {
+	if (!session.value) return
+	const scene = session.value.scenes[i]
+	if (!scene) return
+	const next = session.value.scenes.slice()
+	next.splice(i, 1)
+	session.value.scenes = next
+	softDelete.enqueue(scene, i)
+}
+
+function addSceneAfter(index: number, opts: { focus?: boolean } = {}) {
+	if (!session.value) return
+	const newScene: SceneBlock = {
+		id: crypto.randomUUID(),
+		type: 'scene',
+		label: '',
+		config: {},
+	}
+	const next = session.value.scenes.slice()
+	next.splice(index + 1, 0, newScene)
+	session.value.scenes = next
+	selection.select(newScene.id)
+	if (opts.focus) focusRequest.value = { id: newScene.id, field: 'voice' }
+}
+
+/**
+ * Backspace-collapse: user hit backspace in an already-empty scene. Remove
+ * the scene and focus the previous scene's last non-empty field (caret at
+ * end). If there's no previous scene, do nothing — we don't want the editor
+ * to end up with zero scenes this way.
+ */
+function deleteBackwardFrom(index: number) {
+	if (!session.value) return
+	if (index <= 0) return
+	const prev = session.value.scenes[index - 1]
+	if (!prev) return
+	const next = session.value.scenes.slice()
+	next.splice(index, 1)
+	session.value.scenes = next
+	selection.select(prev.id)
+	focusRequest.value = { id: prev.id, field: 'auto', atEnd: true }
+}
+
+function addSceneAtEnd() {
+	if (!session.value) return
+	addSceneAfter(session.value.scenes.length - 1)
+}
+
+useStudioShortcuts({
+	onSave: () => {
+		if (dirty.value && !saving.value) save()
+	},
+	onUndo: () => history.undo(),
+	onRedo: () => history.redo(),
+	onNext: () => selection.next(),
+	onPrev: () => selection.prev(),
+	onDuplicate: () => duplicateSelected(),
+	onDelete: () => deleteSelected(),
+	onNewScene: () => {
+		if (!session.value) return
+		const idx = selection.selectedIndex.value
+		if (idx < 0) addSceneAtEnd()
+		else addSceneAfter(idx)
+	},
+	onToggleMeta: () => {
+		metaDrawerOpen.value = !metaDrawerOpen.value
+	},
+})
 
 // Warn on accidental close/navigation when unsaved.
 function onBeforeUnload(e: BeforeUnloadEvent) {
@@ -142,44 +307,74 @@ watch(
 
 <template>
 	<StudioShell>
-		<div :class="su.container">
-			<div :class="su.header">
-				<div>
-					<RouterLink to="/studio/sessions" class="text-sm text-zinc-400 hover:text-white">
-						← Sessions
-					</RouterLink>
-					<h1 :class="[su.h1, 'mt-1']">
-						{{ session?.title || (loading ? 'Loading…' : 'Session') }}
-					</h1>
-					<p class="text-xs text-zinc-500 mt-1">
-						<span v-if="dirty" class="text-amber-300">Unsaved changes</span>
-						<span v-else-if="session">All changes saved</span>
-					</p>
-				</div>
-				<div class="flex items-center gap-2">
-					<button
-						:class="su.btn"
-						:disabled="saving || !dirty || !session"
-						@click="save">
-						{{ saving ? 'Saving…' : 'Save' }}
-					</button>
-				</div>
+		<div class="h-[calc(100vh-3.5rem)] flex flex-col">
+			<StudioEditorToolbar
+				:session="session"
+				:dirty="dirty"
+				:saving="saving"
+				:can-undo="history.canUndo.value"
+				:can-redo="history.canRedo.value"
+				:just-saved="justSaved"
+				@save="save"
+				@undo="history.undo"
+				@redo="history.redo"
+				@publish="togglePublish"
+				@unpublish="togglePublish"
+				@update-title="(t) => session && (session.title = t)"
+				@open-meta="metaDrawerOpen = true" />
+
+			<div
+				v-if="error"
+				class="px-4 py-2 text-sm text-red-400 border-b border-zinc-800">
+				{{ error }}
 			</div>
 
-			<div v-if="error" :class="[su.error, 'mb-6']">{{ error }}</div>
+			<div
+				v-if="loading"
+				class="flex-1 flex items-center justify-center text-zinc-500 text-sm">
+				Loading…
+			</div>
 
-			<div v-if="loading" class="text-zinc-500 text-sm py-12 text-center">Loading…</div>
+			<div
+				v-else-if="session"
+				class="flex-1 grid grid-cols-[1fr_360px] min-h-0">
+				<SceneStack
+					v-model="session.scenes"
+					v-model:session="session"
+					:selected-id="selection.selectedId.value"
+					:focus-request="focusRequest"
+					@select="selection.select"
+					@duplicate="duplicateAt"
+					@remove="removeSceneAt"
+					@advance="(i) => addSceneAfter(i, { focus: true })"
+					@delete-backward="deleteBackwardFrom"
+					@focus-consumed="focusRequest = null" />
 
-			<template v-else-if="session">
-				<SessionDetailsPanel
-					v-model="session"
-					@publish="togglePublish"
-					@unpublish="togglePublish" />
-
-				<SessionAssetsPanel v-model="session" />
-
-				<SceneList v-model="session.scenes" :audio-assets="audioAssets" />
-			</template>
+				<div class="flex flex-col min-h-0 border-l border-zinc-800 bg-zinc-950/80">
+					<SessionLivePreview
+						class="shrink-0"
+						:session="session"
+						:selected-id="selection.selectedId.value"
+						:selected-index="selection.selectedIndex.value" />
+					<SceneInspector
+						v-if="selection.selectedScene.value"
+						v-model="session.scenes[selection.selectedIndex.value]"
+						:audio-assets="audioAssets"
+						class="flex-1 min-h-0" />
+					<div v-else class="flex-1" />
+				</div>
+			</div>
 		</div>
+
+		<ToastStack
+			:pending="softDelete.pending.value"
+			:window-ms="softDelete.UNDO_WINDOW_MS"
+			@undo="softDelete.undo" />
+
+		<SessionMetaDrawer
+			v-if="session"
+			v-model:open="metaDrawerOpen"
+			v-model:session="session" />
 	</StudioShell>
 </template>
+

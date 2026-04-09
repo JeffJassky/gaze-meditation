@@ -71,13 +71,20 @@ export class Scene {
 	private isMediaSequenceComplete = false
 	private pendingBehaviorResult: any = null
 
-	constructor(config: SceneConfig) {
-		this.config = {
-			cooldown: 2000,
-			...config
-		}
+	constructor(config: SceneConfig, options: { skipBehaviors?: boolean } = {}) {
+		// Hold config by reference — do NOT clone. The studio editor mutates
+		// scene configs in place (text, voice, audio, theme, …) and the
+		// runtime must see those edits on the next scene start. Defaults like
+		// cooldown are provided via getters that read the live config, so we
+		// don't need to materialize them onto a copy.
+		this.config = config
 		this.id = config.id || `scene_${Math.random().toString(36).substring(2, 11)}`
-		this.initBehaviors()
+		// `skipBehaviors` lets callers (e.g. the studio editor's live preview)
+		// instantiate a Scene without wiring up camera / mic / accelerometer
+		// behaviors. Voice + text + audio still run normally.
+		if (!options.skipBehaviors) {
+			this.initBehaviors()
+		}
 	}
 
 	// Alias for compatibility with code expecting Instruction.options
@@ -125,11 +132,15 @@ export class Scene {
 	}
 
 	private createBehavior(suggestion: BehaviorSuggestion): Behavior | null {
+		// The behavior's execution model ('hold' vs 'trigger') is a property
+		// of the Behavior subclass itself now — we don't need to tell it
+		// whether the duration was user-provided. Duration semantics are:
+		//   - hold    : required hold time
+		//   - trigger : optional timeout (undefined = wait forever)
 		const options = {
 			duration: suggestion.duration,
+			failBehavior: suggestion.failBehavior,
 			...suggestion.options,
-			isExplicitDuration:
-				suggestion.duration !== undefined && suggestion.duration !== Infinity
 		}
 
 		const entry = BEHAVIOR_REGISTRY[suggestion.type]
@@ -145,6 +156,26 @@ export class Scene {
 		return BEHAVIOR_REGISTRY[type] || null
 	}
 
+	/**
+	 * Rebuild behavior instances from the current config. Used by `start()`
+	 * so that any edits the studio editor made to `config.behavior.suggestions`
+	 * (including per-suggestion option tweaks like tolerance or duration)
+	 * take effect on the next scene run without needing to rebuild the
+	 * entire Scene instance. Behaviors hold their own state and event
+	 * listeners — stopping them here fully releases that state.
+	 */
+	public rebuildBehaviors() {
+		for (const b of this.behaviors) {
+			try {
+				b.stop()
+			} catch {
+				/* ignore — stop() is best-effort cleanup */
+			}
+		}
+		this.behaviors = []
+		this.initBehaviors()
+	}
+
 	public async start(context: SceneContext) {
 		console.log(`[Scene] Starting: ${this.id}`, {
 			config: this.config,
@@ -154,6 +185,11 @@ export class Scene {
 		this.isActive = true
 		this.progress.value = 0
 		this.startTime = Date.now()
+
+		// Rebuild behaviors from current config so live option edits in the
+		// studio editor flow through on the next scene start. No-op overhead
+		// in normal playback since scenes only start once.
+		this.rebuildBehaviors()
 
 		// Reset Text State
 		this.activeText.value = ''

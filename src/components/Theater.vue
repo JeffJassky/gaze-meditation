@@ -33,13 +33,51 @@ interface TheaterProps {
 	program?: Session
 	sessionId?: string
 	subjectId?: string
+	/**
+	 * Embed mode: used by the studio editor's live preview pane. Changes
+	 * chrome only — skips the fullscreen request, hides the internal
+	 * transport, suppresses the finish screen, starts paused, and routes
+	 * around any UI that assumes full-viewport rendering. It does NOT by
+	 * itself disable biofeedback — see `enableBiofeedback`.
+	 */
+	embedded?: boolean
+	/**
+	 * Whether to wire up camera / microphone / accelerometer devices and
+	 * instantiate scene behaviors. Defaults to `!embedded`:
+	 *
+	 *   - Normal playback (embedded = false):     defaults to true
+	 *   - Editor preview (embedded = true):       defaults to false
+	 *
+	 * The editor's live-preview wrapper flips this on when the writer
+	 * explicitly opts in to test biofeedback. When this is false, scene
+	 * behaviors are not instantiated at all (Scene is constructed with
+	 * `skipBehaviors: true`) and the device acquisition path is skipped.
+	 */
+	enableBiofeedback?: boolean
+	/** Start with master audio muted (used together with `embedded`). */
+	initialMuted?: boolean
 }
 
 const props = withDefaults(defineProps<TheaterProps>(), {
-	subjectId: 'guest'
+	subjectId: 'guest',
+	embedded: false,
+	enableBiofeedback: undefined,
+	initialMuted: false
 })
+
+/**
+ * Resolved biofeedback flag — honours an explicit prop, else falls back to
+ * "on in normal mode, off in embedded mode".
+ */
+const biofeedbackEnabled = computed(() =>
+	props.enableBiofeedback ?? !props.embedded,
+)
 const emit = defineEmits<{
 	(e: 'exit'): void
+	/** Fired whenever the active scene index changes. */
+	(e: 'scene-change', index: number): void
+	/** Fired when playback transitions between playing and paused. */
+	(e: 'playing-change', isPlaying: boolean): void
 }>()
 
 const router = useRouter()
@@ -103,7 +141,25 @@ const state = ref<SessionState>(SessionState.INITIALIZING)
 const sessionScenes = shallowRef<Scene[]>([])
 const sceneIndex = ref(0)
 const score = ref(0)
-const isPaused = ref(false)
+// Embedded preview mounts start paused — the writer hasn't asked for
+// playback, they just want to see the scene they're editing. The auto-
+// advance guard in triggerReinforcement will hold on whatever scene they
+// select until they hit play.
+const isPaused = ref(props.embedded)
+
+// --- Outward state contract -------------------------------------------------
+// Anything outside Theater (e.g. the studio editor's live preview) should
+// observe Theater purely through these events. Do not read internal refs.
+watch(sceneIndex, (i) => emit('scene-change', i))
+
+const isPlayingComputed = computed(
+	() =>
+		!isPaused.value &&
+		state.value !== SessionState.FINISHED &&
+		state.value !== SessionState.IDLE &&
+		state.value !== SessionState.INITIALIZING,
+)
+watch(isPlayingComputed, (p) => emit('playing-change', p), { immediate: false })
 const controlsVisible = ref(false)
 const isMenuOpen = ref(false)
 const isHoveringControls = ref(false)
@@ -150,8 +206,6 @@ const handleRestart = () => {
 const timerRef = ref<number | null>(null)
 const startTimeRef = ref<number>(Date.now())
 const metricsRef = ref<SessionMetric[]>([])
-
-const currentResolvedTheme = ref<ThemeConfig>(DEFAULT_THEME)
 
 // Loading State
 const loadingMessage = ref('Preparing Session')
@@ -204,21 +258,21 @@ const currentScene = computed(() => {
 	return undefined
 })
 
-watch(
-	[currentScene, activeSession],
-	([newScene, newSession]) => {
-		console.log('[Theater] currentScene changed:', newScene?.id)
-		if (newScene) {
-			currentResolvedTheme.value = getSceneEffectiveTheme(
-				newSession as Session,
-				newScene as any
-			)
-		} else {
-			currentResolvedTheme.value = newSession?.theme || DEFAULT_THEME
-		}
-	},
-	{ immediate: true }
-)
+/**
+ * Resolved theme for the active scene. Computed (not watched) so Vue's
+ * dep tracker follows reads through the reactive scene config proxy —
+ * editing `scene.config.theme.backgroundColor` in the studio editor will
+ * invalidate this and re-render without a Theater remount or a scene
+ * re-trigger.
+ */
+const currentResolvedTheme = computed<ThemeConfig>(() => {
+	const scene = currentScene.value
+	const session = activeSession.value
+	if (scene && session) {
+		return getSceneEffectiveTheme(session as Session, scene as any)
+	}
+	return session?.theme || DEFAULT_THEME
+})
 
 provide('resolvedTheme', currentResolvedTheme)
 provide('sessionReport', sessionReport)
@@ -238,17 +292,22 @@ const initSession = async () => {
 	let needsMicrophone = false
 	let needsAccelerometer = false
 
-	activeSession.value!.scenes.forEach(s => {
-		s.behavior?.suggestions?.forEach(sig => {
-			const BehaviorClass = Scene.getBehaviorClass(sig.type)
-			if (BehaviorClass) {
-				const devices = (BehaviorClass as any).requiredDevices || []
-				if (devices.includes('camera')) needsCamera = true
-				if (devices.includes('microphone')) needsMicrophone = true
-				if (devices.includes('accelerometer')) needsAccelerometer = true
-			}
+	// Only scan for required hardware when biofeedback is enabled. In
+	// embedded-preview-without-biofeedback mode this block is skipped
+	// entirely so the writer never sees device prompts on editor load.
+	if (biofeedbackEnabled.value) {
+		activeSession.value!.scenes.forEach(s => {
+			s.behavior?.suggestions?.forEach(sig => {
+				const BehaviorClass = Scene.getBehaviorClass(sig.type)
+				if (BehaviorClass) {
+					const devices = (BehaviorClass as any).requiredDevices || []
+					if (devices.includes('camera')) needsCamera = true
+					if (devices.includes('microphone')) needsMicrophone = true
+					if (devices.includes('accelerometer')) needsAccelerometer = true
+				}
+			})
 		})
-	})
+	}
 
 	const needsAudio =
 		activeSession.value!.audio?.musicTrack !== 'none' || activeSession.value!.audio?.binaural
@@ -260,7 +319,11 @@ const initSession = async () => {
 		needsAudio
 	})
 
-	if (needsCamera || needsMicrophone || needsAccelerometer) {
+	// In embedded mode the editor owns the permission-request UX — it shows
+	// its own gate before even setting enableBiofeedback to true, so by the
+	// time we reach this point permissions have already been granted and we
+	// can skip the in-theater prompt entirely.
+	if (!props.embedded && (needsCamera || needsMicrophone || needsAccelerometer)) {
 		try {
 			const camQuery = needsCamera
 				? navigator.permissions.query({ name: 'camera' as any })
@@ -360,11 +423,14 @@ const initSession = async () => {
 			await speechService.start()
 		} catch (e) {
 			console.warn('Speech Initialization Failed', e)
-			alert(
-				'Microphone access is required for this session. Please enable it in your browser settings and try again.'
-			)
-			emit('exit')
-			return
+			if (!props.embedded) {
+				alert(
+					'Microphone access is required for this session. Please enable it in your browser settings and try again.'
+				)
+				emit('exit')
+				return
+			}
+			// In embedded mode the editor owns the permission UX. Fail soft.
 		}
 	}
 
@@ -375,9 +441,12 @@ const initSession = async () => {
 			await faceMeshService.init()
 		} catch (e) {
 			console.error('FaceMesh Initialization Failed', e)
-			alert('Camera access required for this session.')
-			emit('exit')
-			return
+			if (!props.embedded) {
+				alert('Camera access required for this session.')
+				emit('exit')
+				return
+			}
+			// In embedded mode the editor owns the permission UX. Fail soft.
 		}
 	}
 	loadingProgress.value = 90
@@ -409,13 +478,17 @@ const initSession = async () => {
 		)
 	}
 
-	const programScenes = activeSession.value.scenes.map(s => new Scene(s))
+	// Skip behavior initialization whenever biofeedback is disabled. Configs
+	// are passed by reference so in-place editor edits flow through live.
+	const programScenes = activeSession.value.scenes.map(
+		s => new Scene(s, { skipBehaviors: !biofeedbackEnabled.value })
+	)
 	sessionScenes.value = [...reminders, ...programScenes]
 	console.log('[Theater] Scenes Prepared:', sessionScenes.value.length)
 
 	loadingProgress.value = 100
 
-	if (!document.fullscreenElement) {
+	if (!props.embedded && !document.fullscreenElement) {
 		loadingMessage.value = 'Session Ready'
 		showBeginButton.value = true
 
@@ -731,6 +804,15 @@ const triggerReinforcement = (success: boolean, metrics: any, result?: any) => {
 
 	currentScene.value?.stop()
 
+	// If the user has paused, don't auto-advance to the next scene. The
+	// current scene has already rendered; hold here until they hit play or
+	// jump to a different scene. This matters for the embedded editor
+	// preview where clicking a scene should show it without kicking off
+	// the auto-progression chain.
+	if (isPaused.value) {
+		return
+	}
+
 	const cooldown = currentScene.value?.cooldown ?? 2000 / playbackSpeed.value
 
 	if (currentScene.value) {
@@ -820,6 +902,16 @@ const persistRun = (log: SessionLog, extras: { report?: SessionReport | null } =
 }
 
 const finishSession = () => {
+	// In embedded preview mode, never show the score card or redirect —
+	// just loop back to scene 0 so the writer can keep scrubbing.
+	if (props.embedded) {
+		metricsRef.value = []
+		sessionReport.value = undefined
+		startTimeRef.value = Date.now()
+		nextScene(0)
+		return
+	}
+
 	if (activeSession.value!.id.includes('initial_training')) {
 		state.value = SessionState.SELECTION
 		const { snapshots: physData } = sessionTracker.stopSession()
@@ -925,7 +1017,9 @@ const handleSessionSelect = async (program: Session) => {
 		}
 	}
 
-	sessionScenes.value = activeSession.value!.scenes.map(s => new Scene(s))
+	sessionScenes.value = activeSession.value!.scenes.map(
+		s => new Scene(s, { skipBehaviors: !biofeedbackEnabled.value })
+	)
 	nextScene(0)
 }
 
@@ -949,11 +1043,21 @@ onMounted(() => {
 		return
 	}
 
-	try {
-		document.documentElement
-			.requestFullscreen()
-			.catch(e => console.log('Fullscreen blocked', e))
-	} catch (e) {}
+	if (props.initialMuted) {
+		try {
+			audioSession.setMasterVolume(0)
+		} catch (e) {
+			console.warn('[Theater] initialMuted: setMasterVolume failed', e)
+		}
+	}
+
+	if (!props.embedded) {
+		try {
+			document.documentElement
+				.requestFullscreen()
+				.catch(e => console.log('Fullscreen blocked', e))
+		} catch (e) {}
+	}
 
 	initSession()
 
@@ -962,13 +1066,49 @@ onMounted(() => {
 	}
 	window.addEventListener('keydown', handleKeyDown)
 })
+
+// --- Imperative API ---------------------------------------------------------
+// A narrow, stable surface for parents that embed Theater (e.g. the studio
+// editor's live preview). These methods are plain functions — no ref
+// unwrapping pitfalls. Observers should subscribe to `scene-change` /
+// `playing-change` events instead of reading internal refs.
+function jumpToScene(index: number) {
+	if (index < 0 || index >= sessionScenes.value.length) return
+	if (index === sceneIndex.value) {
+		// Re-trigger the current scene (used by the preview to replay after
+		// an in-place text/voice edit).
+		nextScene(index)
+		return
+	}
+	nextScene(index)
+}
+function play() {
+	handlePlay()
+}
+function pause() {
+	handlePause()
+}
+function restart() {
+	handleRestart()
+}
+
+defineExpose({
+	jumpToScene,
+	play,
+	pause,
+	restart,
+})
 </script>
 
 <template>
 	<div
-		class="relative w-full h-full bg-black overflow-hidden transition-all duration-300"
+		class="relative w-full h-full overflow-hidden transition-all duration-300"
 		:class="controlsVisible ? 'cursor-default' : 'cursor-none'"
-		:style="{ '--speed-factor': playbackSpeed }"
+		:style="{
+			'--speed-factor': playbackSpeed,
+			backgroundColor: currentResolvedTheme.backgroundColor || '#000',
+			color: currentResolvedTheme.textColor || '#fff',
+		}"
 		@mousemove="showControls"
 		@click="handleScreenClick"
 	>
@@ -1171,6 +1311,7 @@ onMounted(() => {
 
 		<Transition name="fade">
 			<TransportControl
+				v-if="!embedded"
 				v-show="controlsVisible && state !== SessionState.SELECTION"
 				:scenes="sessionScenes"
 				:currentIndex="sceneIndex"

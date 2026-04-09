@@ -3,45 +3,69 @@ import { su } from '@new/components/ui/studioUi'
 
 const config = defineModel<Record<string, unknown>>({ required: true })
 
-function setNumber(key: string, v: string) {
-	const n = Number(v)
-	if (v === '' || Number.isNaN(n)) delete (config.value as any)[key]
-	else (config.value as any)[key] = n
+// All three timing fields (duration, fadeOutDuration, cooldown) are stored
+// in milliseconds to match existing program data and what the runtime
+// reads. The editor's inputs show seconds for friendliness and convert
+// at the boundary.
+function msToSeconds(ms: unknown): number | '' {
+	if (typeof ms !== 'number' || Number.isNaN(ms)) return ''
+	return ms / 1000
+}
+function setSecondsField(key: string, raw: string) {
+	if (raw === '') {
+		delete (config.value as any)[key]
+		return
+	}
+	const n = Number(raw)
+	if (!Number.isFinite(n)) return
+	;(config.value as any)[key] = Math.round(n * 1000)
 }
 </script>
 
 <template>
-	<div :class="su.subCard">
-		<h3 :class="[su.h3, 'mb-3']">Timing</h3>
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-			<div>
-				<label :class="su.label">Forced duration (s)</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.5"
-					:value="(config.duration as number) ?? ''"
-					placeholder="auto"
-					@input="(e) => setNumber('duration', (e.target as HTMLInputElement).value)" />
-			</div>
-			<div>
-				<label :class="su.label">Fade out (s)</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.1"
-					:value="(config.fadeOutDuration as number) ?? ''"
-					@input="(e) => setNumber('fadeOutDuration', (e.target as HTMLInputElement).value)" />
-			</div>
-			<div>
-				<label :class="su.label">Cooldown (s)</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.1"
-					:value="(config.cooldown as number) ?? ''"
-					@input="(e) => setNumber('cooldown', (e.target as HTMLInputElement).value)" />
-			</div>
+	<div class="flex flex-col gap-2">
+		<div class="flex items-center gap-3">
+			<label :class="[su.label, '!mb-0 flex-1']">Forced duration (s)</label>
+			<input
+				:class="[su.input, 'w-16 text-right']"
+				type="number"
+				step="0.5"
+				:value="msToSeconds(config.duration)"
+				placeholder="auto"
+				@input="(e) => setSecondsField('duration', (e.target as HTMLInputElement).value)" />
+		</div>
+		<div class="flex items-center gap-3">
+			<label :class="[su.label, '!mb-0 flex-1']">Fade in (s)</label>
+			<input
+				:class="[su.input, 'w-16 text-right']"
+				type="number"
+				step="0.1"
+				:value="msToSeconds(config.fadeInDuration)"
+				@input="
+					(e) => setSecondsField('fadeInDuration', (e.target as HTMLInputElement).value)
+				" />
+		</div>
+		<div class="flex items-center gap-3">
+			<label :class="[su.label, '!mb-0 flex-1']">Fade out (s)</label>
+			<input
+				:class="[su.input, 'w-16 text-right']"
+				type="number"
+				step="0.1"
+				:value="msToSeconds(config.fadeOutDuration)"
+				@input="
+					(e) => setSecondsField('fadeOutDuration', (e.target as HTMLInputElement).value)
+				" />
+		</div>
+		<div class="flex items-center gap-3">
+			<label :class="[su.label, '!mb-0 flex-1']">Break (s)</label>
+			<input
+				:class="[su.input, 'w-16 text-right']"
+				type="number"
+				step="0.1"
+				:value="msToSeconds(config.cooldown)"
+				@input="
+					(e) => setSecondsField('cooldown', (e.target as HTMLInputElement).value)
+				" />
 		</div>
 	</div>
 </template>

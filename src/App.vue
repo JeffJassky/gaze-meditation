@@ -1,16 +1,27 @@
 <script setup lang="ts">
-// No specific setup needed for App.vue as it's now just a router host
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+// Only navigations that involve the immersive Theater route get a fade
+// transition — the rest of the app (studio editor, dashboard, etc.)
+// swaps instantly so normal navigation doesn't feel sluggish. We have
+// to skip the <transition> wrapper entirely for non-Theater routes
+// because Vue's default empty-name transition still applies `v-enter-*`
+// classes which inherit from the default fade styling.
+const router = useRouter()
+const animateRoute = ref(false)
+router.beforeEach((to, from) => {
+	animateRoute.value = to.name === 'theater' || from?.name === 'theater'
+})
 </script>
 
 <template>
 	<div class="w-full min-h-screen bg-black text-white">
 		<router-view v-slot="{ Component }">
-			<transition
-				name="fade"
-				mode="out-in"
-			>
+			<transition v-if="animateRoute" name="fade" mode="out-in">
 				<component :is="Component" />
 			</transition>
+			<component v-else :is="Component" />
 		</router-view>
 	</div>
 </template>

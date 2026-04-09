@@ -36,6 +36,7 @@ export const SESSION_AUDIENCE = [
   't4a',
   't4f',
   't4m',
+  't4t',
   'unspecified',
 ] as const;
 

@@ -10,6 +10,7 @@ export interface StillnessBehaviorOptions extends BehaviorOptions {
 export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 
 	public static override readonly requiredDevices = ['camera']
+	public static override readonly kind = 'hold' as const
 
 
 
