@@ -2,16 +2,17 @@
 import { computed } from 'vue'
 import { su } from '@new/components/ui/studioUi'
 import type { SessionAsset } from '@/services/sessions'
+import type { SceneConfig, SceneAudioConfig } from '@shared/types'
 
-const config = defineModel<Record<string, unknown>>({ required: true })
+const config = defineModel<SceneConfig>({ required: true })
 const props = defineProps<{ audioAssets: SessionAsset[] }>()
 
 /**
  * Read-or-create an audio subobject. Returning a computed that always has
  * the nested shape lets the template bind to fields without guards.
  */
-const audio = computed<Record<string, any>>({
-	get: () => (config.value.audio as Record<string, any>) ?? {},
+const audio = computed<SceneAudioConfig>({
+	get: () => config.value.audio ?? {},
 	set: (v) => (config.value.audio = v),
 })
 
@@ -69,8 +70,8 @@ const fx = computed(() => (audio.value.fx as Record<string, any>) ?? {})
 
 const fxAssetId = computed({
 	get: () => {
-		// Prefer the explicit assetId if present (new data), else resolve by
-		// matching the stored path against an asset's key (legacy data).
+		// Prefer the explicit assetId when present; otherwise resolve by
+		// matching the stored path against an asset's key.
 		const storedId = fx.value.assetId as string | undefined
 		if (storedId) {
 			const match = props.audioAssets.find((a) => a.id === storedId)

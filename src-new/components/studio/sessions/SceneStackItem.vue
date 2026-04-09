@@ -33,11 +33,11 @@ const configModel = computed({
 // --- Voice override --------------------------------------------------------
 const voicesState = inject(VOICES_KEY, undefined)
 const voiceOverrideId = computed({
-	get: () => (scene.value.config?.elevenlabsVoiceId as string | undefined) ?? '',
+	get: () => scene.value.config?.elevenlabsVoiceId ?? '',
 	set: (v: string) => {
 		if (!scene.value.config) scene.value.config = {}
 		if (v) scene.value.config.elevenlabsVoiceId = v
-		else delete (scene.value.config as Record<string, unknown>).elevenlabsVoiceId
+		else delete scene.value.config.elevenlabsVoiceId
 	},
 })
 // Effective voice id = scene override OR session default.
@@ -56,15 +56,15 @@ const currentVoiceName = computed(() => {
 // can see at a glance which scenes have overrides and roughly how they'll
 // look. We only apply what's meaningfully previewable in a dense list:
 // background color (as the scene item's background) and the two text
-// colors (voice → textColor, on-screen → secondaryTextColor). Anything
+// colors (voice → uiTextColor, on-screen → promptTextColor). Anything
 // else stays un-previewed.
 interface SceneTheme {
 	backgroundColor?: string
-	textColor?: string
-	secondaryTextColor?: string
+	uiTextColor?: string
+	promptTextColor?: string
 }
 const themeOverride = computed<SceneTheme | null>(() => {
-	const t = (scene.value.config as any)?.theme
+	const t = scene.value.config?.theme
 	if (!t || typeof t !== 'object') return null
 	return t as SceneTheme
 })
@@ -73,30 +73,28 @@ const themeOverride = computed<SceneTheme | null>(() => {
 // Summarises a few inspector panel states inline so the writer can see
 // at a glance which scenes do what without opening the inspector.
 const behaviorLabels = computed<string[]>(() => {
-	const sugs = (scene.value.config as any)?.behavior?.suggestions as
-		| Array<{ type: string }>
-		| undefined
+	const sugs = scene.value.config?.behavior?.suggestions
 	if (!sugs || sugs.length === 0) return []
 	return sugs.map((s) => BEHAVIOR_BY_TYPE[s.type]?.label ?? s.type)
 })
 const behaviorSummary = computed(() => behaviorLabels.value.join(' + '))
 const binauralHz = computed<number | null>(() => {
-	const hz = (scene.value.config as any)?.audio?.binaural?.hertz
+	const hz = scene.value.config?.audio?.binaural?.hertz
 	if (typeof hz !== 'number' || !Number.isFinite(hz)) return null
 	return hz
 })
-function msToDisplaySeconds(ms: unknown): number | null {
-	if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0) return null
+function msToDisplaySeconds(ms: number | undefined): number | null {
+	if (ms === undefined || !Number.isFinite(ms) || ms <= 0) return null
 	return Math.round((ms / 1000) * 10) / 10
 }
 const cooldownSeconds = computed<number | null>(() =>
-	msToDisplaySeconds((scene.value.config as any)?.cooldown),
+	msToDisplaySeconds(scene.value.config?.cooldown),
 )
 const fadeInSeconds = computed<number | null>(() =>
-	msToDisplaySeconds((scene.value.config as any)?.fadeInDuration),
+	msToDisplaySeconds(scene.value.config?.fadeInDuration),
 )
 const fadeOutSeconds = computed<number | null>(() =>
-	msToDisplaySeconds((scene.value.config as any)?.fadeOutDuration),
+	msToDisplaySeconds(scene.value.config?.fadeOutDuration),
 )
 
 // --- Handle flyout ---------------------------------------------------------
@@ -235,8 +233,8 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 			<div class="flex-1 min-w-0">
 				<SceneTextPanel
 					v-model="configModel"
-					:voice-color="themeOverride?.textColor"
-					:text-color="themeOverride?.secondaryTextColor"
+					:voice-color="themeOverride?.uiTextColor"
+					:text-color="themeOverride?.promptTextColor"
 					@advance="$emit('advance')"
 					@delete-backward="$emit('deleteBackward')" />
 			</div>

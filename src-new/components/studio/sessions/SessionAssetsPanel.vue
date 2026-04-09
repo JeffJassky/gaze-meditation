@@ -2,9 +2,9 @@
 import { ref } from 'vue'
 import { su } from '@new/components/ui/studioUi'
 import SessionAssetUploader from './SessionAssetUploader.vue'
-import type { SessionAsset, SessionDoc } from '@/services/sessions'
+import type { SessionAsset, Session } from '@/services/sessions'
 
-const session = defineModel<SessionDoc>({ required: true })
+const session = defineModel<Session>({ required: true })
 
 /**
  * Local list of files currently uploading. Each one mounts a

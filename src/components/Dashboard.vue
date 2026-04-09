@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import type { User, SessionLog } from '../types'
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService'
 import { historyApi, type SessionRun } from '../services/history'
-import { sessionsApi, type SessionDoc } from '../services/sessions'
+import { sessionsApi, type Session } from '../services/sessions'
 import { audioSession } from '../services/audio'
 import { useRouter } from 'vue-router'
 import { auth } from '../state/auth'
@@ -16,7 +16,7 @@ import SessionDetail from './SessionDetail.vue'
  * and whenever the auth user changes. No hardcoded lists anymore — the
  * database is the sole source of truth.
  */
-const availableSessions = ref<SessionDoc[]>([])
+const availableSessions = ref<Session[]>([])
 const sessionsLoading = ref(false)
 const sessionsError = ref<string | null>(null)
 
@@ -42,7 +42,7 @@ async function loadAvailableSessions() {
  * The imported tutorial session, identified by slug. Used by the
  * "Start Introduction" CTA. Null until the sessions list resolves.
  */
-const tutorialSession = computed<SessionDoc | null>(() => {
+const tutorialSession = computed<Session | null>(() => {
 	return (
 		availableSessions.value.find((s) => s.slug === 'initial-training-short') ??
 		null
@@ -54,7 +54,7 @@ const tutorialSession = computed<SessionDoc | null>(() => {
  * and anything flagged as hidden via settings. Sorted by creation date
  * so newer sessions appear first.
  */
-const fullSessions = computed<SessionDoc[]>(() => {
+const fullSessions = computed<Session[]>(() => {
 	return availableSessions.value
 		.filter((s) => s.slug !== 'initial-training-short')
 		.slice()
@@ -253,7 +253,7 @@ const handleCreateUser = () => {
 	activeTab.value = 'start'
 }
 
-const handleStartSession = async (program: SessionDoc) => {
+const handleStartSession = async (program: Session) => {
 	if (!selectedUser.value) return
 
 	// Start transition

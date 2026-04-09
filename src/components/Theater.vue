@@ -2,7 +2,6 @@
 import { ref, shallowRef, onMounted, onUnmounted, watch, computed, provide } from 'vue'
 import {
 	SessionState,
-	type Session,
 	type SessionLog,
 	type SessionMetric,
 	type ThemeConfig,
@@ -19,17 +18,14 @@ import { saveSession } from '../services/storageService'
 import { historyApi } from '../services/history'
 import { getSceneEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
 import { assetUrl } from '../utils/assetUrl'
-import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
 import { playOneShot } from '../services/audio/oneShot'
-import { speechService } from '../services/speechService'
 import { voiceService } from '../services/voiceService'
-import { accelerometer } from '../../src-new/services'
+import { camera, microphone, accelerometer } from '../../src-new/services'
 import { playbackSpeed } from '../state/playback'
 import { useRouter } from 'vue-router'
-import { sessionsApi, type SessionDoc } from '../services/sessions'
-import { sessionDocToLegacy } from '../utils/sessionAdapter'
+import { sessionsApi, type Session } from '../services/sessions'
 
 interface TheaterProps {
 	program?: Session
@@ -86,11 +82,9 @@ const router = useRouter()
 
 /**
  * List of sessions shown in the in-Theater "Select a Session" grid that
- * appears between plays. Populated once on mount from `/sessions?mine=1`
- * and kept in SessionDoc shape (what SessionCard expects). Converted to
- * the legacy runtime shape on demand when the user actually picks one.
+ * appears between plays. Populated once on mount from `/sessions?mine=1`.
  */
-const FULL_SESSIONS = ref<SessionDoc[]>([])
+const FULL_SESSIONS = ref<Session[]>([])
 
 const activeSession = shallowRef<Session | null>(null)
 const sessionReport = ref<SessionReport | undefined>(undefined)
@@ -114,11 +108,11 @@ const cleanupSession = (fadeDuration: number = 0.5) => {
 	// Ensure all audio is stopped
 	audioSession.binaural.stop(fadeDuration)
 	audioSession.musicLooper.stop(fadeDuration)
-	speechService.stop()
+	microphone.stop()
 	voiceService.stop()
 	
 	// Stop hardware
-	faceMeshService.stop()
+	camera.stop()
 	accelerometer.stop()
 	
 	activeFxStops.value.forEach(stop => stop(fadeDuration))
@@ -270,7 +264,7 @@ const currentResolvedTheme = computed<ThemeConfig>(() => {
 	const scene = currentScene.value
 	const session = activeSession.value
 	if (scene && session) {
-		return getSceneEffectiveTheme(session as Session, scene as any)
+		return getSceneEffectiveTheme(session, scene as any)
 	}
 	return session?.theme || DEFAULT_THEME
 })
@@ -298,7 +292,7 @@ const initSession = async () => {
 	// entirely so the writer never sees device prompts on editor load.
 	if (biofeedbackEnabled.value) {
 		activeSession.value!.scenes.forEach(s => {
-			s.behavior?.suggestions?.forEach(sig => {
+			s.config.behavior?.suggestions?.forEach(sig => {
 				const BehaviorClass = Scene.getBehaviorClass(sig.type)
 				if (BehaviorClass) {
 					const devices = (BehaviorClass as any).requiredDevices || []
@@ -420,8 +414,7 @@ const initSession = async () => {
 
 	if (needsMicrophone) {
 		try {
-			await speechService.init()
-			await speechService.start()
+			await microphone.start()
 		} catch (e) {
 			console.warn('Speech Initialization Failed', e)
 			if (!props.embedded) {
@@ -439,9 +432,9 @@ const initSession = async () => {
 
 	if (needsCamera) {
 		try {
-			await faceMeshService.init()
+			await camera.start()
 		} catch (e) {
-			console.error('FaceMesh Initialization Failed', e)
+			console.error('Camera Initialization Failed', e)
 			if (!props.embedded) {
 				alert('Camera access required for this session.')
 				emit('exit')
@@ -452,39 +445,11 @@ const initSession = async () => {
 	}
 	loadingProgress.value = 90
 
-	// Prepend Reminders
-	const reminders: Scene[] = []
-	const reminderText: string[] = []
-	const shouldSkipIntro = activeSession.value.skipIntro === true
-
-	if (!shouldSkipIntro) {
-		if (needsCamera && needsMicrophone) {
-			reminderText.push('Find yourself in a quiet, well-lit space ~ for optimal biofeedback.')
-		} else if (needsMicrophone) {
-			reminderText.push('Find yourself in a quiet space ~ for optimal biofeedback.')
-		} else if (needsCamera) {
-			reminderText.push('Find yourself in a well-lit space ~ for optimal biofeedback.')
-		}
-
-		reminders.push(
-			new Scene({
-				id: 'reminder-dnd',
-				text: [
-					...reminderText,
-					'Use headphones for best results.',
-					'To avoid interruptions,',
-					'consider putting your device ~ into do not disturb mode.'
-				]
-			})
-		)
-	}
-
 	// Skip behavior initialization whenever biofeedback is disabled. Configs
 	// are passed by reference so in-place editor edits flow through live.
-	const programScenes = activeSession.value.scenes.map(
+	sessionScenes.value = activeSession.value.scenes.map(
 		s => new Scene(s, { skipBehaviors: !biofeedbackEnabled.value })
 	)
-	sessionScenes.value = [...reminders, ...programScenes]
 	console.log('[Theater] Scenes Prepared:', sessionScenes.value.length)
 
 	loadingProgress.value = 100
@@ -750,7 +715,7 @@ const nextScene = (index: number) => {
 		})
 	}
 
-	// Handle FX (Legacy / Direct)
+	// Handle scene-level FX (one-shot audio).
 	if (currentScene.value?.config.audio?.fx) {
 		const fx = currentScene.value.config.audio.fx
 		playOneShot(
@@ -913,10 +878,6 @@ const finishSession = () => {
 		return
 	}
 
-	// (Legacy code here used to short-circuit the tutorial session back
-	// into SESSION_STATE.SELECTION; we now treat every session the same
-	// and always generate a report at the end.)
-
 	// Calculate Report
 	const successfulSceneIds = new Set(
 		metricsRef.value.filter(m => m.success).map(m => m.sceneId)
@@ -1012,15 +973,14 @@ const handleSessionSelect = async (program: Session) => {
 }
 
 onMounted(async () => {
-	// Initialize activeSession — either from a directly-passed legacy
-	// Session (used by SessionLivePreview when it already has the doc)
-	// or by fetching from /sessions/:id and converting.
+	// Initialize activeSession — either from a directly-passed Session
+	// (used by SessionLivePreview when it already has the doc) or by
+	// fetching from /sessions/:id.
 	if (props.program) {
 		activeSession.value = props.program
 	} else if (props.sessionId) {
 		try {
-			const doc = await sessionsApi.get(props.sessionId)
-			activeSession.value = sessionDocToLegacy(doc)
+			activeSession.value = await sessionsApi.get(props.sessionId)
 		} catch (e) {
 			console.error(`[Theater] Failed to load session ${props.sessionId}`, e)
 			exitSession()
@@ -1111,14 +1071,14 @@ defineExpose({
 		:style="{
 			'--speed-factor': playbackSpeed,
 			backgroundColor: currentResolvedTheme.backgroundColor || '#000',
-			color: currentResolvedTheme.textColor || '#fff',
+			color: currentResolvedTheme.uiTextColor || '#fff',
 		}"
 		@mousemove="showControls"
 		@click="handleScreenClick"
 	>
 		<!-- Video Background -->
 		<video
-			v-if="activeSession?.videoBackground"
+			v-if="activeSession?.settings?.videoBackground"
 			autoplay
 			loop
 			muted
@@ -1127,35 +1087,26 @@ defineExpose({
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		>
 			<source
-				:src="assetUrl(activeSession!.videoBackground)"
+				:src="assetUrl(activeSession!.settings!.videoBackground)"
 				type="video/mp4"
 			/>
 		</video>
 
 		<!-- Spiral Background -->
 		<div
-			v-if="activeSession?.spiralBackground"
-			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
+			v-if="activeSession?.settings?.spiralBackground"
+			class="spiral-bg spiral-rotation"
 			:style="{
-				backgroundImage: `url(${assetUrl(activeSession!.spiralBackground)})`,
-				backgroundSize: 'cover',
-				backgroundPosition: 'center',
-				width: '150vmax',
-				height: '150vmax',
-				filter: 'blur(8px)',
-				opacity: 0.8
+				backgroundImage: `url(${assetUrl(activeSession!.settings!.spiralBackground)})`,
+				filter: 'blur(8px)'
 			}"
 		></div>
 
 		<div
-			v-if="activeSession?.spiralBackground"
-			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
+			v-if="activeSession?.settings?.spiralBackground"
+			class="spiral-bg spiral-rotation"
 			:style="{
-				backgroundImage: `url(${assetUrl(activeSession!.spiralBackground)})`,
-				backgroundSize: 'cover',
-				backgroundPosition: 'center',
-				width: '150vmax',
-				height: '150vmax',
+				backgroundImage: `url(${assetUrl(activeSession!.settings!.spiralBackground)})`,
 				filter: 'blur(3px)',
 				'-webkit-mask-image': 'radial-gradient(circle, black 0%, transparent 20%)',
 				'mask-image': 'radial-gradient(circle, black 0%, transparent 20%)'
@@ -1265,7 +1216,7 @@ defineExpose({
 							v-for="prog in FULL_SESSIONS"
 							:key="prog.id"
 							:program="prog"
-							@start="(doc) => handleSessionSelect(sessionDocToLegacy(doc))"
+							@start="(doc) => handleSessionSelect(doc)"
 						/>
 					</div>
 
@@ -1415,6 +1366,17 @@ defineExpose({
 .scene-leave-from {
 	opacity: 1;
 	transform: scale(1);
+}
+
+.spiral-bg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 150vmax;
+	height: 150vmax;
+	background-size: cover;
+	background-position: center;
+	z-index: 1;
 }
 
 .spiral-rotation {

@@ -6,7 +6,7 @@ const props = defineProps<{
   velocity: number // Breath velocity for text guidance
   theme: {
     positiveColor?: string
-    secondaryTextColor?: string
+    promptTextColor?: string
     [key: string]: any
   }
   duration?: number // Optional duration for progress ring if needed, though Scene handles generic progress

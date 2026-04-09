@@ -40,31 +40,32 @@ float random(vec2 st) {
 
 void main() {
     vec2 uv = vUv;
-    
+
+    // Fully transparent when no glitch is active — lets layers behind
+    // (spiral background, video, etc.) show through.
+    if (uIntensity <= 0.0) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+
     // Glitch Displacement
     float wave = sin(uv.y * 10.0 + uTime * 20.0) * 0.02 * uIntensity;
     float noiseVal = random(vec2(uTime, uv.y));
-    
+
     if (noiseVal < 0.2 * uIntensity) {
         uv.x += wave * 5.0;
     }
-    
-    // Chromatic Aberration
-    // float r = 0.01 * uIntensity;
-    // float g = 0.005 * uIntensity;
-    
-    // Simple grid pattern background
+
+    // Grid pattern visible only during glitch
     float grid = step(0.98, fract(uv.x * 20.0)) + step(0.98, fract(uv.y * 20.0));
     vec3 baseColor = vec3(grid * 0.1);
 
-    if (uIntensity > 0.0) {
-         // Red/Blue shift
-        baseColor.r += step(0.5, random(vec2(uv.y, uTime))) * uIntensity; 
-        baseColor.g *= 1.0 - uIntensity;
-        baseColor.b *= 1.0 - uIntensity;
-    }
+    // Red/Blue shift
+    baseColor.r += step(0.5, random(vec2(uv.y, uTime))) * uIntensity;
+    baseColor.g *= 1.0 - uIntensity;
+    baseColor.b *= 1.0 - uIntensity;
 
-    gl_FragColor = vec4(baseColor, 1.0);
+    gl_FragColor = vec4(baseColor, uIntensity);
 }
 `;
 
@@ -110,6 +111,7 @@ const initThree = () => {
   backgroundMaterial = new THREE.ShaderMaterial({
     vertexShader: GLITCH_VERTEX,
     fragmentShader: GLITCH_FRAGMENT,
+    transparent: true,
     uniforms: {
       uTime: { value: 0 },
       uIntensity: { value: 0 }

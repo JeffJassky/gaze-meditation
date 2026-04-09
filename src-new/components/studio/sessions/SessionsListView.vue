@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import StudioShell from '@new/components/ui/StudioShell.vue'
 import { su } from '@new/components/ui/studioUi'
-import { sessionsApi, type SessionDoc, type SessionStatus } from '@/services/sessions'
+import { sessionsApi, type Session, type SessionStatus } from '@/services/sessions'
 
 const router = useRouter()
 
@@ -16,7 +16,7 @@ const visibilityFilter = ref<'' | 'private' | 'public'>('')
 const sortBy = ref<'updated' | 'title'>('updated')
 const groupBy = ref<'none' | 'status' | 'audience' | 'visibility'>('none')
 
-const items = ref<SessionDoc[]>([])
+const items = ref<Session[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -72,7 +72,7 @@ const filtered = computed(() => {
 
 const grouped = computed(() => {
 	if (groupBy.value === 'none') return [{ label: '', items: filtered.value }]
-	const map = new Map<string, SessionDoc[]>()
+	const map = new Map<string, Session[]>()
 	for (const s of filtered.value) {
 		const key =
 			groupBy.value === 'status'
@@ -100,7 +100,7 @@ async function createNew() {
 	}
 }
 
-async function duplicate(s: SessionDoc) {
+async function duplicate(s: Session) {
 	const copy = await sessionsApi.create({
 		title: `${s.title} (copy)`,
 		description: s.description,
@@ -115,7 +115,7 @@ async function duplicate(s: SessionDoc) {
 	router.push(`/studio/sessions/${copy.id}`)
 }
 
-async function remove(s: SessionDoc) {
+async function remove(s: Session) {
 	if (!confirm(`Delete "${s.title}"? This cannot be undone.`)) return
 	await sessionsApi.delete(s.id)
 	items.value = items.value.filter((x) => x.id !== s.id)

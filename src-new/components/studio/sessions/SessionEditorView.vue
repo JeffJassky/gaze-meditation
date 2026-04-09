@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import StudioShell from '@new/components/ui/StudioShell.vue'
 import StudioEditorToolbar from './StudioEditorToolbar.vue'
@@ -11,11 +11,12 @@ import { useSceneSelection } from './composables/useSceneSelection'
 import { useSceneHistory } from './composables/useSceneHistory'
 import { useSoftDelete } from './composables/useSoftDelete'
 import { useStudioShortcuts } from './composables/useStudioShortcuts'
+import { useDirtyTracking } from '@new/composables/useDirtyTracking'
 import ToastStack from './ToastStack.vue'
 import {
 	sessionsApi,
 	type SceneBlock,
-	type SessionDoc,
+	type Session,
 	type SessionAsset,
 } from '@/services/sessions'
 import { assetsApi, type AssetDoc } from '@/services/assets'
@@ -35,8 +36,8 @@ import { VOICES_KEY } from './voicesKey'
  */
 const route = useRoute()
 
-const session = ref<SessionDoc | null>(null)
-const snapshot = ref<string>('')
+const session = ref<Session | null>(null)
+const { dirty, markClean } = useDirtyTracking(session)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref<string | null>(null)
@@ -44,16 +45,12 @@ const metaDrawerOpen = ref(false)
 const justSaved = ref(false)
 const focusRequest = ref<FocusRequest | null>(null)
 
-const dirty = computed(() =>
-	session.value ? JSON.stringify(session.value) !== snapshot.value : false,
-)
-
 // --- Asset pool ------------------------------------------------------------
 // The editor's audio picker draws from two places, merged:
-//   1. Assets embedded in the current SessionDoc (legacy + newly uploaded
-//      via the assets drawer before a full reload).
+//   1. Assets embedded in the current Session (those uploaded via the
+//      assets drawer before a full reload).
 //   2. The shared Asset collection (all of the owner's assets across every
-//      session — populated by the legacy import + future uploads).
+//      session).
 // Merging by `key` dedupes when the same file appears in both places.
 const sharedAudioAssets = ref<AssetDoc[]>([])
 async function loadSharedAudioAssets() {
@@ -154,7 +151,7 @@ async function load() {
 			]
 		}
 		session.value = doc
-		snapshot.value = JSON.stringify(session.value)
+		markClean()
 		// Select the first scene so the inspector and preview have something
 		// to render immediately.
 		if (doc.scenes[0]) selection.select(doc.scenes[0].id)
@@ -187,7 +184,7 @@ async function save() {
 			settings: s.settings,
 		})
 		session.value = updated
-		snapshot.value = JSON.stringify(updated)
+		markClean()
 		// Reset history baseline so undo can't cross the save boundary —
 		// crossing it would silently re-dirty the doc against the server.
 		history.reset()
@@ -209,7 +206,7 @@ async function togglePublish() {
 			session.value.status === 'draft'
 				? await sessionsApi.publish(session.value.id)
 				: await sessionsApi.unpublish(session.value.id)
-		snapshot.value = JSON.stringify(session.value)
+		markClean()
 	} catch (e) {
 		error.value = (e as Error).message
 	}
@@ -335,20 +332,11 @@ useStudioShortcuts({
 	},
 })
 
-// Warn on accidental close/navigation when unsaved.
-function onBeforeUnload(e: BeforeUnloadEvent) {
-	if (dirty.value) {
-		e.preventDefault()
-		e.returnValue = ''
-	}
-}
 onMounted(() => {
 	load()
 	loadVoices()
 	loadSharedAudioAssets()
-	window.addEventListener('beforeunload', onBeforeUnload)
 })
-onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 
 // Reload if the route id changes (e.g. duplicate → new edit page).
 watch(

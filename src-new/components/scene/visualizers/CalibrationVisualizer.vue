@@ -6,7 +6,7 @@ const props = defineProps<{
   isSuccess: boolean
   displayNumber: number
   theme: {
-    textColor: string
+    uiTextColor: string
     accentColor: string
     positiveColor?: string
     [key: string]: any
@@ -37,7 +37,7 @@ const bgColor = computed(() => {
         class="absolute inset-0 bg-white opacity-20 rounded-full animate-ping"
       ></div>
 
-      <span class="text-4xl font-mono font-bold drop-shadow-lg z-10" :style="{ color: theme.textColor }">
+      <span class="text-4xl font-mono font-bold drop-shadow-lg z-10" :style="{ color: theme.uiTextColor }">
         {{ isSuccess ? '✓' : displayNumber }}
       </span>
     </div>

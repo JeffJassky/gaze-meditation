@@ -2,7 +2,7 @@
 import { computed, inject } from 'vue'
 import { RouterLink } from 'vue-router'
 import { su } from '@new/components/ui/studioUi'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 import { VOICES_KEY } from './voicesKey'
 
 /**
@@ -12,7 +12,7 @@ import { VOICES_KEY } from './voicesKey'
  * Uses `defineModel` so the parent editor's `session` ref is the single
  * source of truth — no internal copies to keep in sync.
  */
-const session = defineModel<SessionDoc>({ required: true })
+const session = defineModel<Session>({ required: true })
 
 const emit = defineEmits<{
 	publish: []

@@ -2,11 +2,9 @@ import { apiRequest } from './api'
 
 /**
  * Client-side wrappers for /assets routes. Mirrors the Asset model on
- * the server (see server/src/models/Asset.ts).
- *
- * The shape here intentionally matches the legacy `SessionAsset` subdoc
- * so the editor can mix embedded session assets and the shared pool in
- * the same list during the Phase-1→Phase-2 transition.
+ * the server (see server/src/models/Asset.ts). The shape matches
+ * `SessionAsset` so the editor can render embedded session assets and
+ * shared-pool assets in a single list.
  */
 
 export type AssetKind = 'audio' | 'image' | 'video'

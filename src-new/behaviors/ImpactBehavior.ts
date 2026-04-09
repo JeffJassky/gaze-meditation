@@ -2,6 +2,7 @@ import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { accelerometer } from '../services'
 import ImpactVisualizer from '../components/scene/visualizers/ImpactVisualizer.vue'
+import { registerBehavior } from './registry'
 
 export interface ImpactBehaviorOptions extends BehaviorOptions {
 	impacts?: number
@@ -50,3 +51,5 @@ export class ImpactBehavior extends Behavior<ImpactBehaviorOptions> {
 		}
 	}
 }
+
+registerBehavior('motion:impact', ImpactBehavior)

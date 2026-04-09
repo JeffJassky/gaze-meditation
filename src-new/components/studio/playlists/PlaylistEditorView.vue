@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import StudioShell from '@new/components/ui/StudioShell.vue'
 import { su } from '@new/components/ui/studioUi'
 import PlaylistSessionPicker from './PlaylistSessionPicker.vue'
+import { useDirtyTracking } from '@new/composables/useDirtyTracking'
 import { playlistsApi, type PlaylistDoc } from '@/services/playlists'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 
 /**
  * Playlist editor: metadata card + ordered session list with drag/drop.
@@ -15,16 +16,12 @@ import type { SessionDoc } from '@/services/sessions'
 const route = useRoute()
 
 const playlist = ref<PlaylistDoc | null>(null)
-const sessionsById = ref(new Map<string, SessionDoc>())
-const snapshot = ref('')
+const sessionsById = ref(new Map<string, Session>())
+const { dirty, markClean } = useDirtyTracking(playlist)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref<string | null>(null)
 const pickerOpen = ref(false)
-
-const dirty = computed(() =>
-	playlist.value ? JSON.stringify(playlist.value) !== snapshot.value : false,
-)
 
 async function load() {
 	loading.value = true
@@ -32,7 +29,7 @@ async function load() {
 		const p = await playlistsApi.get(String(route.params.id), true)
 		playlist.value = p
 		sessionsById.value = new Map((p.sessionDocs ?? []).map((s) => [s.id, s]))
-		snapshot.value = JSON.stringify(p)
+		markClean()
 	} catch (e) {
 		error.value = (e as Error).message
 	} finally {
@@ -52,7 +49,7 @@ async function save() {
 			sessions: p.sessions,
 		})
 		playlist.value = { ...updated, sessionDocs: p.sessionDocs }
-		snapshot.value = JSON.stringify(playlist.value)
+		markClean()
 	} catch (e) {
 		error.value = (e as Error).message
 	} finally {
@@ -60,7 +57,7 @@ async function save() {
 	}
 }
 
-function onPick(s: SessionDoc) {
+function onPick(s: Session) {
 	if (!playlist.value) return
 	if (!playlist.value.sessions.includes(s.id)) {
 		playlist.value.sessions = [...playlist.value.sessions, s.id]
@@ -89,17 +86,9 @@ function onDrop(target: number) {
 	dragIndex.value = null
 }
 
-function onBeforeUnload(e: BeforeUnloadEvent) {
-	if (dirty.value) {
-		e.preventDefault()
-		e.returnValue = ''
-	}
-}
 onMounted(() => {
 	load()
-	window.addEventListener('beforeunload', onBeforeUnload)
 })
-onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 </script>
 
 <template>

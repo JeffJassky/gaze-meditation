@@ -23,33 +23,33 @@ const configModel = computed({
 })
 
 const themeOverrideEnabled = ref(
-	!!(scene.value.config as any)?.theme &&
-		Object.keys(((scene.value.config as any)?.theme ?? {}) as object).length > 0,
+	!!scene.value.config?.theme &&
+		Object.keys(scene.value.config.theme).length > 0,
 )
 
 watch(
 	() => scene.value.id,
 	() => {
-		const t = (scene.value.config as any)?.theme
+		const t = scene.value.config?.theme
 		themeOverrideEnabled.value = !!t && Object.keys(t).length > 0
 	},
 )
 
 watch(themeOverrideEnabled, (v) => {
-	if (!v && (scene.value.config as any)?.theme !== undefined) {
-		delete (scene.value.config as any).theme
-	} else if (v && !(scene.value.config as any)?.theme) {
-		;(scene.value.config as any).theme = {}
+	if (!v && scene.value.config?.theme !== undefined) {
+		delete scene.value.config.theme
+	} else if (v && !scene.value.config?.theme) {
+		scene.value.config.theme = {}
 	}
 })
 
 const behaviorCount = computed(() => {
-	const b = (scene.value.config as any)?.behavior
+	const b = scene.value.config?.behavior
 	return Array.isArray(b?.suggestions) ? b.suggestions.length : 0
 })
 
 const hasAudio = computed(() => {
-	const a = (scene.value.config as any)?.audio
+	const a = scene.value.config?.audio
 	return !!(a?.binaural || a?.fx?.path)
 })
 </script>

@@ -8,7 +8,7 @@ const props = defineProps<{
 	progress: number // 0-100
 	theme: {
 		accentColor: string
-		textColor: string
+		uiTextColor: string
 		positiveColor?: string
 		[key: string]: any
 	}

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { su } from '@new/components/ui/studioUi'
+import type { SceneConfig } from '@shared/types'
 
-const config = defineModel<Record<string, unknown>>({ required: true })
+const config = defineModel<SceneConfig>({ required: true })
 
 // All three timing fields (duration, fadeOutDuration, cooldown) are stored
 // in milliseconds to match existing program data and what the runtime
@@ -11,14 +12,14 @@ function msToSeconds(ms: unknown): number | '' {
 	if (typeof ms !== 'number' || Number.isNaN(ms)) return ''
 	return ms / 1000
 }
-function setSecondsField(key: string, raw: string) {
+function setSecondsField(key: 'duration' | 'fadeInDuration' | 'fadeOutDuration' | 'cooldown', raw: string) {
 	if (raw === '') {
-		delete (config.value as any)[key]
+		delete config.value[key]
 		return
 	}
 	const n = Number(raw)
 	if (!Number.isFinite(n)) return
-	;(config.value as any)[key] = Math.round(n * 1000)
+	config.value[key] = Math.round(n * 1000)
 }
 </script>
 

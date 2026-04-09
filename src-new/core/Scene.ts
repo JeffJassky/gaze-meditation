@@ -1,48 +1,16 @@
 import { markRaw, ref, type Ref } from 'vue'
 import { type SceneConfig, type BehaviorSuggestion } from '@/types'
-import {
-	NodBehavior,
-	StillnessBehavior,
-	NoBlinkBehavior,
-	CloseEyesBehavior,
-	OpenEyesBehavior,
-	SpeechBehavior,
-	TypeBehavior,
-	RelaxJawBehavior,
-	TongueOutBehavior,
-	LeftGazeBehavior,
-	RightGazeBehavior,
-	UpGazeBehavior,
-	DownGazeBehavior,
-	FormBehavior,
-	MotionBehavior,
-	ImpactBehavior,
-	Behavior
-} from '@new/behaviors'
+import { type SceneBlock } from '@/services/sessions'
+// Side-effect import: each behavior module calls registerBehavior() at load
+// time, populating the registry. Importing the barrel ensures every behavior
+// is registered before Scene tries to look anything up.
+import { Behavior } from '@new/behaviors'
+import '@new/behaviors'
+import { getBehaviorClass } from '@new/behaviors/registry'
 import SceneView from '@new/components/scene/Scene.vue'
 import { voiceService } from '@/services/voiceService'
 import { playbackSpeed } from '@/state/playback'
 import { calculateDuration } from '@/utils/time'
-
-const BEHAVIOR_REGISTRY: Record<string, any> = {
-	'head:nod': NodBehavior,
-	'head:shake': NodBehavior,
-	'head:still': StillnessBehavior,
-	'eyes:no-blink': NoBlinkBehavior,
-	'eyes:close': CloseEyesBehavior,
-	'eyes:open': OpenEyesBehavior,
-	'speech:speak': SpeechBehavior,
-	type: TypeBehavior,
-	'mouth:relax': RelaxJawBehavior,
-	'tongue:out': TongueOutBehavior,
-	'head:left': LeftGazeBehavior,
-	'head:right': RightGazeBehavior,
-	'head:up': UpGazeBehavior,
-	'head:down': DownGazeBehavior,
-	'form:submit': FormBehavior,
-	'motion:move': MotionBehavior,
-	'motion:impact': ImpactBehavior
-}
 
 export interface SceneContext {
 	complete(success: boolean, metrics?: any, result?: any): void
@@ -71,14 +39,14 @@ export class Scene {
 	private isMediaSequenceComplete = false
 	private pendingBehaviorResult: any = null
 
-	constructor(config: SceneConfig, options: { skipBehaviors?: boolean } = {}) {
+	constructor(block: SceneBlock, options: { skipBehaviors?: boolean } = {}) {
 		// Hold config by reference — do NOT clone. The studio editor mutates
 		// scene configs in place (text, voice, audio, theme, …) and the
 		// runtime must see those edits on the next scene start. Defaults like
 		// cooldown are provided via getters that read the live config, so we
 		// don't need to materialize them onto a copy.
-		this.config = config
-		this.id = config.id || `scene_${Math.random().toString(36).substring(2, 11)}`
+		this.config = block.config
+		this.id = block.id
 		// `skipBehaviors` lets callers (e.g. the studio editor's live preview)
 		// instantiate a Scene without wiring up camera / mic / accelerometer
 		// behaviors. Voice + text + audio still run normally.
@@ -143,17 +111,17 @@ export class Scene {
 			...suggestion.options,
 		}
 
-		const entry = BEHAVIOR_REGISTRY[suggestion.type]
-		if (!entry) {
+		const BehaviorClass = getBehaviorClass(suggestion.type)
+		if (!BehaviorClass) {
 			console.warn(`[Scene] Unknown behavior type: ${suggestion.type}`)
 			return null
 		}
 
-		return new entry(options)
+		return new BehaviorClass(options)
 	}
 
-	public static getBehaviorClass(type: string): any {
-		return BEHAVIOR_REGISTRY[type] || null
+	public static getBehaviorClass(type: string) {
+		return getBehaviorClass(type) || null
 	}
 
 	/**

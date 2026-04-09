@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { sessionTracker } from '../services/sessionTracker'
-import { breathAnalyzer } from '../services/analysis/breathAnalyzer'
-import { faceMeshService } from '../services/faceMeshService'
+import { breathRegion, eyesRegion } from '../../src-new/services'
 
 const width = 300
 const height = 60
@@ -69,16 +68,14 @@ const createPath = (key: 'stillness' | 'breathRate' | 'blinkRate' | 'blinkSpeed'
 }
 
 const metrics = computed(() => sessionTracker.liveMetrics)
-const breathState = computed(() => breathAnalyzer.state.value)
-const breathSignal = computed(() => breathAnalyzer.fusedSignal.value.toFixed(3))
-const breathConf = computed(() => (breathAnalyzer.confidence.value * 100).toFixed(0))
-const activeAxis = computed(() => breathAnalyzer.activeAxis.value)
-const breathDirection = computed(() => breathAnalyzer.crossingState.value)
+const breathState = computed(() => breathRegion.state)
+const breathSignal = computed(() => breathRegion.fusedSignal.toFixed(3))
+const breathConf = computed(() => (breathRegion.confidence * 100).toFixed(0))
+const activeAxis = computed(() => breathRegion.activeAxis)
+const breathDirection = computed(() => breathRegion.crossingState)
 
-// Accessing private property via any cast for debug, or we should expose it in SessionTracker.
-// But we can check raw blinkDetected from faceMeshService to see if blinks are firing at all.
-const blinkDetected = computed(() => faceMeshService.debugData.blinkDetected)
-const eyeOpenness = computed(() => faceMeshService.debugData.eyeOpennessNormalized.toFixed(2))
+const blinkDetected = computed(() => eyesRegion.blinkDetected)
+const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 
 </script>
 

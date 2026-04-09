@@ -1,5 +1,6 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, headRegion } from '../services'
+import { registerBehavior } from './registry'
 
 export interface NodBehaviorOptions extends BehaviorOptions {
 	type?: 'YES' | 'NO'
@@ -56,3 +57,5 @@ export class NodBehavior extends Behavior<NodBehaviorOptions> {
 		}
 	}
 }
+
+registerBehavior(['head:nod', 'head:shake'], NodBehavior)

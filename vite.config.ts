@@ -306,13 +306,14 @@ export default defineConfig(({ mode }) => {
 		resolve: {
 			alias: {
 				'@': path.resolve(__dirname, './src'),
-				'@new': path.resolve(__dirname, './src-new')
+				'@new': path.resolve(__dirname, './src-new'),
+				'@shared': path.resolve(__dirname, './shared')
 			}
 		},
 		server: {
 			headers: {
 				'Cross-Origin-Opener-Policy': 'same-origin',
-				'Cross-Origin-Embedder-Policy': 'require-corp'
+				'Cross-Origin-Embedder-Policy': 'credentialless'
 			}
 		}
 	}

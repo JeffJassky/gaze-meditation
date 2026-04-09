@@ -1,5 +1,7 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, mouthRegion } from '../services'
+import { TONGUE_DURATION_DEFAULT, MOUTH_THRESHOLD_DEFAULT } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface TongueOutBehaviorOptions extends BehaviorOptions {
 	threshold?: number
@@ -10,9 +12,9 @@ export class TongueOutBehavior extends Behavior<TongueOutBehaviorOptions> {
 
 	constructor(options: TongueOutBehaviorOptions) {
 		super({
-			duration: 2000,
+			duration: TONGUE_DURATION_DEFAULT,
 			failOnTimeout: true,
-			threshold: 0.15,
+			threshold: MOUTH_THRESHOLD_DEFAULT,
 			...options
 		})
 		this.updateData({ score: 0, isDetected: false })
@@ -40,3 +42,5 @@ export class TongueOutBehavior extends Behavior<TongueOutBehaviorOptions> {
 		this.setConditionMet(isDetected)
 	}
 }
+
+registerBehavior('tongue:out', TongueOutBehavior)

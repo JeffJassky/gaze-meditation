@@ -4,34 +4,18 @@ import { assetsApi } from './assets'
 import { assetUrl } from '../utils/assetUrl'
 
 /**
- * Resolves a voice hash to a loadable URL. Checks the shared Asset
- * collection first (fast DB index lookup), then falls back to the
- * legacy per-program cache URL. Always returns a string — callers
- * HEAD the result to decide whether to fall through to generation.
+ * Resolves a voice hash to an asset key (or `null` if no such asset
+ * exists). Callers use the result to load from cache; a null return
+ * means the voice needs to be generated.
  */
-async function resolveVoiceUrl(
-	hash: string,
-	programId: string,
-): Promise<string> {
-	// 1) Asset collection shortcut — handles both imported legacy voices
-	// (migrated with meta.voiceHash set) and future server-generated
-	// voices that register themselves in the collection.
+async function resolveVoiceKey(hash: string): Promise<string | null> {
 	try {
 		const asset = await assetsApi.byVoiceHash(hash)
-		if (asset) {
-			// Return a legacy-style absolute path that audioSession's URL
-			// rewriter will expand to the S3 public base. Using the asset's
-			// key directly gives us the same result as the imported files.
-			return `/${asset.key}`
-		}
+		return asset?.key ?? null
 	} catch (e) {
-		// Network error or auth issue — fall through to the legacy path
-		// so playback still works even if /api/assets is unreachable.
-		console.warn('[VoiceService] asset lookup failed, falling back', e)
+		console.warn('[VoiceService] asset lookup failed', e)
+		return null
 	}
-	// 2) Legacy per-program cache URL (works for files imported before the
-	// Asset collection existed, and for new dev-middleware generations).
-	return `/sessions/${programId}/audio/voice/${hash}.mp3`
 }
 
 class VoiceService {
@@ -60,15 +44,17 @@ class VoiceService {
 		}
 
 		const hash = await textToHash(fullText)
-		const relativeUrl = await resolveVoiceUrl(hash, programId)
+		const key = await resolveVoiceKey(hash)
 
-		// Check cache first (loadBuffer handles this)
-		try {
-			await audioSession.loadBuffer(relativeUrl)
-			// If successful, we have it.
-			return
-		} catch (e) {
-			// Fail silently on preload check, proceed to generate
+		// If the voice is already in the asset collection, warm the buffer
+		// cache so playVoice() can start instantly when the scene fires.
+		if (key) {
+			try {
+				await audioSession.loadBuffer(key)
+				return
+			} catch (e) {
+				// Fall through to regeneration if the cached asset fails to load.
+			}
 		}
 
 		// Generate
@@ -111,30 +97,33 @@ class VoiceService {
 			// Check cancellation
 			if (this.currentGenerationId !== myId) return
 
-			const relativeUrl = await resolveVoiceUrl(hash, programId)
+			const key = await resolveVoiceKey(hash)
 
 			// Check cancellation
 			if (this.currentGenerationId !== myId) return
 
-			try {
-				// Check if file exists via HEAD (handles both Asset-collection
-				// lookups and the legacy per-program path fallback). Route
-				// through assetUrl so S3-hosted files are reachable.
-				const check = await fetch(assetUrl(relativeUrl), { method: 'HEAD' })
+			if (key) {
+				try {
+					// Verify the asset actually exists on S3 before committing
+					// to playback. A HEAD request is cheap and lets us fall
+					// through to regeneration if the asset row is stale.
+					const check = await fetch(assetUrl(key), { method: 'HEAD' })
 
-				// Check cancellation
-				if (this.currentGenerationId !== myId) return
+					if (this.currentGenerationId !== myId) return
 
-				const cType = check.headers.get('content-type')
-				const isAudio = cType && (cType.includes('audio') || cType.includes('octet-stream'))
+					const cType = check.headers.get('content-type')
+					const isAudio =
+						cType &&
+						(cType.includes('audio') || cType.includes('octet-stream'))
 
-				if (check.ok && isAudio) {
-					this.generatingPromise = null
-					await this.playAudio(relativeUrl, myId)
-					return
+					if (check.ok && isAudio) {
+						this.generatingPromise = null
+						await this.playAudio(key, myId)
+						return
+					}
+				} catch (e) {
+					// Fall through to generation.
 				}
-			} catch (e) {
-				// Proceed to generation
 			}
 
 			// Generate if not found

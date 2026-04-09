@@ -2,6 +2,8 @@ import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { headRegion, camera } from '../services'
 import DriftVisualizer from '../components/scene/visualizers/DriftVisualizer.vue'
+import { BEHAVIOR_DURATION_DEFAULT, STILLNESS_TOLERANCE_DEFAULT } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface StillnessBehaviorOptions extends BehaviorOptions {
 	tolerance?: number // Drift threshold before failure (default 0.05)
@@ -17,15 +19,10 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 	constructor(options: StillnessBehaviorOptions) {
 
 		super({
-
-			duration: 5000,
-
+			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: true,
-
-			tolerance: 0.05,
-
+			tolerance: STILLNESS_TOLERANCE_DEFAULT,
 			...options
-
 		})
 
 		this.updateData({
@@ -106,3 +103,5 @@ export class StillnessBehavior extends Behavior<StillnessBehaviorOptions> {
 	}
 
 }
+
+registerBehavior('head:still', StillnessBehavior)

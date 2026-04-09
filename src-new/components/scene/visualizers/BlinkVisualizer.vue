@@ -5,7 +5,7 @@ const props = defineProps<{
 	openness: number // 0-100 range
 	theme: {
 		accentColor: string
-		textColor: string
+		uiTextColor: string
 		[key: string]: any
 	}
 }>()

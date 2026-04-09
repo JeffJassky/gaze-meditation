@@ -1,4 +1,5 @@
 export * from './Behavior'
+export { registerBehavior, getBehaviorClass, getRegisteredTypes } from './registry'
 export * from './NodBehavior'
 export * from './StillnessBehavior'
 export * from './EyeBehavior'

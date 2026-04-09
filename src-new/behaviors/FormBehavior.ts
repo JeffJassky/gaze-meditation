@@ -2,6 +2,7 @@ import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { FormFieldType, type FormField } from '@/types'
 import FormVisualizer from '../components/scene/visualizers/FormVisualizer.vue'
+import { registerBehavior } from './registry'
 
 export interface FormBehaviorOptions extends BehaviorOptions {
 	question: string
@@ -53,3 +54,5 @@ export class FormBehavior extends Behavior<FormBehaviorOptions> {
 		this.emitSuccess(data)
 	}
 }
+
+registerBehavior('form:submit', FormBehavior)

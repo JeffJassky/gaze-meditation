@@ -1,70 +1,23 @@
 import { apiRequest } from './api'
+import type {
+	Session,
+	SessionListResult,
+	SessionStatus,
+} from '@shared/types'
 
-// --- Types (mirror server/src/models/Session.ts) -----------------------------
-
-export type SessionStatus = 'draft' | 'published'
-export type SessionVisibility = 'private' | 'public'
-export type SessionAudience =
-	| 'f4a'
-	| 'm4a'
-	| 'm4f'
-	| 'm4m'
-	| 'f4f'
-	| 'f4m'
-	| 't4a'
-	| 't4f'
-	| 't4m'
-	| 't4t'
-	| 'unspecified'
-
-export interface SessionAsset {
-	id: string
-	kind: 'audio' | 'image' | 'video'
-	key: string
-	label?: string
-	contentType?: string
-	size?: number
-	meta?: Record<string, unknown>
-}
-
-export interface SceneBlock {
-	id: string
-	type: string
-	label?: string
-	config: Record<string, unknown>
-}
-
-export interface SessionDoc {
-	id: string
-	owner: string
-	slug: string
-	title: string
-	description: string
-	status: SessionStatus
-	visibility: SessionVisibility
-	publishedAt: string | null
-	audience: SessionAudience
-	tags: string[]
-	isAdult: boolean
-	theme: Record<string, unknown>
-	coverAssetId: string | null
-	audio: Record<string, unknown>
-	/** Default ElevenLabs voice id for the session's spoken text. */
-	elevenlabsVoiceId: string | null
-	assets: SessionAsset[]
-	scenes: SceneBlock[]
-	settings: Record<string, unknown>
-	createdAt: string
-	updatedAt: string
-}
-
-export interface SessionListResult {
-	items: SessionDoc[]
-	page: number
-	limit: number
-	total: number
-	hasMore: boolean
-}
+// Re-export types so existing `import type { X } from '@/services/sessions'` works.
+export type {
+	Session,
+	SessionStatus,
+	SessionListResult,
+	SceneBlock,
+	SessionAsset,
+	SessionAudio,
+	SessionSettings,
+	SessionVisibility,
+	SessionAudience,
+	AssetKind,
+} from '@shared/types'
 
 // --- Client ------------------------------------------------------------------
 
@@ -92,18 +45,18 @@ function qs(params: Record<string, unknown>): string {
 export const sessionsApi = {
 	list: (params: ListSessionsParams = {}) =>
 		apiRequest<SessionListResult>(`/sessions${qs(params as Record<string, unknown>)}`),
-	get: (id: string) => apiRequest<SessionDoc>(`/sessions/${id}`),
-	create: (body: Partial<SessionDoc>) =>
-		apiRequest<SessionDoc>('/sessions', { method: 'POST', body: JSON.stringify(body) }),
-	update: (id: string, body: Partial<SessionDoc>) =>
-		apiRequest<SessionDoc>(`/sessions/${id}`, {
+	get: (id: string) => apiRequest<Session>(`/sessions/${id}`),
+	create: (body: Partial<Session>) =>
+		apiRequest<Session>('/sessions', { method: 'POST', body: JSON.stringify(body) }),
+	update: (id: string, body: Partial<Session>) =>
+		apiRequest<Session>(`/sessions/${id}`, {
 			method: 'PATCH',
 			body: JSON.stringify(body),
 		}),
 	delete: (id: string) =>
 		apiRequest<{ ok: true }>(`/sessions/${id}`, { method: 'DELETE' }),
 	publish: (id: string) =>
-		apiRequest<SessionDoc>(`/sessions/${id}/publish`, { method: 'POST' }),
+		apiRequest<Session>(`/sessions/${id}/publish`, { method: 'POST' }),
 	unpublish: (id: string) =>
-		apiRequest<SessionDoc>(`/sessions/${id}/unpublish`, { method: 'POST' }),
+		apiRequest<Session>(`/sessions/${id}/unpublish`, { method: 'POST' }),
 }

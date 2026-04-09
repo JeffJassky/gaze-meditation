@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import type { SessionDoc } from '../services/sessions'
+import type { Session } from '../services/sessions'
 
 /**
  * Compact "begin this session" card used on the dashboard. Consumes a
- * database-fed SessionDoc directly — the `scenes` subdoc length gives
+ * database-fed Session directly — the `scenes` subdoc length gives
  * us the scene count we need for the duration estimate.
  */
 defineProps<{
-	program: SessionDoc
+	program: Session
 	disabled?: boolean
 }>()
 
 defineEmits<{
-	(e: 'start', program: SessionDoc): void
+	(e: 'start', program: Session): void
 }>()
 </script>
 

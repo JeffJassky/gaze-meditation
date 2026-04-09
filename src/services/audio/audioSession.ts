@@ -80,27 +80,23 @@ export class AudioSession {
 		this.masterGain.gain.setTargetAtTime(volume, this.ctx.currentTime, 0.05)
 	}
 
-	async loadBuffer(path: string): Promise<AudioBuffer> {
-		// Legacy session data stores paths like `/audio/music.mp3` and
-		// `/sessions/.../voice/hash.mp3` which used to be served out of
-		// `public/`. Rewrite them to the configured S3 public base URL
-		// before hitting the network so imported sessions can resolve.
-		// Key the cache on the original input so repeat callers with the
-		// same legacy path still hit the cache.
-		if (this.bufferCache.has(path)) {
-			console.log(`[AudioSession] Cache hit: ${path}`)
-			return this.bufferCache.get(path)!
+	async loadBuffer(key: string): Promise<AudioBuffer> {
+		// Cache is keyed by the asset key (or full URL / blob URL for voice
+		// generation) so repeat callers with the same input always hit it.
+		if (this.bufferCache.has(key)) {
+			console.log(`[AudioSession] Cache hit: ${key}`)
+			return this.bufferCache.get(key)!
 		}
 
-		const url = assetUrl(path)
-		console.log(`[AudioSession] Loading buffer: ${path}${url !== path ? ` → ${url}` : ''}`)
+		const url = assetUrl(key)
+		console.log(`[AudioSession] Loading buffer: ${key}${url !== key ? ` → ${url}` : ''}`)
 		try {
 			const res = await fetch(url)
 			if (!res.ok) throw new Error(`HTTP ${res.status}`)
 			
 			const contentType = res.headers.get('content-type')
 			if (contentType && !contentType.includes('audio') && !contentType.includes('octet-stream')) {
-				console.warn(`[AudioSession] Warning: loading buffer from ${path} returned Content-Type: ${contentType}`)
+				console.warn(`[AudioSession] Warning: loading buffer from ${key} returned Content-Type: ${contentType}`)
 				// If it's HTML, it's likely a 404 fallback
 				if (contentType.includes('text/html')) {
 					throw new Error('Received HTML instead of Audio (Likely 404)')
@@ -109,12 +105,12 @@ export class AudioSession {
 
 			const buf = await res.arrayBuffer()
 			const decoded = await this.ctx.decodeAudioData(buf)
-			console.log(`[AudioSession] Buffer loaded: ${path} (${decoded.duration.toFixed(2)}s)`)
+			console.log(`[AudioSession] Buffer loaded: ${key} (${decoded.duration.toFixed(2)}s)`)
 
-			this.bufferCache.set(path, decoded)
+			this.bufferCache.set(key, decoded)
 			return decoded
 		} catch (e) {
-			console.error(`[AudioSession] Failed to load buffer: ${path}`, e)
+			console.error(`[AudioSession] Failed to load buffer: ${key}`, e)
 			throw e
 		}
 	}

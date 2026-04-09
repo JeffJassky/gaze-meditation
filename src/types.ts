@@ -1,200 +1,61 @@
-export interface BehaviorSuggestion {
-	type:
-		| 'head:still'
-		| 'head:nod'
-		| 'head:left'
-		| 'head:right'
-		| 'head:down'
-		| 'head:up'
-		| 'eyes:close'
-		| 'eyes:open'
-		| 'eyes:blink'
-		| 'eyes:no-blink'
-		| 'mouth:relax'
-		| 'tongue:out'
-		| 'form:submit'
-		| 'motion:move'
-		| 'motion:impact'
-		| 'button:click'
-		| 'speech:speak'
-		| string
-	options?: any // Other configuration options for the behavior (such as tolerance, etc)
-	duration?: number // The duration the behavior must be held for
-	failBehavior?: 'pause' | 'reset' // How to handle the duration timer when the suggestion fails (defaults to 'pause')
-}
+// Re-export shared domain types so existing `@/types` imports continue to work.
+export type {
+	ThemeConfig,
+	BehaviorType,
+	BehaviorSuggestion,
+	SoundboardSample,
+	SoundboardEvent,
+	SessionBinauralConfig,
+	SceneAudioConfig,
+	SceneBehaviorConfig,
+	SceneConfig,
+	SceneBlock,
+	SessionAsset,
+	SessionAudio,
+	SessionSettings,
+	Session,
+	SessionListResult,
+	SessionStatus,
+	SessionVisibility,
+	SessionAudience,
+	AssetKind,
+	PlaylistDoc,
+	PlaylistVisibility,
+	PlaylistListResult,
+	SessionMetric,
+	PhysiologicalSnapshot,
+	BiometricSummary,
+	SessionReport,
+	FormField,
+	FormSceneConfig,
+} from '@shared/types'
 
-export interface SoundboardSample {
-	id: string
-	path: string
-	volume?: number // default 1
-	loop?: boolean | number // default false
-	fadeInDuration?: number // default 0
-	fadeOutDuration?: number // default 0.5
-}
+export { FormFieldType } from '@shared/types'
 
-export interface SoundboardEvent {
-	event: 'start' | 'stop'
-	id: string
-}
+// --- Client-only types (UI state, legacy models) ---------------------------
 
-export interface SceneConfig {
-	id?: string // Used for condtitional jumps / branching
-	theme?: ThemeConfig // visual theming for the scene
-	voice?: string | string[] // Text to be spoken during the scene
-	text?: string | string[] // Text to be displayed during the scene
-	duration?: number // Forced duration, by default, it's dynamic based on the text, voice audio duration, or maybe dependent on challenge completion
-	audio?: {
-		binaural?: SessionBinauralConfig
-		fx?: {
-			path: string
-			volume?: number
-			loop?: boolean | number
-		}
-		soundboard?: SoundboardEvent[]
-	}
-	behavior?: {
-		suggestions?: BehaviorSuggestion[]
-		success?: {
-			enabled?: boolean
-			message?: string
-		}
-		fail?: {
-			enabled?: boolean
-			message?: string
-		}
-	}
-	onCompleteCallback?: (success: boolean, result?: any) => string | undefined
-
-	// Fade options
-	fadeOutDuration?: number
-
-	// Delay after completion before next instruction starts
-	cooldown?: number
-}
-
-// Enums
+import type { SessionMetric, PhysiologicalSnapshot, BiometricSummary } from '@shared/types'
 
 export enum SessionState {
 	IDLE = 'IDLE',
 	INITIALIZING = 'INITIALIZING',
-	INSTRUCTING = 'INSTRUCTING', // Prompt is visible, waiting for user to start
-	VALIDATING = 'VALIDATING', // User is performing task, system checking
-	REINFORCING_POS = 'REINFORCING_POS', // Success state
-	REINFORCING_NEG = 'REINFORCING_NEG', // Failure state
+	INSTRUCTING = 'INSTRUCTING',
+	VALIDATING = 'VALIDATING',
+	REINFORCING_POS = 'REINFORCING_POS',
+	REINFORCING_NEG = 'REINFORCING_NEG',
 	FINISHED = 'FINISHED',
 	SELECTION = 'SELECTION'
-}
-
-export enum FormFieldType {
-	TEXT = 'text',
-	LONG_TEXT = 'longText',
-	NUMBER = 'number',
-	EMAIL = 'email',
-	RADIO = 'radio',
-	MULTISELECT = 'multiselect'
-}
-
-// Interfaces for Form Scene
-export interface FormField {
-	label: string
-	type: FormFieldType
-	name: string // The key for the field's value
-	options?: string[] // For radio and multiselect
-	required?: boolean // Optional: for validation
-}
-
-export interface FormSceneConfig extends SceneConfig {
-	question: string
-	fields: FormField[]
-	autoContinue?: boolean
-}
-
-export interface ThemeConfig {
-	textColor?: string
-	positiveColor?: string
-	negativeColor?: string
-	backgroundColor?: string
-	secondaryTextColor?: string
-	accentColor?: string
-	debugColor?: string
-	tint?: {
-		color: string // hex color
-		opacity: number // 0-1
-	}
-}
-
-export interface SessionBinauralConfig {
-	hertz?: number // 6 by default
-	volume?: number // 0.5 by default
-}
-
-// Data Models
-export interface Session {
-	id: string
-	title: string
-	isAdult?: boolean
-	skipIntro?: boolean
-	// experienceLevel?: 'beginner' | 'intermediate' | 'advanced'
-	description: string
-	tags?: string[]
-	audio?: {
-		musicTrack?: string // Simulated audio track name
-		binaural?: SessionBinauralConfig
-		soundboard?: SoundboardSample[]
-	}
-	videoBackground?: string
-	spiralBackground?: string
-	scenes: SceneConfig[] // All items use the unified Scene class
-	theme?: ThemeConfig // Optional theme configuration for the program
-}
-
-export interface SessionMetric {
-	sceneId: string
-	success: boolean
-	timestamp: number
-	reactionTime: number
-}
-
-export interface PhysiologicalSnapshot {
-	timestamp: number // Relative to session start (ms)
-	blinkRate: number // Blinks per minute (rolling)
-	blinkSpeed: number // Average blink duration in ms (rolling)
-	breathRate: number // Estimated breaths per minute
-	stillness: number // 0-1 score (1 = perfectly still)
-	headYaw: number
-	headPitch: number
-	headRoll: number
-	browRaise: number
-	eyeOpenness: number
-	mouthOpenness: number
 }
 
 export interface SessionLog {
 	id: string
 	subjectId: string
 	programId: string
-	startTime: string // ISO String
+	startTime: string
 	endTime?: string
 	totalScore: number
 	metrics: SessionMetric[]
 	physiologicalData: PhysiologicalSnapshot[]
-	biometrics?: BiometricSummary
-}
-
-export interface BiometricSummary {
-	blinkRate: { start: number; best: number; improvement: number }
-	blinkSpeed: { start: number; best: number; improvement: number }
-	stillness: { start: number; best: number; improvement: number }
-	relaxation: { start: number; best: number; improvement: number } // Combined jaw/face relaxation? Or just Mouth?
-	eyeDroop: { start: number; best: number; improvement: number }
-}
-
-export interface SessionReport {
-	durationMs: number
-	scenesCompleted: number
-	totalScenes: number
-	suggestionsCompleted: number
-	points: number
 	biometrics?: BiometricSummary
 }
 
@@ -210,6 +71,6 @@ export interface User {
 	id: string
 	name: string
 	totalScore: number
-	history: string[] // Array of SessionLog IDs
+	history: string[]
 	calibration?: UserCalibration
 }

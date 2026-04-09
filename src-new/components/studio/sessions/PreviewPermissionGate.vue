@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 import { Scene } from '@new/core/Scene'
 
 /**
@@ -17,7 +17,7 @@ import { Scene } from '@new/core/Scene'
  * permissions are already in the 'granted' state, so Theater's internal
  * permission UI never runs.
  */
-const props = defineProps<{ session: SessionDoc }>()
+const props = defineProps<{ session: Session }>()
 const emit = defineEmits<{
 	granted: []
 	cancel: []
@@ -74,9 +74,9 @@ async function requestAccess() {
 
 		if (constraints.video || constraints.audio) {
 			const stream = await navigator.mediaDevices.getUserMedia(constraints)
-			// Release the preview stream immediately — the actual services
-			// (faceMeshService / speechService) will open their own streams
-			// when Theater initializes with biofeedback enabled. We only
+			// Release the preview stream immediately — the actual devices
+			// (camera / microphone) will open their own streams when
+			// Theater initializes with biofeedback enabled. We only
 			// needed the user gesture + permission grant here.
 			stream.getTracks().forEach((t) => t.stop())
 		}

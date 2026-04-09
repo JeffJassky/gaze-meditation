@@ -2,7 +2,7 @@
 import { nextTick, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { su } from '@new/components/ui/studioUi'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 
 /**
  * Slim toolbar that lives inside the StudioShell main slot, just below the
@@ -10,7 +10,7 @@ import type { SessionDoc } from '@/services/sessions'
  * span so the writer can rename without opening the meta drawer.
  */
 const props = defineProps<{
-	session: SessionDoc | null
+	session: Session | null
 	dirty: boolean
 	saving: boolean
 	canUndo: boolean

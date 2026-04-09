@@ -11,8 +11,8 @@ const props = defineProps<{
     accentColor: string
     accentHoverColor?: string
     negativeColor?: string
-    secondaryTextColor?: string
-    textColor: string
+    promptTextColor?: string
+    uiTextColor: string
     backgroundColor?: string
     [key: string]: any
   }
@@ -52,7 +52,7 @@ const submitForm = () => {
 
 <template>
   <div class="form-visualizer p-8 w-full max-w-2xl mx-auto backdrop-blur-md bg-black/20 rounded-3xl border border-white/5 shadow-2xl">
-    <h2 class="text-3xl font-light mb-12 text-center tracking-tight" :style="{ color: theme.textColor }">
+    <h2 class="text-3xl font-light mb-12 text-center tracking-tight" :style="{ color: theme.uiTextColor }">
       <span
         v-for="(segment, index) in question.split('~')"
         :key="index"
@@ -65,7 +65,7 @@ const submitForm = () => {
         <label
           :for="field.name"
           class="block text-xs uppercase tracking-widest font-bold opacity-50"
-          :style="{ color: theme.secondaryTextColor }"
+          :style="{ color: theme.promptTextColor }"
         >
           {{ field.label }}
           <span v-if="field.required" :style="{ color: theme.negativeColor }">*</span>

@@ -16,33 +16,22 @@ import {
  * auto-generated from the selected behavior's option schema (see
  * behaviorCatalog.ts). No raw JSON exposed to the user.
  */
-const config = defineModel<Record<string, unknown>>({ required: true })
+import type { SceneConfig, SceneBehaviorConfig, BehaviorSuggestion } from '@shared/types'
 
-interface Suggestion {
-	type: string
-	duration?: number
-	options?: Record<string, unknown>
-	failBehavior?: 'pause' | 'reset'
-}
+const config = defineModel<SceneConfig>({ required: true })
 
-const behavior = computed<{
-	suggestions?: Suggestion[]
-	success?: { enabled?: boolean; message?: string }
-	fail?: { enabled?: boolean; message?: string }
-}>({
-	get: () => (config.value.behavior as any) ?? {},
+const behavior = computed<SceneBehaviorConfig>({
+	get: () => config.value.behavior ?? {},
 	set: (v) => (config.value.behavior = v),
 })
 
-function write<K extends 'suggestions' | 'success' | 'fail'>(key: K, value: unknown) {
-	const b = { ...behavior.value }
-	;(b as any)[key] = value
-	config.value.behavior = b
+function write<K extends keyof SceneBehaviorConfig>(key: K, value: SceneBehaviorConfig[K]) {
+	config.value.behavior = { ...behavior.value, [key]: value }
 }
 
-const suggestions = computed<Suggestion[]>(() => behavior.value.suggestions ?? [])
+const suggestions = computed<BehaviorSuggestion[]>(() => behavior.value.suggestions ?? [])
 
-function addSuggestion(type: string = 'head:still') {
+function addBehaviorSuggestion(type: string = 'head:still') {
 	const def = BEHAVIOR_BY_TYPE[type]
 	// Hold behaviors need a default hold time; trigger behaviors leave
 	// the timeout empty so they wait indefinitely until the writer sets
@@ -72,13 +61,13 @@ function secondsToMs(raw: string): number | undefined {
 	return Math.round(n * 1000)
 }
 
-function removeSuggestion(index: number) {
+function removeBehaviorSuggestion(index: number) {
 	const next = suggestions.value.slice()
 	next.splice(index, 1)
 	write('suggestions', next)
 }
 
-function updateSuggestion(index: number, patch: Partial<Suggestion>) {
+function updateBehaviorSuggestion(index: number, patch: Partial<BehaviorSuggestion>) {
 	const next = suggestions.value.slice()
 	const current = next[index]
 	if (!current) return
@@ -95,7 +84,7 @@ function updateSuggestion(index: number, patch: Partial<Suggestion>) {
  */
 function changeType(index: number, newType: string) {
 	const def = BEHAVIOR_BY_TYPE[newType]
-	updateSuggestion(index, {
+	updateBehaviorSuggestion(index, {
 		duration: def?.kind === 'hold' ? 5000 : undefined,
 		type: newType,
 		options: defaultOptionsFor(newType),
@@ -106,7 +95,7 @@ function setOptionField(index: number, key: string, value: unknown) {
 	const current = suggestions.value[index]
 	if (!current) return
 	const nextOptions = { ...(current.options ?? {}), [key]: value }
-	updateSuggestion(index, { options: nextOptions })
+	updateBehaviorSuggestion(index, { options: nextOptions })
 }
 
 /**
@@ -148,7 +137,7 @@ const groups = computed(() => groupedBehaviors())
 									{{ b.label }}
 								</option>
 							</optgroup>
-							<!-- Preserve unknown legacy types so data isn't silently lost. -->
+							<!-- Preserve unknown/custom types so data isn't silently lost. -->
 							<option v-if="s.type && !defOf(s.type)" :value="s.type">
 								{{ s.type }} (custom)
 							</option>
@@ -173,7 +162,7 @@ const groups = computed(() => groupedBehaviors())
 							:value="msToSeconds(s.duration)"
 							@input="
 								(e) =>
-									updateSuggestion(i, {
+									updateBehaviorSuggestion(i, {
 										duration: secondsToMs(
 											(e.target as HTMLInputElement).value,
 										),
@@ -196,7 +185,7 @@ const groups = computed(() => groupedBehaviors())
 							:value="s.failBehavior ?? 'pause'"
 							@change="
 								(e) =>
-									updateSuggestion(i, {
+									updateBehaviorSuggestion(i, {
 										failBehavior: (e.target as HTMLSelectElement).value as
 											| 'pause'
 											| 'reset',
@@ -292,7 +281,7 @@ const groups = computed(() => groupedBehaviors())
 						:class="su.btnDanger"
 						class="self-end mt-1"
 						type="button"
-						@click="removeSuggestion(i)">
+						@click="removeBehaviorSuggestion(i)">
 						Remove
 					</button>
 				</div>
@@ -301,7 +290,7 @@ const groups = computed(() => groupedBehaviors())
 			<button
 				:class="[su.btnGhost, 'w-full mt-3']"
 				type="button"
-				@click="addSuggestion()">
+				@click="addBehaviorSuggestion()">
 				+ Add behavior
 			</button>
 		</div>

@@ -1,6 +1,7 @@
 import { ref, type Ref, markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import TypeVisualizer from '../components/scene/visualizers/TypeVisualizer.vue'
+import { registerBehavior } from './registry'
 
 export interface TypeBehaviorOptions extends BehaviorOptions {
 	targetPhrase: string
@@ -67,3 +68,5 @@ export class TypeBehavior extends Behavior<TypeBehaviorOptions> {
 			.replace(/\s{2,}/g, ' ')
 	}
 }
+
+registerBehavior('type', TypeBehavior)

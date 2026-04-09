@@ -6,8 +6,8 @@ const props = defineProps<{
   currentInput: string
   isComplete: boolean
   theme: {
-    textColor: string
-    secondaryTextColor?: string
+    uiTextColor: string
+    promptTextColor?: string
     accentColor: string
     positiveColor?: string
     negativeColor?: string
@@ -26,8 +26,8 @@ const hasError = computed(() => {
 })
 
 const inputAreaStyles = computed(() => {
-  let borderColor = props.theme.secondaryTextColor || '#ccc'
-  let color = props.theme.textColor || '#fff'
+  let borderColor = props.theme.promptTextColor || '#ccc'
+  let color = props.theme.uiTextColor || '#fff'
 
   if (props.isComplete) {
     borderColor = props.theme.positiveColor || 'green'

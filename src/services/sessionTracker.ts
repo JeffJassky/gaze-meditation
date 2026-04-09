@@ -1,26 +1,22 @@
-import { reactive, watch } from 'vue'
-import { faceMeshService } from './faceMeshService'
-import { breathAnalyzer } from './analysis/breathAnalyzer'
-import { postureAnalyzer } from './analysis/postureAnalyzer'
+import { reactive } from 'vue'
+import { headRegion, eyesRegion, mouthRegion, breathRegion } from '../../src-new/services'
 import type { PhysiologicalSnapshot } from '../types'
 
 class SessionTracker {
 	private startTime: number = 0
 	private intervalId: number | null = null
 	private isTracking = false
-	private isInitialized = false
-	
+
 	// Data storage
 	private snapshots: PhysiologicalSnapshot[] = []
-	
+
 	// Temporary buffers for rolling calculations
 	private blinkTimes: number[] = [] // Timestamps of blink starts
 	private blinkDurations: { timestamp: number; duration: number }[] = [] // Durations of recent blinks in ms
-	
+
 	// Blink Logic
-	private wasBlinking = false
-	private blinkStartTimestamp = 0
-	
+	private blinkHandler: ((e: Event) => void) | null = null
+
 	// Reactive state for UI consumption (if needed live)
 	public liveMetrics = reactive({
 		elapsedTime: 0,
@@ -35,44 +31,28 @@ class SessionTracker {
 		browRaise: 0
 	})
 
-	constructor() {
-		// Watch for blink changes to calculate duration and count
-		watch(() => faceMeshService.debugData.blinkDetected, (isBlinking) => {
-			if (!this.isTracking) return
-
-			const now = Date.now()
-			
-			if (isBlinking && !this.wasBlinking) {
-				// Blink Start
-				this.wasBlinking = true
-				this.blinkStartTimestamp = now
-				this.blinkTimes.push(now)
-				this.pruneOldBlinks(now)
-			} else if (!isBlinking && this.wasBlinking) {
-				// Blink End
-				this.wasBlinking = false
-				const duration = now - this.blinkStartTimestamp
-				// Allow long blinks (eye closures) by removing the upper duration cap
-				if (duration > 50) { 
-					this.blinkDurations.push({ timestamp: now, duration: duration })
-					this.pruneOldDurations(now)
-				}
-			}
-		})
-	}
-
 	public startSession() {
 		this.startTime = Date.now()
 		this.isTracking = true
 		this.snapshots = []
-		
-		this.resetBuffers()
-		
-		// Start Analyzers
-		breathAnalyzer.start()
-		postureAnalyzer.start()
 
-		// Start Sampling Loop (e.g., 2Hz - every 500ms)
+		this.resetBuffers()
+
+		// Listen for blink events from eyesRegion
+		this.blinkHandler = (e: Event) => {
+			if (!this.isTracking) return
+			const now = Date.now()
+			const detail = (e as CustomEvent).detail
+			this.blinkTimes.push(now)
+			this.pruneOldBlinks(now)
+			if (detail.duration > 50) {
+				this.blinkDurations.push({ timestamp: now, duration: detail.duration })
+				this.pruneOldDurations(now)
+			}
+		}
+		eyesRegion.addEventListener('blink', this.blinkHandler)
+
+		// Start Sampling Loop (2Hz - every 500ms)
 		if (this.intervalId) clearInterval(this.intervalId)
 		this.intervalId = window.setInterval(() => {
 			this.sample()
@@ -85,13 +65,15 @@ class SessionTracker {
 			clearInterval(this.intervalId)
 			this.intervalId = null
 		}
-		
-		breathAnalyzer.stop()
-		postureAnalyzer.stop()
-		
+
+		if (this.blinkHandler) {
+			eyesRegion.removeEventListener('blink', this.blinkHandler)
+			this.blinkHandler = null
+		}
+
 		const summary = this.calculateBiometricSummary()
 
-		return { 
+		return {
 			snapshots: [...this.snapshots],
 			summary
 		}
@@ -100,7 +82,7 @@ class SessionTracker {
 	public get history() {
 		return this.snapshots
 	}
-	
+
 	private calculateBiometricSummary() {
 		if (this.snapshots.length < 10) return undefined // Not enough data
 
@@ -135,7 +117,7 @@ class SessionTracker {
 		// We slide through the session (skipping the very start to allow for settling)
 		for (let i = baselineCount; i <= this.snapshots.length - windowSize; i++) {
 			const window = this.snapshots.slice(i, i + windowSize)
-			
+
 			const avgStillness = getAvg(window, 'stillness') // Higher is better (0-1)
 			const avgBlinkRate = getAvg(window, 'blinkRate') // Lower is better
 			const avgTension = getAvg(window, 'browRaise')   // Lower is better
@@ -195,18 +177,17 @@ class SessionTracker {
 			}
 		}
 	}
-	
+
 	private resetBuffers() {
 		this.blinkTimes = []
 		this.blinkDurations = []
-		this.wasBlinking = false
-		
+
 		this.liveMetrics.blinkRate = 0
 		this.liveMetrics.blinkSpeed = 0
 		this.liveMetrics.stillness = 0
 		this.liveMetrics.breathRate = 0
 	}
-	
+
 	private pruneOldBlinks(now: number) {
 		// Keep blinks from last 60 seconds
 		const window = 60000
@@ -227,30 +208,26 @@ class SessionTracker {
 		this.pruneOldBlinks(now)
 		this.pruneOldDurations(now)
 
-		// Update Buffers
-		const yaw = faceMeshService.debugData.headYaw
-		const pitch = faceMeshService.debugData.headPitch
-		const roll = faceMeshService.debugData.headRoll
-		const brow = faceMeshService.debugData.browRaise
-		
+		// Read from region public properties
+		const yaw = headRegion.yaw
+		const pitch = headRegion.pitch
+		const roll = headRegion.roll
+		const brow = eyesRegion.browRaise
+
 		// Calculate Metrics
 		this.calculateBlinkRate(now)
 		this.calculateBlinkSpeed()
-		
-		// Stillness from Analyzer
-		// Drift is 0..N. Stillness is 0..1.
-		// Sensitivity: Drift of 0.05 is "moved a lot".
-		const drift = postureAnalyzer.drift.value
-		const stillness = Math.max(0, 1 - (drift * 20)) // 0.05 * 20 = 1.0 (Full movement)
-		this.liveMetrics.stillness = stillness
-		
-		this.liveMetrics.breathRate = breathAnalyzer.respirationRate.value
-		this.liveMetrics.eyeOpenness = faceMeshService.debugData.eyeOpennessNormalized
-		this.liveMetrics.mouthOpenness = faceMeshService.debugData.mouthOpenness
+
+		// Stillness from headRegion (smoothedStability is 0-1)
+		this.liveMetrics.stillness = headRegion.smoothedStability
+
+		this.liveMetrics.breathRate = breathRegion.respirationRate
+		this.liveMetrics.eyeOpenness = eyesRegion.openNormalized
+		this.liveMetrics.mouthOpenness = mouthRegion.openness
 		this.liveMetrics.headRoll = roll
 		this.liveMetrics.headPitch = pitch
 		this.liveMetrics.browRaise = brow
-		
+
 		const snapshot: PhysiologicalSnapshot = {
 			timestamp: elapsed,
 			blinkRate: this.liveMetrics.blinkRate,
@@ -261,25 +238,25 @@ class SessionTracker {
 			headPitch: pitch,
 			headRoll: roll,
 			browRaise: brow,
-			eyeOpenness: faceMeshService.debugData.eyeOpennessNormalized,
+			eyeOpenness: eyesRegion.openNormalized,
 			mouthOpenness: this.liveMetrics.mouthOpenness
 		}
-		
+
 		this.snapshots.push(snapshot)
 	}
-	
+
 	private calculateBlinkRate(now: number) {
 		const secondsActive = Math.min((now - this.startTime) / 1000, 60)
 		if (secondsActive < 5) {
 			this.liveMetrics.blinkRate = 0 // Too early
 			return
 		}
-		
+
 		const count = this.blinkTimes.length
 		// Normalize to BPM
 		this.liveMetrics.blinkRate = (count / secondsActive) * 60
 	}
-	
+
 	private calculateBlinkSpeed() {
 		if (this.blinkDurations.length === 0) {
 			this.liveMetrics.blinkSpeed = 0

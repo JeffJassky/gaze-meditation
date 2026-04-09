@@ -3,7 +3,7 @@ import type { SceneBlock } from '@/services/sessions'
 /**
  * Returns the first non-empty preview line for a scene, drawing from
  * `config.text` then `config.voice`. Both fields may be a string or an
- * array of strings (legacy data shape).
+ * array of strings.
  */
 export function sceneFirstLine(scene: SceneBlock, maxLen = 80): string {
 	const cfg = (scene?.config ?? {}) as Record<string, unknown>

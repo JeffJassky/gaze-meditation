@@ -1,7 +1,9 @@
-import { markRaw, watch } from 'vue'
+import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
-import { speechService } from '@/services/speechService'
+import { microphone } from '../services'
 import SpeechVisualizer from '../components/scene/visualizers/SpeechVisualizer.vue'
+import { SPEECH_DURATION_DEFAULT } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface SpeechBehaviorOptions extends BehaviorOptions {
 	targetValue: string
@@ -10,16 +12,17 @@ export interface SpeechBehaviorOptions extends BehaviorOptions {
 export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 	public static override readonly requiredDevices = ['microphone']
 
+	private transcript = ''
+
 	constructor(options: SpeechBehaviorOptions) {
 		super({
-			// Speech usually relies on matching, so maybe infinite duration until match or timeout
-			duration: 10000, 
+			duration: SPEECH_DURATION_DEFAULT,
 			failOnTimeout: true,
 			...options
 		})
-		this.updateData({ 
-			words: this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false })), 
-			isComplete: false 
+		this.updateData({
+			words: this.options.targetValue.split(' ').map(text => ({ text, isSpoken: false })),
+			isComplete: false
 		})
 	}
 
@@ -28,22 +31,18 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 	}
 
 	protected async onStart() {
-		await speechService.init()
-		speechService.resetTranscript()
-		
-		if (!speechService.isListening.value) {
-			speechService.start()
-		}
-
-		this.addManagedEventListener(
-			watch(speechService.transcript, (newVal) => {
-				this.handleTranscript(newVal)
-			})
-		)
+		this.transcript = ''
+		this.addManagedEventListener(microphone, 'result', this.handleResult)
 	}
 
 	protected onStop() {
 		// Handled by base class
+	}
+
+	private handleResult = (e: Event) => {
+		const { text } = (e as CustomEvent).detail
+		this.transcript += ' ' + text
+		this.handleTranscript(this.transcript.trim())
 	}
 
 	private handleTranscript(transcript: string) {
@@ -68,35 +67,29 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 				continue
 			}
 
-			// Search for the word only AFTER the last found word's position
 			const searchArea = normalizedTranscript.substring(searchIndex)
 			const regex = new RegExp(`\\b${cleanWord}\\b`)
 			const match = searchArea.match(regex)
 
 			if (match && match.index !== undefined) {
-				// Word found in the correct relative order
 				status.isSpoken = true
 				searchIndex += match.index + match[0].length
-				console.log(`[SpeechBehavior] Match: "${cleanWord}" at rel index ${match.index}. Total searchIndex: ${searchIndex}`)
 			} else {
-				// If not found in current transcript, check if it was already spoken in a previous update
 				if (!status.isSpoken) {
 					allFound = false
-					// Restore strict order: stop checking further words if this one hasn't been spoken yet.
-					break 
+					break
 				}
 			}
 		}
 
 		this.updateData({ words: [...currentWords] })
 
-		console.log(`[SpeechBehavior] allFound: ${allFound}, isComplete: ${this.data.isComplete}`)
-
 		if (allFound && !this.data.isComplete) {
 			console.log('[SpeechBehavior] Phrase complete - triggering success')
 			this.updateData({ isComplete: true })
-			// Trigger success immediately to avoid race conditions with multiple transcript updates
 			this.emitSuccess({ transcript })
 		}
 	}
 }
+
+registerBehavior('speech:speak', SpeechBehavior)

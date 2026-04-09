@@ -2,6 +2,8 @@ import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { eyesRegion, camera } from '../services'
 import BlinkVisualizer from '../components/scene/visualizers/BlinkVisualizer.vue'
+import { BEHAVIOR_DURATION_DEFAULT, BEHAVIOR_DURATION_LONG } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface EyeBehaviorOptions extends BehaviorOptions {
 	// ...
@@ -13,7 +15,7 @@ export class NoBlinkBehavior extends Behavior<EyeBehaviorOptions> {
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
-			duration: 5000,
+			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: false, // Reaching the end of duration is success
 			...options
 		})
@@ -49,7 +51,7 @@ export class CloseEyesBehavior extends Behavior<EyeBehaviorOptions> {
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
-			duration: 8000, // Timeout for the action
+			duration: BEHAVIOR_DURATION_LONG,
 			failOnTimeout: true,
 			...options
 		})
@@ -85,7 +87,7 @@ export class OpenEyesBehavior extends Behavior<EyeBehaviorOptions> {
 
 	constructor(options: EyeBehaviorOptions) {
 		super({
-			duration: 8000,
+			duration: BEHAVIOR_DURATION_LONG,
 			failOnTimeout: true,
 			...options
 		})
@@ -115,3 +117,7 @@ export class OpenEyesBehavior extends Behavior<EyeBehaviorOptions> {
 		this.emitSuccess()
 	}
 }
+
+registerBehavior('eyes:no-blink', NoBlinkBehavior)
+registerBehavior('eyes:close', CloseEyesBehavior)
+registerBehavior('eyes:open', OpenEyesBehavior)

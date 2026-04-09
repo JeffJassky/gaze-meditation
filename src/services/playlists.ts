@@ -1,29 +1,8 @@
 import { apiRequest } from './api'
-import type { SessionDoc } from './sessions'
+import type { PlaylistDoc, PlaylistListResult } from '@shared/types'
 
-export type PlaylistVisibility = 'private' | 'public'
-
-export interface PlaylistDoc {
-	id: string
-	owner: string
-	slug: string
-	title: string
-	description: string
-	visibility: PlaylistVisibility
-	coverImageKey: string | null
-	sessions: string[] // ordered session ids
-	sessionDocs?: SessionDoc[] // only present with ?populate=1
-	createdAt: string
-	updatedAt: string
-}
-
-export interface PlaylistListResult {
-	items: PlaylistDoc[]
-	page: number
-	limit: number
-	total: number
-	hasMore: boolean
-}
+// Re-export types so existing imports work.
+export type { PlaylistDoc, PlaylistListResult, PlaylistVisibility } from '@shared/types'
 
 export interface ListPlaylistsParams {
 	mine?: boolean

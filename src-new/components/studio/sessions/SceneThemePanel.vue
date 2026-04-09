@@ -1,27 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { su } from '@new/components/ui/studioUi'
+import type { SceneConfig, ThemeConfig } from '@shared/types'
 
-const config = defineModel<Record<string, unknown>>({ required: true })
+const config = defineModel<SceneConfig>({ required: true })
 
 const THEME_KEYS = [
 	['backgroundColor', 'Background'],
-	['textColor', 'Text'],
-	['secondaryTextColor', 'Secondary text'],
+	['uiTextColor', 'UI Text'],
+	['promptTextColor', 'Prompt Text'],
 	['accentColor', 'Accent'],
 	['positiveColor', 'Positive'],
 	['negativeColor', 'Negative'],
 ] as const
 
-const theme = computed<Record<string, any>>({
-	get: () => (config.value.theme as Record<string, any>) ?? {},
+const theme = computed<ThemeConfig>({
+	get: () => config.value.theme ?? {},
 	set: (v) => (config.value.theme = v),
 })
 
-function setTheme(key: string, value: string) {
+function setTheme(key: keyof ThemeConfig, value: string) {
 	const next = { ...theme.value }
 	if (!value) delete next[key]
-	else next[key] = value
+	else (next[key] as string) = value
 	config.value.theme = next
 }
 

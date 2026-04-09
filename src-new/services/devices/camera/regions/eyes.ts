@@ -9,6 +9,7 @@ export class EyesRegion extends CameraRegion {
 	public gazeX = 0
 	public gazeY = 0
 	public isOpen = true // Default to open
+	public browRaise = 0 // Brow-to-eye distance normalized by IOD (relaxed ~0.2-0.3)
 
 	// Calibration & Adaptation
 	private minOpen = 0.15
@@ -167,11 +168,26 @@ export class EyesRegion extends CameraRegion {
 			}
 		}
 
+		// Brow Tension (distance between brow and eye, normalized by IOD)
+		const leftBrow = k[66]
+		const rightBrow = k[296]
+		const leftEyeTop = k[159]
+		const rightEyeTop = k[386]
+		const leftOuter = k[33]
+		const rightOuter = k[263]
+
+		if (leftBrow && rightBrow && leftEyeTop && rightEyeTop && leftOuter && rightOuter) {
+			const iod = this.dist(leftOuter, rightOuter)
+			if (iod > 0) {
+				const lDist = this.dist(leftBrow, leftEyeTop)
+				const rDist = this.dist(rightBrow, rightEyeTop)
+				this.browRaise = ((lDist + rDist) / 2) / iod
+			}
+		}
+
 		// Gaze Calculation
 		const nose = k[1]
 		const midEye = k[168]
-		const leftOuter = k[33]
-		const rightOuter = k[263]
 		if (nose && midEye && leftOuter && rightOuter) {
 			const iod = Math.hypot(rightOuter.x - leftOuter.x, rightOuter.y - leftOuter.y)
 			if (iod > 0) {

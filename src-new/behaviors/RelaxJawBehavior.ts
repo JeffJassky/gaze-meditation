@@ -2,6 +2,8 @@ import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, mouthRegion } from '../services'
 import RelaxJawVisualizer from '../components/scene/visualizers/RelaxJawVisualizer.vue'
+import { BEHAVIOR_DURATION_DEFAULT, MOUTH_THRESHOLD_DEFAULT } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface RelaxJawBehaviorOptions extends BehaviorOptions {
 	threshold?: number
@@ -12,9 +14,9 @@ export class RelaxJawBehavior extends Behavior<RelaxJawBehaviorOptions> {
 	
 	constructor(options: RelaxJawBehaviorOptions) {
 		super({
-			duration: 5000,
+			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: true,
-			threshold: 0.15,
+			threshold: MOUTH_THRESHOLD_DEFAULT,
 			...options
 		})
 		this.updateData({ openness: 0, threshold: this.options.threshold! })
@@ -36,8 +38,10 @@ export class RelaxJawBehavior extends Behavior<RelaxJawBehaviorOptions> {
 	private handleUpdate = (e: Event) => {
 		const detail = (e as CustomEvent).detail
 		const rel = Math.max(0, detail.openness - detail.baseline)
-		
+
 		this.updateData({ openness: rel, threshold: this.options.threshold! })
 		this.setConditionMet(rel > this.options.threshold!)
 	}
 }
+
+registerBehavior('mouth:relax', RelaxJawBehavior)

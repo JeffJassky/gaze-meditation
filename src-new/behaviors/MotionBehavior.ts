@@ -1,5 +1,6 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { accelerometer } from '../services'
+import { registerBehavior } from './registry'
 
 export class MotionBehavior extends Behavior<BehaviorOptions> {
 	public static override readonly requiredDevices = ['accelerometer']
@@ -39,3 +40,5 @@ export class MotionBehavior extends Behavior<BehaviorOptions> {
 		this.setConditionMet(false)
 	}
 }
+
+registerBehavior('motion:move', MotionBehavior)

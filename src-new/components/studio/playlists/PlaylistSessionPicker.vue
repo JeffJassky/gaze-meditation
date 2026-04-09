@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import { su } from '@new/components/ui/studioUi'
-import { sessionsApi, type SessionDoc } from '@/services/sessions'
+import { sessionsApi, type Session } from '@/services/sessions'
 
 /**
  * Modal session picker for playlists. Lists the user's own sessions plus
@@ -10,7 +10,7 @@ import { sessionsApi, type SessionDoc } from '@/services/sessions'
  * Search is server-side via the sessions list endpoint's `q` param.
  */
 const emit = defineEmits<{
-	pick: [session: SessionDoc]
+	pick: [session: Session]
 	close: []
 }>()
 
@@ -18,7 +18,7 @@ const props = defineProps<{ excludeIds: string[] }>()
 
 const mode = ref<'mine' | 'public'>('mine')
 const search = ref('')
-const results = ref<SessionDoc[]>([])
+const results = ref<Session[]>([])
 const loading = ref(false)
 
 async function load() {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
+import { SESSION_AUDIENCE } from '@shared/constants/session'
 
 /**
  * Blog-style session header rendered at the top of the scrolling script
@@ -9,7 +10,7 @@ import type { SessionDoc } from '@/services/sessions'
  * visibility / adult rating are tiny inline selects styled to read as
  * metadata chips.
  */
-const session = defineModel<SessionDoc>({ required: true })
+const session = defineModel<Session>({ required: true })
 
 // ──────────────────────────────────────────────────────────────────────
 // Title — contenteditable, kept in sync via the same pattern as the
@@ -122,17 +123,7 @@ const visibilityLabel = computed(() =>
 				<select
 					v-model="session.audience"
 					class="absolute inset-0 opacity-0 cursor-pointer w-full">
-					<option value="f4a">f4a</option>
-					<option value="m4a">m4a</option>
-					<option value="m4f">m4f</option>
-					<option value="m4m">m4m</option>
-					<option value="f4f">f4f</option>
-					<option value="f4m">f4m</option>
-					<option value="t4a">t4a</option>
-					<option value="t4f">t4f</option>
-					<option value="t4m">t4m</option>
-					<option value="t4t">t4t</option>
-					<option value="unspecified">unspecified</option>
+					<option v-for="a in SESSION_AUDIENCE" :key="a" :value="a">{{ a }}</option>
 				</select>
 			</label>
 

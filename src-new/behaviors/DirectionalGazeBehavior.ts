@@ -1,5 +1,7 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
 import { camera, headRegion } from '../services'
+import { BEHAVIOR_DURATION_DEFAULT } from '@shared/constants/behavior'
+import { registerBehavior } from './registry'
 
 export interface DirectionalGazeBehaviorOptions extends BehaviorOptions {
 	direction: 'LEFT' | 'RIGHT' | 'UP' | 'DOWN'
@@ -10,7 +12,7 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 
 	constructor(options: DirectionalGazeBehaviorOptions) {
 		super({
-			duration: 5000,
+			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: true,
 			...options
 		})
@@ -72,3 +74,8 @@ export class DownGazeBehavior extends DirectionalGazeBehavior {
 		super({ ...options, direction: 'DOWN' })
 	}
 }
+
+registerBehavior('head:left', LeftGazeBehavior)
+registerBehavior('head:right', RightGazeBehavior)
+registerBehavior('head:up', UpGazeBehavior)
+registerBehavior('head:down', DownGazeBehavior)

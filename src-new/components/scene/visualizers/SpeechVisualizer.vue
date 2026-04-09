@@ -10,14 +10,14 @@ const props = defineProps<{
   words: WordStatus[]
   isComplete?: boolean
   theme: {
-    textColor: string
+    uiTextColor: string
     accentColor: string
     [key: string]: any
   }
 }>()
 
 const accentColor = computed(() => props.theme.accentColor || '#ffffff')
-const textColor = computed(() => props.theme.textColor || '#ffffff')
+const uiTextColor = computed(() => props.theme.uiTextColor || '#ffffff')
 </script>
 
 <template>
@@ -27,7 +27,7 @@ const textColor = computed(() => props.theme.textColor || '#ffffff')
       :key="index"
       class="mx-2 inline-block transition-all duration-500"
       :style="{
-        color: word.isSpoken ? accentColor : textColor,
+        color: word.isSpoken ? accentColor : uiTextColor,
         opacity: word.isSpoken ? 1 : 0.3
       }"
     >

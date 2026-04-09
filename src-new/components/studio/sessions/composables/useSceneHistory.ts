@@ -1,5 +1,5 @@
 import { ref, watch, nextTick, computed, type Ref } from 'vue'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 
 /**
  * Ring-buffer undo/redo over JSON snapshots of the session document.
@@ -15,7 +15,7 @@ import type { SessionDoc } from '@/services/sessions'
 const MAX = 100
 const DEBOUNCE_MS = 400
 
-export function useSceneHistory(session: Ref<SessionDoc | null>) {
+export function useSceneHistory(session: Ref<Session | null>) {
 	const past = ref<string[]>([])
 	const future = ref<string[]>([])
 	let suppress = false

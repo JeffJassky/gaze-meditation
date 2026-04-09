@@ -3,7 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import SceneStackItem from './SceneStackItem.vue'
 import SessionHeader from './SessionHeader.vue'
-import type { SceneBlock, SessionDoc } from '@/services/sessions'
+import type { SceneBlock, Session } from '@/services/sessions'
 
 /**
  * Center pane of the editor — a continuous scrollable script. The scene
@@ -12,7 +12,7 @@ import type { SceneBlock, SessionDoc } from '@/services/sessions'
  * scroll position via an IntersectionObserver.
  */
 const scenes = defineModel<SceneBlock[]>({ required: true })
-const session = defineModel<SessionDoc>('session', { required: true })
+const session = defineModel<Session>('session', { required: true })
 /**
  * Structured focus request. `atEnd` moves the caret to the end of the
  * textarea's existing content (used for backspace-collapse into the

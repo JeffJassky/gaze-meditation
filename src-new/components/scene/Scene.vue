@@ -37,7 +37,7 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 <template>
 	<div
 		class="scene-container"
-		:style="{ color: theme.textColor }"
+		:style="{ color: theme.uiTextColor }"
 	>
 		<!-- 1. Background Layer (z-0) -->
 		<div class="scene-layer background-layer z-0">
@@ -53,7 +53,7 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 				:progress="progress"
 				:size="150"
 				:stroke-width="8"
-				:fillColor="theme.accentColor || theme.textColor"
+				:fillColor="theme.accentColor || theme.uiTextColor"
 				:trackColor="trackColor"
 			/>
 		</div>
@@ -98,7 +98,7 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 						v-if="isTextVisible && activeText"
 						:key="activeText"
 						class="px-4 leading-relaxed text-line"
-						:style="{ color: theme.secondaryTextColor || theme.textColor }"
+						:style="{ color: theme.promptTextColor || theme.uiTextColor }"
 					>
 						<span
 							v-for="line in activeText.split('~')"

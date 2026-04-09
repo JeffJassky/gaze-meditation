@@ -73,7 +73,7 @@ const formatDuration = (ms: number) => {
 				>
 					<h1
 						class="text-5xl font-bold"
-						:style="{ color: resolvedTheme.textColor }"
+						:style="{ color: resolvedTheme.uiTextColor }"
 					>
 						Session Complete.
 					</h1>
@@ -92,7 +92,7 @@ const formatDuration = (ms: number) => {
 							</div>
 							<p
 								class="text-sm tracking-widest opacity-60 uppercase"
-								:style="{ color: resolvedTheme.secondaryTextColor }"
+								:style="{ color: resolvedTheme.promptTextColor }"
 							>
 								Points Earned
 							</p>
@@ -102,13 +102,13 @@ const formatDuration = (ms: number) => {
 						<div class="bg-white/5 p-4 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center text-center">
 							<div
 								class="text-3xl font-bold"
-								:style="{ color: resolvedTheme.textColor }"
+								:style="{ color: resolvedTheme.uiTextColor }"
 							>
 								{{ formatDuration(report.durationMs) }}
 							</div>
 							<p
 								class="text-xs tracking-widest opacity-60 uppercase mt-1"
-								:style="{ color: resolvedTheme.secondaryTextColor }"
+								:style="{ color: resolvedTheme.promptTextColor }"
 							>
 								Time Elapsed
 							</p>
@@ -117,13 +117,13 @@ const formatDuration = (ms: number) => {
 						<div class="bg-white/5 p-4 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center text-center">
 							<div
 								class="text-3xl font-bold"
-								:style="{ color: resolvedTheme.textColor }"
+								:style="{ color: resolvedTheme.uiTextColor }"
 							>
 								{{ report.scenesCompleted }} / {{ report.totalScenes }}
 							</div>
 							<p
 								class="text-xs tracking-widest opacity-60 uppercase mt-1"
-								:style="{ color: resolvedTheme.secondaryTextColor }"
+								:style="{ color: resolvedTheme.promptTextColor }"
 							>
 								Scenes
 							</p>
@@ -136,7 +136,7 @@ const formatDuration = (ms: number) => {
 						>
 							<h3
 								class="text-sm uppercase tracking-widest text-center mb-6 opacity-80"
-								:style="{ color: resolvedTheme.secondaryTextColor }"
+								:style="{ color: resolvedTheme.promptTextColor }"
 							>
 								Physiological Depth
 							</h3>
@@ -258,7 +258,7 @@ const formatDuration = (ms: number) => {
 						</div>
 						<p
 							class="text-xl tracking-widest opacity-60"
-							:style="{ color: resolvedTheme.secondaryTextColor }"
+							:style="{ color: resolvedTheme.promptTextColor }"
 						>
 							POINTS EARNED
 						</p>

@@ -1,5 +1,9 @@
 import crypto from 'node:crypto';
 import { Schema, model, Types, type InferSchemaType, type HydratedDocument } from 'mongoose';
+import { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE } from '@shared/constants/session.js';
+
+// Re-export so existing server imports keep working.
+export { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE };
 
 /**
  * Sessions are stored as a single document with an embedded `scenes` array.
@@ -18,27 +22,7 @@ import { Schema, model, Types, type InferSchemaType, type HydratedDocument } fro
  *     replacing the whole `scenes` array (which is how the editor will save) is fine.
  */
 
-// --- Enums / constants --------------------------------------------------------
-
-export const SESSION_STATUS = ['draft', 'published'] as const;
-export const SESSION_VISIBILITY = ['private', 'public'] as const;
-/**
- * Audience categorization. `f4a` = "female for all", etc.
- * Kept loose — add values here as the taxonomy grows.
- */
-export const SESSION_AUDIENCE = [
-  'f4a',
-  'm4a',
-  'm4f',
-  'm4m',
-  'f4f',
-  'f4m',
-  't4a',
-  't4f',
-  't4m',
-  't4t',
-  'unspecified',
-] as const;
+// --- Constants ----------------------------------------------------------------
 
 export const ASSET_KINDS = ['audio', 'image', 'video'] as const;
 

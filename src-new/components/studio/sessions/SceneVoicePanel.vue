@@ -8,14 +8,16 @@ import { VOICES_KEY } from './voicesKey'
  * VOICES_KEY context the editor view provides on mount. Auditioning a voice
  * uses the catalog's `preview_url` — there is no live TTS endpoint yet.
  */
-const config = defineModel<Record<string, unknown>>({ required: true })
+import type { SceneConfig } from '@shared/types'
+
+const config = defineModel<SceneConfig>({ required: true })
 const voicesCtx = inject(VOICES_KEY)
 
 const voiceId = computed<string | undefined>({
-	get: () => config.value.elevenlabsVoiceId as string | undefined,
+	get: () => config.value.elevenlabsVoiceId,
 	set: (v) => {
 		if (v) config.value.elevenlabsVoiceId = v
-		else delete (config.value as Record<string, unknown>).elevenlabsVoiceId
+		else delete config.value.elevenlabsVoiceId
 	},
 })
 

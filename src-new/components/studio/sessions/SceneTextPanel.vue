@@ -12,11 +12,13 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
  * Storage shape is unchanged: `string | string[]`. Multi-line input gets
  * normalized to an array on set so the runtime can treat each line as a beat.
  */
-const config = defineModel<Record<string, unknown>>({ required: true })
+import type { SceneConfig } from '@shared/types'
+
+const config = defineModel<SceneConfig>({ required: true })
 defineProps<{
-	/** Optional override for the voice textarea color (scene.theme.textColor). */
+	/** Optional override for the voice textarea color (scene.theme.uiTextColor). */
 	voiceColor?: string
-	/** Optional override for the on-screen text color (scene.theme.secondaryTextColor). */
+	/** Optional override for the on-screen text color (scene.theme.promptTextColor). */
 	textColor?: string
 }>()
 const emit = defineEmits<{

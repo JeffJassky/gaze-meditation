@@ -1,8 +1,8 @@
 import type { ThemeConfig } from './types'
 
 export const DEFAULT_THEME: ThemeConfig = {
-	textColor: '#ffffff',
-	secondaryTextColor: '#ffffff',
+	uiTextColor: '#ffffff',
+	promptTextColor: '#ffffff',
 	accentColor: '#ffffff',
 	debugColor: '#FF0000',
 

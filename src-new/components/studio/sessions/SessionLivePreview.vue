@@ -2,9 +2,7 @@
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import Theater from '@/components/Theater.vue'
 import { audioSession } from '@/services/audio'
-import type { Session as LegacySession } from '@/types'
-import type { SessionDoc } from '@/services/sessions'
-import { sessionDocToLegacy } from '@/utils/sessionAdapter'
+import type { Session } from '@/services/sessions'
 import PreviewPermissionGate from './PreviewPermissionGate.vue'
 
 /**
@@ -30,7 +28,7 @@ import PreviewPermissionGate from './PreviewPermissionGate.vue'
  * the editor — preview→editor sync is an explicit v2 feature.
  */
 const props = defineProps<{
-	session: SessionDoc
+	session: Session
 	selectedId: string | null
 	selectedIndex: number
 }>()
@@ -61,13 +59,6 @@ onBeforeUnmount(() => {
 		/* ignore */
 	}
 })
-
-// ──────────────────────────────────────────────────────────────────────────
-// SessionDoc → legacy Session conversion (shared with Theater)
-// ──────────────────────────────────────────────────────────────────────────
-const legacySession = computed<LegacySession>(() =>
-	sessionDocToLegacy(props.session),
-)
 
 // ──────────────────────────────────────────────────────────────────────────
 // Biofeedback opt-in
@@ -329,7 +320,7 @@ const stageStyle = computed(() => {
 					<Theater
 						:key="sessionKey"
 						ref="theater"
-						:program="legacySession"
+						:program="session"
 						embedded
 						:enable-biofeedback="biofeedbackEnabled"
 						:initial-muted="true"

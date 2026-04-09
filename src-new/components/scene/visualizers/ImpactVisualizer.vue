@@ -10,7 +10,7 @@ const props = withDefaults(
 		theme: {
 			positiveColor?: string
 			negativeColor?: string
-			textColor?: string
+			uiTextColor?: string
 			[key: string]: any
 		}
 	}>(),
@@ -45,10 +45,10 @@ const props = withDefaults(
 				class="w-4 h-4 rounded-full transition-all duration-500 transform border-2"
 				:class="i <= impactsCount ? 'scale-110' : 'scale-90 opacity-50'"
 				:style="{
-					backgroundColor: i <= impactsCount ? theme.textColor : 'transparent',
-					borderColor: theme.textColor,
+					backgroundColor: i <= impactsCount ? theme.uiTextColor : 'transparent',
+					borderColor: theme.uiTextColor,
 					boxShadow:
-						i <= impactsCount ? `0 0 15px ${theme.textColor || '#ffffff'}80` : 'none'
+						i <= impactsCount ? `0 0 15px ${theme.uiTextColor || '#ffffff'}80` : 'none'
 				}"
 			></div>
 		</div>

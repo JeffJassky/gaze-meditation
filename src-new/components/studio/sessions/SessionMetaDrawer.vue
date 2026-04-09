@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
 import SessionAssetsPanel from './SessionAssetsPanel.vue'
-import type { SessionDoc } from '@/services/sessions'
+import type { Session } from '@/services/sessions'
 
 /**
  * Slide-over drawer for session assets. Session details (title, description,
@@ -9,7 +9,7 @@ import type { SessionDoc } from '@/services/sessions'
  * stack via SessionHeader, so this drawer is asset-only.
  */
 const open = defineModel<boolean>('open', { required: true })
-const session = defineModel<SessionDoc>('session', { required: true })
+const session = defineModel<Session>('session', { required: true })
 
 function close() {
 	open.value = false
