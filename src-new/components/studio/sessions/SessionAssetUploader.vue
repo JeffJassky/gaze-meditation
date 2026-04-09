@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { uploadFile, inferAssetKind, type UploadProgress } from '@/services/uploads'
+import { assetsApi } from '@/services/assets'
 import type { SessionAsset } from '@/services/sessions'
 
 /**
  * Tiny per-file uploader. Owns its own progress state and emits a finished
  * asset payload upward. Intentionally stateless across mounts — each upload
  * is a fire-and-forget row in the parent list.
+ *
+ * After the S3 PUT completes, the uploaded file is also registered in the
+ * shared Asset collection via POST /assets so it shows up in the editor's
+ * global asset picker. The emitted payload still carries the session-embed
+ * shape so the parent can keep populating `session.assets` for backcompat.
  */
 const props = defineProps<{ file: File }>()
 const emit = defineEmits<{
-	done: [asset: Omit<SessionAsset, 'id'>]
+	done: [asset: Omit<SessionAsset, 'id'> & { id?: string }]
 	error: [message: string]
 }>()
 
@@ -23,9 +29,32 @@ async function run() {
 		const { key, contentType, size } = await uploadFile(props.file, (p) => {
 			progress.value = p
 		})
+		const kind = inferAssetKind(props.file.type || '')
+
+		// Register in the shared Asset collection. Best-effort: if the
+		// registration fails (network blip, auth loss) we still emit the
+		// `done` event so the session-embedded subdoc is updated and the
+		// upload isn't lost — the next run against the same S3 key will
+		// idempotently create the Asset row because POST /assets is
+		// upsert-by-(owner, key).
+		let registeredId: string | undefined
+		try {
+			const registered = await assetsApi.register({
+				kind,
+				key,
+				label: props.file.name,
+				contentType,
+				size,
+			})
+			registeredId = registered.id
+		} catch (e) {
+			console.warn('[SessionAssetUploader] /assets register failed', e)
+		}
+
 		status.value = 'done'
 		emit('done', {
-			kind: inferAssetKind(props.file.type || ''),
+			id: registeredId,
+			kind,
 			key,
 			label: props.file.name,
 			contentType,

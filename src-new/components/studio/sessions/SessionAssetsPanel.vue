@@ -23,8 +23,16 @@ function onPick(e: Event) {
 	input.value = ''
 }
 
-function onDone(rowId: string, asset: Omit<SessionAsset, 'id'>) {
-	session.value.assets.push({ id: crypto.randomUUID(), ...asset })
+function onDone(
+	rowId: string,
+	asset: Omit<SessionAsset, 'id'> & { id?: string },
+) {
+	// Prefer the id returned by /api/assets so the embedded subdoc entry
+	// and the shared Asset doc stay in lockstep. Fall back to a locally
+	// generated UUID if registration failed so the editor still functions.
+	const id = asset.id ?? crypto.randomUUID()
+	const { id: _ignored, ...rest } = asset
+	session.value.assets.push({ id, ...rest })
 	inFlight.value = inFlight.value.filter((r) => r.id !== rowId)
 }
 

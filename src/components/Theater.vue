@@ -18,6 +18,7 @@ import SessionCard from './SessionCard.vue'
 import { saveSession } from '../services/storageService'
 import { historyApi } from '../services/history'
 import { getSceneEffectiveTheme } from '../utils/themeResolver' // Import theme resolver
+import { assetUrl } from '../utils/assetUrl'
 import { faceMeshService } from '../services/faceMeshService'
 import { sessionTracker } from '../services/sessionTracker'
 import { audioSession } from '../services/audio'
@@ -27,7 +28,8 @@ import { voiceService } from '../services/voiceService'
 import { accelerometer } from '../../src-new/services'
 import { playbackSpeed } from '../state/playback'
 import { useRouter } from 'vue-router'
-import { getSessionById, ALL_SESSIONS } from '../programs'
+import { sessionsApi, type SessionDoc } from '../services/sessions'
+import { sessionDocToLegacy } from '../utils/sessionAdapter'
 
 interface TheaterProps {
 	program?: Session
@@ -82,14 +84,13 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
-const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s =>
-	[
-		'prog_somatic_reset_extended',
-		'prog_council_fire',
-		'prog_blue_door',
-		'prog_somatic_reset_kinetic'
-	].includes(s.id)
-)
+/**
+ * List of sessions shown in the in-Theater "Select a Session" grid that
+ * appears between plays. Populated once on mount from `/sessions?mine=1`
+ * and kept in SessionDoc shape (what SessionCard expects). Converted to
+ * the legacy runtime shape on demand when the user actually picks one.
+ */
+const FULL_SESSIONS = ref<SessionDoc[]>([])
 
 const activeSession = shallowRef<Session | null>(null)
 const sessionReport = ref<SessionReport | undefined>(undefined)
@@ -912,22 +913,9 @@ const finishSession = () => {
 		return
 	}
 
-	if (activeSession.value!.id.includes('initial_training')) {
-		state.value = SessionState.SELECTION
-		const { snapshots: physData } = sessionTracker.stopSession()
-		const log: SessionLog = {
-			id: `SES_${Date.now()}`,
-			subjectId: props.subjectId,
-			programId: activeSession.value!.id,
-			startTime: new Date(startTimeRef.value).toISOString(),
-			endTime: new Date().toISOString(),
-			totalScore: score.value,
-			metrics: metricsRef.value,
-			physiologicalData: physData
-		}
-		persistRun(log)
-		return
-	}
+	// (Legacy code here used to short-circuit the tutorial session back
+	// into SESSION_STATE.SELECTION; we now treat every session the same
+	// and always generate a report at the end.)
 
 	// Calculate Report
 	const successfulSceneIds = new Set(
@@ -1023,16 +1011,18 @@ const handleSessionSelect = async (program: Session) => {
 	nextScene(0)
 }
 
-onMounted(() => {
-	// Initialize activeSession
+onMounted(async () => {
+	// Initialize activeSession — either from a directly-passed legacy
+	// Session (used by SessionLivePreview when it already has the doc)
+	// or by fetching from /sessions/:id and converting.
 	if (props.program) {
 		activeSession.value = props.program
 	} else if (props.sessionId) {
-		const found = getSessionById(props.sessionId)
-		if (found) {
-			activeSession.value = found
-		} else {
-			console.error(`Session not found: ${props.sessionId}`)
+		try {
+			const doc = await sessionsApi.get(props.sessionId)
+			activeSession.value = sessionDocToLegacy(doc)
+		} catch (e) {
+			console.error(`[Theater] Failed to load session ${props.sessionId}`, e)
 			exitSession()
 			return
 		}
@@ -1041,6 +1031,15 @@ onMounted(() => {
 	if (!activeSession.value) {
 		exitSession()
 		return
+	}
+
+	// Populate the in-Theater "Select a Session" grid from the API. Non-
+	// fatal on failure — the grid just stays empty.
+	try {
+		const list = await sessionsApi.list({ mine: true, limit: 50 })
+		FULL_SESSIONS.value = list.items
+	} catch (e) {
+		console.warn('[Theater] Failed to load session list', e)
 	}
 
 	if (props.initialMuted) {
@@ -1102,8 +1101,13 @@ defineExpose({
 
 <template>
 	<div
-		class="relative w-full h-full overflow-hidden transition-all duration-300"
-		:class="controlsVisible ? 'cursor-default' : 'cursor-none'"
+		class="overflow-hidden transition-all duration-300"
+		:class="[
+			embedded
+				? 'relative w-full h-full'
+				: 'fixed inset-0 z-40',
+			controlsVisible ? 'cursor-default' : 'cursor-none',
+		]"
 		:style="{
 			'--speed-factor': playbackSpeed,
 			backgroundColor: currentResolvedTheme.backgroundColor || '#000',
@@ -1123,7 +1127,7 @@ defineExpose({
 			class="absolute top-0 left-0 w-full h-full object-cover z-0"
 		>
 			<source
-				:src="activeSession!.videoBackground"
+				:src="assetUrl(activeSession!.videoBackground)"
 				type="video/mp4"
 			/>
 		</video>
@@ -1133,7 +1137,7 @@ defineExpose({
 			v-if="activeSession?.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeSession!.spiralBackground})`,
+				backgroundImage: `url(${assetUrl(activeSession!.spiralBackground)})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -1147,7 +1151,7 @@ defineExpose({
 			v-if="activeSession?.spiralBackground"
 			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 aspect-square spiral-rotation z-0"
 			:style="{
-				backgroundImage: `url(${activeSession!.spiralBackground})`,
+				backgroundImage: `url(${assetUrl(activeSession!.spiralBackground)})`,
 				backgroundSize: 'cover',
 				backgroundPosition: 'center',
 				width: '150vmax',
@@ -1261,7 +1265,7 @@ defineExpose({
 							v-for="prog in FULL_SESSIONS"
 							:key="prog.id"
 							:program="prog"
-							@start="handleSessionSelect"
+							@start="(doc) => handleSessionSelect(sessionDocToLegacy(doc))"
 						/>
 					</div>
 

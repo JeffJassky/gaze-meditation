@@ -12,7 +12,13 @@ import { useSceneHistory } from './composables/useSceneHistory'
 import { useSoftDelete } from './composables/useSoftDelete'
 import { useStudioShortcuts } from './composables/useStudioShortcuts'
 import ToastStack from './ToastStack.vue'
-import { sessionsApi, type SceneBlock, type SessionDoc } from '@/services/sessions'
+import {
+	sessionsApi,
+	type SceneBlock,
+	type SessionDoc,
+	type SessionAsset,
+} from '@/services/sessions'
+import { assetsApi, type AssetDoc } from '@/services/assets'
 import { listElevenLabsVoices, type ElevenLabsVoice } from '@/services/elevenlabs'
 import { auth } from '@/state/auth'
 import { VOICES_KEY } from './voicesKey'
@@ -42,9 +48,56 @@ const dirty = computed(() =>
 	session.value ? JSON.stringify(session.value) !== snapshot.value : false,
 )
 
-const audioAssets = computed(
-	() => session.value?.assets.filter((a) => a.kind === 'audio') ?? [],
-)
+// --- Asset pool ------------------------------------------------------------
+// The editor's audio picker draws from two places, merged:
+//   1. Assets embedded in the current SessionDoc (legacy + newly uploaded
+//      via the assets drawer before a full reload).
+//   2. The shared Asset collection (all of the owner's assets across every
+//      session — populated by the legacy import + future uploads).
+// Merging by `key` dedupes when the same file appears in both places.
+const sharedAudioAssets = ref<AssetDoc[]>([])
+async function loadSharedAudioAssets() {
+	try {
+		// Paginate through in case there are many. The server caps limit at 1000
+		// per page, which is plenty for any realistic library.
+		const pages: AssetDoc[] = []
+		let page = 1
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			const res = await assetsApi.list({ kind: 'audio', limit: 1000, page })
+			pages.push(...res.items)
+			if (!res.hasMore) break
+			page++
+		}
+		sharedAudioAssets.value = pages
+	} catch (e) {
+		console.warn('[editor] failed to load shared audio assets', e)
+	}
+}
+
+const audioAssets = computed<SessionAsset[]>(() => {
+	const byKey = new Map<string, SessionAsset>()
+	// Embedded first — those win when the same key appears in both (the
+	// embedded copy may have session-specific label edits).
+	for (const a of session.value?.assets ?? []) {
+		if (a.kind !== 'audio') continue
+		byKey.set(a.key, a)
+	}
+	// Then the shared pool, in newest-first order.
+	for (const a of sharedAudioAssets.value) {
+		if (byKey.has(a.key)) continue
+		byKey.set(a.key, {
+			id: a.id,
+			kind: a.kind,
+			key: a.key,
+			label: a.label,
+			contentType: a.contentType,
+			size: a.size,
+			meta: a.meta,
+		})
+	}
+	return Array.from(byKey.values())
+})
 
 // Selection model — wraps a writable computed view of session.scenes so the
 // composable can react to scene mutations even when session itself is null.
@@ -292,6 +345,7 @@ function onBeforeUnload(e: BeforeUnloadEvent) {
 onMounted(() => {
 	load()
 	loadVoices()
+	loadSharedAudioAssets()
 	window.addEventListener('beforeunload', onBeforeUnload)
 })
 onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))

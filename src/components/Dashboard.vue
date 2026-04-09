@@ -1,23 +1,65 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import type { User, Session, SessionLog } from '../types'
+import type { User, SessionLog } from '../types'
 import { getUsers, getSessions, seedDatabase, saveUser } from '../services/storageService'
 import { historyApi, type SessionRun } from '../services/history'
+import { sessionsApi, type SessionDoc } from '../services/sessions'
 import { audioSession } from '../services/audio'
 import { useRouter } from 'vue-router'
 import { auth } from '../state/auth'
-import { ALL_SESSIONS, initialTrainingSession, TEST_SESSIONS } from '../programs'
 import Home from './Home.vue'
 import SessionCard from './SessionCard.vue'
 import SessionDetail from './SessionDetail.vue'
 
-// Full Sessions
-const FULL_SESSIONS: Session[] = ALL_SESSIONS.filter(s => 
-	['prog_somatic_reset_extended', 'prog_council_fire', 'prog_blue_door', 'prog_somatic_reset_kinetic'].includes(s.id)
-)
+/**
+ * Sessions the signed-in user can play. Fetched from /sessions on mount
+ * and whenever the auth user changes. No hardcoded lists anymore — the
+ * database is the sole source of truth.
+ */
+const availableSessions = ref<SessionDoc[]>([])
+const sessionsLoading = ref(false)
+const sessionsError = ref<string | null>(null)
 
-// Fun & Sexy Sessions
-const FUN_SESSIONS: Session[] = ALL_SESSIONS.filter(s => s.id === 'held_without_rope')
+async function loadAvailableSessions() {
+	if (!auth.state.user) {
+		availableSessions.value = []
+		return
+	}
+	sessionsLoading.value = true
+	sessionsError.value = null
+	try {
+		const res = await sessionsApi.list({ mine: true, limit: 200 })
+		availableSessions.value = res.items
+	} catch (err) {
+		sessionsError.value = (err as Error).message
+		console.warn('[Dashboard] failed to load sessions', err)
+	} finally {
+		sessionsLoading.value = false
+	}
+}
+
+/**
+ * The imported tutorial session, identified by slug. Used by the
+ * "Start Introduction" CTA. Null until the sessions list resolves.
+ */
+const tutorialSession = computed<SessionDoc | null>(() => {
+	return (
+		availableSessions.value.find((s) => s.slug === 'initial-training-short') ??
+		null
+	)
+})
+
+/**
+ * Full sessions grid excludes the tutorial (it has its own CTA above)
+ * and anything flagged as hidden via settings. Sorted by creation date
+ * so newer sessions appear first.
+ */
+const fullSessions = computed<SessionDoc[]>(() => {
+	return availableSessions.value
+		.filter((s) => s.slug !== 'initial-training-short')
+		.slice()
+		.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+})
 
 const router = useRouter()
 
@@ -32,14 +74,19 @@ const sessions = ref<SessionLog[]>([])
 const selectedUser = ref<string>('')
 const activeTab = ref<'home' | 'start' | 'history'>(props.initialTab || 'home')
 
-// Map programId -> human-readable title
+// Map programId -> human-readable title. Falls back to the available
+// sessions list (already fetched), then to the id itself.
 const getSessionTitle = (programId: string) => {
-	return ALL_SESSIONS.find(s => s.id === programId)?.title || programId
+	return (
+		availableSessions.value.find((s) => s.id === programId)?.title || programId
+	)
 }
 
-// Completion = scenes with a metric that succeeded / total scenes in the program
+// Completion = scenes with a metric that succeeded / total scenes in the
+// program. Uses the fetched session list to find the total; falls back
+// to the metrics count as a floor so the bar never reads 0%.
 const getSessionCompleteness = (s: SessionLog) => {
-	const prog = ALL_SESSIONS.find(p => p.id === s.programId)
+	const prog = availableSessions.value.find((p) => p.id === s.programId)
 	const total = prog?.scenes.length || s.metrics.length || 1
 	const done = s.metrics.length
 	return Math.min(100, Math.round((done / total) * 100))
@@ -161,19 +208,6 @@ const isSidebarOpen = ref(false)
 const isTransitioning = ref(false)
 const expandedSessionId = ref<string | null>(null)
 
-// Fun & Sexy Password Wall
-const isFunSessionsUnlocked = ref(false)
-const showPasswordPrompt = ref(false)
-const passwordInput = ref('')
-
-const checkPassword = () => {
-	if (passwordInput.value === '1234') {
-		isFunSessionsUnlocked.value = true
-		showPasswordPrompt.value = false
-		passwordInput.value = ''
-	}
-}
-
 const toggleExpand = (id: string) => {
 	expandedSessionId.value = expandedSessionId.value === id ? null : id
 }
@@ -219,7 +253,7 @@ const handleCreateUser = () => {
 	activeTab.value = 'start'
 }
 
-const handleStartSession = async (program: Session) => {
+const handleStartSession = async (program: SessionDoc) => {
 	if (!selectedUser.value) return
 
 	// Start transition
@@ -236,7 +270,7 @@ const handleStartSession = async (program: Session) => {
 	setTimeout(() => {
 		router.push({
 			name: 'theater',
-			params: { sessionId: program.id, subjectId: selectedUser.value }
+			params: { sessionId: program.id, subjectId: selectedUser.value },
 		})
 	}, 1000)
 }
@@ -253,14 +287,21 @@ const handleStartTutorial = () => {
 				id: `SUB_${Math.floor(Math.random() * 1000)}`,
 				name: 'Guest',
 				totalScore: 0,
-				history: []
+				history: [],
 			}
 			saveUser(newUser)
 			refreshData()
 			selectedUser.value = newUser.id
 		}
 	}
-	handleStartSession(initialTrainingSession)
+	const tutorial = tutorialSession.value
+	if (tutorial) {
+		handleStartSession(tutorial)
+	} else {
+		console.warn(
+			'[Dashboard] Tutorial session not found. Expected a session with slug "initial-training-short".',
+		)
+	}
 }
 
 const getSubjectName = (subjectId: string) => {
@@ -275,12 +316,15 @@ onMounted(() => {
 	seedDatabase()
 	refreshData()
 	loadHistory()
+	loadAvailableSessions()
 })
 
-// Re-sync subject + reload history whenever the signed-in user changes.
+// Re-sync subject + reload sessions + reload history whenever the
+// signed-in user changes.
 watch(() => auth.state.user?.id, () => {
 	refreshData()
 	loadHistory()
+	loadAvailableSessions()
 })
 
 // Reload history when the user navigates back to the history tab so a
@@ -448,25 +492,26 @@ watch(() => activeTab.value, (tab) => {
 									<h3
 										class="text-3xl font-bold text-white group-hover:text-cyan-400 transition-colors text-left"
 									>
-										{{ initialTrainingSession.title }}
+										{{ tutorialSession?.title ?? 'Tutorial' }}
 									</h3>
 									<span
+										v-if="tutorialSession"
 										class="text-xs bg-zinc-800 px-3 py-1 rounded-full text-zinc-400 border border-zinc-700 whitespace-nowrap"
 									>
-										{{ Math.ceil(initialTrainingSession.scenes.length / 4) }}-{{
-											Math.ceil(initialTrainingSession.scenes.length / 3)
+										{{ Math.ceil(tutorialSession.scenes.length / 4) }}-{{
+											Math.ceil(tutorialSession.scenes.length / 3)
 										}}
 										min
 									</span>
 								</div>
 								<p class="text-zinc-400 max-w-xl text-left">
-									{{ initialTrainingSession.description }}
+									{{ tutorialSession?.description ?? 'Learn how Gaze works.' }}
 								</p>
 							</div>
 							<div class="flex flex-col items-end gap-4">
 								<button
-									:disabled="!selectedUser"
-									@click="handleStartSession(initialTrainingSession)"
+									:disabled="!selectedUser || !tutorialSession"
+									@click="handleStartTutorial"
 									class="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-black px-10 py-4 rounded-xl font-bold text-base tracking-wide transition-all shadow-lg shadow-cyan-500/20 active:scale-95"
 								>
 									Start Introduction
@@ -477,110 +522,41 @@ watch(() => activeTab.value, (tab) => {
 
 					<label
 						class="pt-4 text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center"
-						>Full Sessions</label
+						>Sessions</label
 					>
-					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						<SessionCard
-							v-for="prog in FULL_SESSIONS"
-							:key="prog.id"
-							:program="prog"
-							:disabled="!selectedUser"
-							@start="handleStartSession"
-						/>
+
+					<div
+						v-if="sessionsLoading && fullSessions.length === 0"
+						class="text-center text-sm text-zinc-500 py-8">
+						Loading sessions…
 					</div>
-					<br />
-					<br />
-					<br />
-					<br />
-					<!-- Fun & Sexy Section (Password Protected) -->
-					<div v-if="isFunSessionsUnlocked">
-						<label
-							class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center animate-in fade-in"
-							>Fun & Sexy Sessions</label
-						>
-						<div
-							class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2"
-						>
-							<SessionCard
-								v-for="prog in FUN_SESSIONS"
-								:key="prog.id"
-								:program="prog"
-								:disabled="!selectedUser"
-								@start="handleStartSession"
-							/>
-						</div>
+					<div
+						v-else-if="sessionsError"
+						class="text-center text-sm text-red-400 py-8">
+						{{ sessionsError }}
+					</div>
+					<div
+						v-else-if="fullSessions.length === 0"
+						class="text-center text-sm text-zinc-500 py-8">
+						No sessions yet.
+						<router-link
+							to="/studio/sessions"
+							class="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
+							Create one in the studio
+						</router-link>
+						.
 					</div>
 					<div
 						v-else
-						class="mt-8 flex flex-col items-center justify-center gap-4"
-					>
-						<button
-							v-if="!showPasswordPrompt"
-							@click="showPasswordPrompt = true"
-							class="text-xs uppercase font-bold text-zinc-600 hover:text-cyan-400 tracking-wider transition-colors border border-zinc-800 hover:border-cyan-500/50 rounded-full px-4 py-2"
-						>
-							Restricted Access
-						</button>
-						<div
-							v-else
-							class="flex items-center gap-2 animate-in fade-in zoom-in-95"
-						>
-							<input
-								ref="passwordInputRef"
-								type="password"
-								v-model="passwordInput"
-								@input="checkPassword"
-								placeholder="Enter Code"
-								class="bg-zinc-900 border border-zinc-700 text-white text-sm rounded-lg px-3 py-2 w-32 text-center focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
-								autofocus
-							/>
-							<button
-								@click="
-									() => {
-										showPasswordPrompt = false
-										passwordInput = ''
-									}
-								"
-								class="text-zinc-500 hover:text-white"
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-4 w-4"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								</svg>
-							</button>
-						</div>
-					</div>
-
-					<br />
-					<br />
-					<br />
-					<br />
-					<label
-						class="mt-8 text-xs uppercase font-bold text-zinc-500 tracking-wider block text-center"
-						>Test Sessions</label
-					>
-					<div
-						class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-						style="opacity: 0.5"
-					>
+						class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						<SessionCard
-							v-for="prog in TEST_SESSIONS"
+							v-for="prog in fullSessions"
 							:key="prog.id"
 							:program="prog"
 							:disabled="!selectedUser"
-							@start="handleStartSession"
-						/>
+							@start="handleStartSession" />
 					</div>
+
 				</div>
 			</div>
 

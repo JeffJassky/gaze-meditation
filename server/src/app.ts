@@ -11,6 +11,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { usersRouter } from './routes/users.routes.js';
 import { uploadsRouter } from './routes/uploads.routes.js';
 import { sessionsRouter } from './routes/sessions.routes.js';
+import { assetsRouter } from './routes/assets.routes.js';
 import { playlistsRouter } from './routes/playlists.routes.js';
 import { historyRouter } from './routes/history.routes.js';
 
@@ -45,6 +46,7 @@ export function createApp(): Express {
   app.use('/users', usersRouter);
   app.use('/uploads', uploadsRouter);
   app.use('/sessions', sessionsRouter);
+  app.use('/assets', assetsRouter);
   app.use('/playlists', playlistsRouter);
   app.use('/history', historyRouter);
 

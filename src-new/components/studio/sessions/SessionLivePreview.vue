@@ -2,8 +2,9 @@
 import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import Theater from '@/components/Theater.vue'
 import { audioSession } from '@/services/audio'
-import type { Session as LegacySession, SceneConfig } from '@/types'
+import type { Session as LegacySession } from '@/types'
 import type { SessionDoc } from '@/services/sessions'
+import { sessionDocToLegacy } from '@/utils/sessionAdapter'
 import PreviewPermissionGate from './PreviewPermissionGate.vue'
 
 /**
@@ -62,41 +63,11 @@ onBeforeUnmount(() => {
 })
 
 // ──────────────────────────────────────────────────────────────────────────
-// SessionDoc → legacy Session conversion
+// SessionDoc → legacy Session conversion (shared with Theater)
 // ──────────────────────────────────────────────────────────────────────────
-// Theater expects the old Session shape. SceneBlock.config already carries
-// the legacy SceneConfig fields (text, voice, audio, behavior, duration, …).
-//
-// Critical: we must pass the *same* config object the editor is mutating —
-// not a clone. The Scene class captures a reference to the config at
-// construction time and reads `this.config.text` live at scene start. A
-// clone would freeze a snapshot and edits would never flow through.
-let warnedMissing = false
-function toLegacyScene(block: SessionDoc['scenes'][number]): SceneConfig {
-	const cfg = (block.config ?? {}) as SceneConfig & { id?: string }
-	// Ensure a stable id exists on the config (Scene uses it for metric
-	// tracking). This is a one-time mutation that's idempotent.
-	if (!cfg.id) cfg.id = block.id
-	if (!warnedMissing && import.meta.env?.DEV) {
-		if (!('text' in cfg) && !('voice' in cfg)) {
-			console.warn('[SessionLivePreview] scene has no text or voice:', block.id)
-			warnedMissing = true
-		}
-	}
-	return cfg as SceneConfig
-}
-
-const legacySession = computed<LegacySession>(() => ({
-	id: props.session.id,
-	title: props.session.title || 'Untitled',
-	description: props.session.description || '',
-	tags: props.session.tags,
-	isAdult: props.session.isAdult,
-	skipIntro: true,
-	audio: props.session.audio as LegacySession['audio'],
-	theme: props.session.theme as LegacySession['theme'],
-	scenes: props.session.scenes.map(toLegacyScene),
-}))
+const legacySession = computed<LegacySession>(() =>
+	sessionDocToLegacy(props.session),
+)
 
 // ──────────────────────────────────────────────────────────────────────────
 // Biofeedback opt-in

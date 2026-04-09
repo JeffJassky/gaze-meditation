@@ -1,5 +1,38 @@
 import { textToHash } from '../utils/voiceCrypto'
 import { audioSession } from './audio/audioSession'
+import { assetsApi } from './assets'
+import { assetUrl } from '../utils/assetUrl'
+
+/**
+ * Resolves a voice hash to a loadable URL. Checks the shared Asset
+ * collection first (fast DB index lookup), then falls back to the
+ * legacy per-program cache URL. Always returns a string — callers
+ * HEAD the result to decide whether to fall through to generation.
+ */
+async function resolveVoiceUrl(
+	hash: string,
+	programId: string,
+): Promise<string> {
+	// 1) Asset collection shortcut — handles both imported legacy voices
+	// (migrated with meta.voiceHash set) and future server-generated
+	// voices that register themselves in the collection.
+	try {
+		const asset = await assetsApi.byVoiceHash(hash)
+		if (asset) {
+			// Return a legacy-style absolute path that audioSession's URL
+			// rewriter will expand to the S3 public base. Using the asset's
+			// key directly gives us the same result as the imported files.
+			return `/${asset.key}`
+		}
+	} catch (e) {
+		// Network error or auth issue — fall through to the legacy path
+		// so playback still works even if /api/assets is unreachable.
+		console.warn('[VoiceService] asset lookup failed, falling back', e)
+	}
+	// 2) Legacy per-program cache URL (works for files imported before the
+	// Asset collection existed, and for new dev-middleware generations).
+	return `/sessions/${programId}/audio/voice/${hash}.mp3`
+}
 
 class VoiceService {
 	private currentSource: AudioBufferSourceNode | null = null
@@ -27,8 +60,7 @@ class VoiceService {
 		}
 
 		const hash = await textToHash(fullText)
-		const filename = `${hash}.mp3`
-		const relativeUrl = `/sessions/${programId}/audio/voice/${filename}`
+		const relativeUrl = await resolveVoiceUrl(hash, programId)
 
 		// Check cache first (loadBuffer handles this)
 		try {
@@ -75,17 +107,21 @@ class VoiceService {
 			this.stop()
 
 			const hash = await textToHash(fullText)
-			
+
 			// Check cancellation
 			if (this.currentGenerationId !== myId) return
 
-			const filename = `${hash}.mp3`
-			const relativeUrl = `/sessions/${programId}/audio/voice/${filename}`
+			const relativeUrl = await resolveVoiceUrl(hash, programId)
+
+			// Check cancellation
+			if (this.currentGenerationId !== myId) return
 
 			try {
-				// Check if file exists via HEAD
-				const check = await fetch(relativeUrl, { method: 'HEAD' })
-				
+				// Check if file exists via HEAD (handles both Asset-collection
+				// lookups and the legacy per-program path fallback). Route
+				// through assetUrl so S3-hosted files are reachable.
+				const check = await fetch(assetUrl(relativeUrl), { method: 'HEAD' })
+
 				// Check cancellation
 				if (this.currentGenerationId !== myId) return
 

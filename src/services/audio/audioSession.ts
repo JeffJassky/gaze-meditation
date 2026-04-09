@@ -1,4 +1,5 @@
 import { type AudioBusName } from './types'
+import { assetUrl } from '../../utils/assetUrl'
 
 import { MusicLooper } from './musicLooper'
 import { BinauralEngine } from './binuralEngine'
@@ -80,14 +81,21 @@ export class AudioSession {
 	}
 
 	async loadBuffer(path: string): Promise<AudioBuffer> {
+		// Legacy session data stores paths like `/audio/music.mp3` and
+		// `/sessions/.../voice/hash.mp3` which used to be served out of
+		// `public/`. Rewrite them to the configured S3 public base URL
+		// before hitting the network so imported sessions can resolve.
+		// Key the cache on the original input so repeat callers with the
+		// same legacy path still hit the cache.
 		if (this.bufferCache.has(path)) {
 			console.log(`[AudioSession] Cache hit: ${path}`)
 			return this.bufferCache.get(path)!
 		}
 
-		console.log(`[AudioSession] Loading buffer: ${path}`)
+		const url = assetUrl(path)
+		console.log(`[AudioSession] Loading buffer: ${path}${url !== path ? ` → ${url}` : ''}`)
 		try {
-			const res = await fetch(path)
+			const res = await fetch(url)
 			if (!res.ok) throw new Error(`HTTP ${res.status}`)
 			
 			const contentType = res.headers.get('content-type')

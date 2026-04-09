@@ -43,7 +43,13 @@ function setFxAsset(v: string) {
 	if (!asset) {
 		delete audio.value.fx
 	} else {
-		ensure(['fx']).path = asset.key
+		// Write both `assetId` (the preferred reference going forward) and
+		// `path` (the S3 key, still what the runtime reads to fetch the
+		// file). Keeping both lets the editor survive key renames via the
+		// stable id while the runtime remains unchanged.
+		const fx = ensure(['fx'])
+		fx.assetId = asset.id
+		fx.path = asset.key
 	}
 	config.value.audio = audio.value
 }
@@ -63,9 +69,18 @@ const fx = computed(() => (audio.value.fx as Record<string, any>) ?? {})
 
 const fxAssetId = computed({
 	get: () => {
-		const path = fx.value.path
-		if (!path) return ''
-		return props.audioAssets.find((a) => a.key === path)?.id ?? ''
+		// Prefer the explicit assetId if present (new data), else resolve by
+		// matching the stored path against an asset's key (legacy data).
+		const storedId = fx.value.assetId as string | undefined
+		if (storedId) {
+			const match = props.audioAssets.find((a) => a.id === storedId)
+			if (match) return match.id
+		}
+		const path = fx.value.path as string | undefined
+		if (path) {
+			return props.audioAssets.find((a) => a.key === path)?.id ?? ''
+		}
+		return ''
 	},
 	set: (v) => setFxAsset(v),
 })
