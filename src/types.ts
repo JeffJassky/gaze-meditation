@@ -2,7 +2,11 @@
 export type {
 	ThemeConfig,
 	BehaviorType,
+	BehaviorOptionsMap,
 	BehaviorSuggestion,
+	BehaviorSuggestionOf,
+	BehaviorOptionsOf,
+	BehaviorSuggestionRaw,
 	SoundboardSample,
 	SoundboardEvent,
 	SessionBinauralConfig,

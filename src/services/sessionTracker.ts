@@ -1,6 +1,20 @@
 import { reactive } from 'vue'
-import { headRegion, eyesRegion, mouthRegion, breathRegion } from '../../src-new/services'
+import { headRegion, eyesRegion, mouthRegion, breathRegion } from '@/devices'
 import type { PhysiologicalSnapshot } from '../types'
+import {
+	TRACKER_SAMPLE_INTERVAL_MS,
+	TRACKER_BLINK_WINDOW_MS,
+	TRACKER_BLINK_MIN_DURATION_MS,
+	TRACKER_MIN_SNAPSHOTS,
+	TRACKER_BASELINE_MAX_SAMPLES,
+	TRACKER_BASELINE_FRACTION,
+	TRACKER_DEEP_WINDOW_SAMPLES,
+	TRACKER_BLINK_RATE_CEILING,
+	TRACKER_COHERENCE_WEIGHT_STILLNESS,
+	TRACKER_COHERENCE_WEIGHT_BLINK,
+	TRACKER_COHERENCE_WEIGHT_TENSION,
+	TRACKER_BLINK_RATE_MIN_SECONDS,
+} from '@/devices/camera/regions/constants'
 
 class SessionTracker {
 	private startTime: number = 0
@@ -45,7 +59,7 @@ class SessionTracker {
 			const detail = (e as CustomEvent).detail
 			this.blinkTimes.push(now)
 			this.pruneOldBlinks(now)
-			if (detail.duration > 50) {
+			if (detail.duration > TRACKER_BLINK_MIN_DURATION_MS) {
 				this.blinkDurations.push({ timestamp: now, duration: detail.duration })
 				this.pruneOldDurations(now)
 			}
@@ -56,7 +70,7 @@ class SessionTracker {
 		if (this.intervalId) clearInterval(this.intervalId)
 		this.intervalId = window.setInterval(() => {
 			this.sample()
-		}, 500)
+		}, TRACKER_SAMPLE_INTERVAL_MS)
 	}
 
 	public stopSession(): { snapshots: PhysiologicalSnapshot[], summary?: any } {
@@ -84,7 +98,7 @@ class SessionTracker {
 	}
 
 	private calculateBiometricSummary() {
-		if (this.snapshots.length < 10) return undefined // Not enough data
+		if (this.snapshots.length < TRACKER_MIN_SNAPSHOTS) return undefined
 
 		// Helper to get average of a key over a slice
 		const getAvg = (data: PhysiologicalSnapshot[], key: keyof PhysiologicalSnapshot) => {
@@ -96,7 +110,10 @@ class SessionTracker {
 		// 1. Define Windows
 		// Baseline: First 60 seconds (or 20% of session if short)
 		// We sample at 2Hz (every 500ms), so 60s = 120 samples
-		const baselineCount = Math.min(120, Math.floor(this.snapshots.length * 0.2))
+		const baselineCount = Math.min(
+			TRACKER_BASELINE_MAX_SAMPLES,
+			Math.floor(this.snapshots.length * TRACKER_BASELINE_FRACTION),
+		)
 		const baselineData = this.snapshots.slice(0, baselineCount)
 
 		// 2. Calculate Baselines
@@ -108,9 +125,8 @@ class SessionTracker {
 			eyeOpenness: getAvg(baselineData, 'eyeOpenness')
 		}
 
-		// 3. Find "Deepest State" (Best 30s Window)
-		// 30s = 60 samples
-		const windowSize = 60
+		// 3. Find "Deepest State" (best sliding window)
+		const windowSize = TRACKER_DEEP_WINDOW_SAMPLES
 		let bestWindow = { ...baseline }
 		let maxCoherenceScore = -Infinity
 
@@ -123,11 +139,13 @@ class SessionTracker {
 			const avgTension = getAvg(window, 'browRaise')   // Lower is better
 
 			// Normalize metrics to 0-1 scores for comparison
-			const blinkScore = Math.max(0, 1 - (avgBlinkRate / 30))
+			const blinkScore = Math.max(0, 1 - (avgBlinkRate / TRACKER_BLINK_RATE_CEILING))
 			const tensionScore = Math.max(0, 1 - avgTension)
 
-			// Coherence Score (Simple weighted sum)
-			const score = (avgStillness * 0.4) + (blinkScore * 0.3) + (tensionScore * 0.3)
+			const score =
+				avgStillness * TRACKER_COHERENCE_WEIGHT_STILLNESS +
+				blinkScore * TRACKER_COHERENCE_WEIGHT_BLINK +
+				tensionScore * TRACKER_COHERENCE_WEIGHT_TENSION
 
 			if (score > maxCoherenceScore) {
 				maxCoherenceScore = score
@@ -189,14 +207,13 @@ class SessionTracker {
 	}
 
 	private pruneOldBlinks(now: number) {
-		// Keep blinks from last 60 seconds
-		const window = 60000
-		this.blinkTimes = this.blinkTimes.filter(t => now - t < window)
+		this.blinkTimes = this.blinkTimes.filter(t => now - t < TRACKER_BLINK_WINDOW_MS)
 	}
 
 	private pruneOldDurations(now: number) {
-		const window = 60000
-		this.blinkDurations = this.blinkDurations.filter(item => now - item.timestamp < window)
+		this.blinkDurations = this.blinkDurations.filter(
+			item => now - item.timestamp < TRACKER_BLINK_WINDOW_MS,
+		)
 	}
 
 	private sample() {
@@ -246,9 +263,12 @@ class SessionTracker {
 	}
 
 	private calculateBlinkRate(now: number) {
-		const secondsActive = Math.min((now - this.startTime) / 1000, 60)
-		if (secondsActive < 5) {
-			this.liveMetrics.blinkRate = 0 // Too early
+		const secondsActive = Math.min(
+			(now - this.startTime) / 1000,
+			TRACKER_BLINK_WINDOW_MS / 1000,
+		)
+		if (secondsActive < TRACKER_BLINK_RATE_MIN_SECONDS) {
+			this.liveMetrics.blinkRate = 0
 			return
 		}
 

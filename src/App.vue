@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import AppNotifications from '@/components/AppNotifications.vue'
 
 // Only navigations that involve the immersive Theater route get a fade
 // transition — the rest of the app (studio editor, dashboard, etc.)
@@ -23,6 +24,7 @@ router.beforeEach((to, from) => {
 			</transition>
 			<component v-else :is="Component" />
 		</router-view>
+		<AppNotifications />
 	</div>
 </template>
 

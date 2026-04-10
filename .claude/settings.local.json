@@ -12,7 +12,9 @@
       "Bash(git stash:*)",
       "Bash(npx vue-tsc:*)",
       "Bash(ls:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(wc -l /Users/jeffjassky/Projects/ncrs/src-new/**/*)",
+      "Bash(wc -l /Users/jeffjassky/Projects/ncrs/src/**/*)"
     ]
   }
 }

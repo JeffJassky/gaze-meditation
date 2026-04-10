@@ -4,7 +4,11 @@ export type {
 
 export type {
 	BehaviorType,
+	BehaviorOptionsMap,
 	BehaviorSuggestion,
+	BehaviorSuggestionOf,
+	BehaviorOptionsOf,
+	BehaviorSuggestionRaw,
 	SoundboardSample,
 	SoundboardEvent,
 } from './behavior.js'

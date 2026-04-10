@@ -1,5 +1,5 @@
 import { reactive, readonly } from 'vue'
-import { authApi, type AuthUser } from '../services/auth'
+import { authApi, type AuthUser } from '../api/auth'
 
 interface AuthState {
 	user: AuthUser | null

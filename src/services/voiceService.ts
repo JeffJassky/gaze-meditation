@@ -1,7 +1,43 @@
 import { textToHash } from '../utils/voiceCrypto'
-import { audioSession } from './audio/audioSession'
-import { assetsApi } from './assets'
+import { audioSession } from '@/audio/audioSession'
+import { assetsApi } from '@/api/assets'
 import { assetUrl } from '../utils/assetUrl'
+
+/** Timeout for voice generation requests (ElevenLabs can be slow). */
+const VOICE_GENERATE_TIMEOUT_MS = 60_000
+
+/**
+ * Fetch wrapper for the voice generation endpoint (Vite dev middleware).
+ * Uses AbortController for timeout and credentials for consistency.
+ */
+async function voiceFetch(body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
+	const controller = new AbortController()
+	const timeoutId = setTimeout(
+		() => controller.abort(new DOMException('Voice generation timed out', 'TimeoutError')),
+		VOICE_GENERATE_TIMEOUT_MS,
+	)
+
+	// Forward caller abort to our controller.
+	if (signal) {
+		if (signal.aborted) {
+			controller.abort(signal.reason)
+		} else {
+			signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true })
+		}
+	}
+
+	try {
+		return await fetch('/api/voice/generate', {
+			method: 'POST',
+			credentials: 'include',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+			signal: controller.signal,
+		})
+	} finally {
+		clearTimeout(timeoutId)
+	}
+}
 
 /**
  * Resolves a voice hash to an asset key (or `null` if no such asset
@@ -60,21 +96,12 @@ class VoiceService {
 		// Generate
 		console.log('[VoiceService] Preload generating voice for:', hash)
 		try {
-			const res = await fetch('/api/voice/generate', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ 
-					text: fullText, 
-					programId,
-					previousText: context?.previousText,
-					nextText: context?.nextText
-				})
+			await voiceFetch({
+				text: fullText,
+				programId,
+				previousText: context?.previousText,
+				nextText: context?.nextText,
 			})
-			
-			if (res.ok) {
-				// console.log('[VoiceService] Preload success')
-			}
-
 		} catch (e) {
 			console.warn('[VoiceService] Preload generation failed', e)
 		}
@@ -138,15 +165,11 @@ class VoiceService {
 			})
 
 			try {
-				const res = await fetch('/api/voice/generate', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ 
-						text: fullText, 
-						programId,
-						previousText: context?.previousText,
-						nextText: context?.nextText
-					})
+				const res = await voiceFetch({
+					text: fullText,
+					programId,
+					previousText: context?.previousText,
+					nextText: context?.nextText,
 				})
 
 				// Check cancellation

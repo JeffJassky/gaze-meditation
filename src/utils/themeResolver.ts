@@ -1,6 +1,6 @@
 import { DEFAULT_THEME } from '../theme'
 import type { ThemeConfig } from '../types'
-import type { Session } from '../services/sessions'
+import type { Session } from '../api/sessions'
 
 export function resolveTheme(
 	programTheme: ThemeConfig | undefined,
