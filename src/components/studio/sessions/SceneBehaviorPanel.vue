@@ -127,12 +127,12 @@ const groups = computed(() => groupedBehaviors())
 				<div
 					v-for="(s, i) in suggestions"
 					:key="i"
-					class="bg-zinc-950 border border-zinc-800 rounded-lg p-4 flex flex-col gap-2">
-					<!-- Type picker -->
-					<div class="flex items-center gap-3">
-						<label :class="[su.label, '!mb-0 flex-1']">Behavior</label>
+					class="bg-zinc-950 border border-zinc-800 rounded-lg p-4 space-y-3">
+					<!-- Type picker (full width) -->
+					<div>
+						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Behavior</label>
 						<select
-							:class="[su.select, 'w-44']"
+							:class="su.select"
 							:value="s.type"
 							@change="(e) => changeType(i, (e.target as HTMLSelectElement).value)">
 							<optgroup
@@ -143,81 +143,77 @@ const groups = computed(() => groupedBehaviors())
 									{{ b.label }}
 								</option>
 							</optgroup>
-							<!-- Preserve unknown/custom types so data isn't silently lost. -->
 							<option v-if="s.type && !defOf(s.type)" :value="s.type">
 								{{ s.type }} (custom)
 							</option>
 						</select>
 					</div>
 
-					<!-- Description of the selected behavior -->
-					<p v-if="defOf(s.type)" class="text-xs text-zinc-500">
+					<p v-if="defOf(s.type)" class="text-xs text-zinc-500 leading-relaxed">
 						{{ defOf(s.type)!.description }}
 					</p>
 
-					<div class="flex items-center gap-3">
-						<label :class="[su.label, '!mb-0 flex-1']">
-							{{ defOf(s.type)?.kind === 'trigger' ? 'Time limit (s)' : 'Hold for (s)' }}
-						</label>
-						<input
-							:class="[su.input, 'w-16 text-right']"
-							type="number"
-							min="0"
-							step="0.5"
-							:placeholder="defOf(s.type)?.kind === 'trigger' ? '—' : ''"
-							:value="msToSeconds(s.duration)"
-							@input="
-								(e) =>
-									updateBehaviorSuggestion(i, {
-										duration: secondsToMs(
-											(e.target as HTMLInputElement).value,
-										),
-									})
-							" />
+					<!-- Duration + failure in a compact grid -->
+					<div class="grid grid-cols-2 gap-2">
+						<div>
+							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">
+								{{ defOf(s.type)?.kind === 'trigger' ? 'Time limit' : 'Duration' }}
+							</label>
+							<div class="flex items-center gap-1.5">
+								<input
+									:class="[su.input, 'flex-1 text-right']"
+									type="number"
+									min="0"
+									step="0.5"
+									:placeholder="defOf(s.type)?.kind === 'trigger' ? '—' : ''"
+									:value="msToSeconds(s.duration)"
+									@input="
+										(e) =>
+											updateBehaviorSuggestion(i, {
+												duration: secondsToMs(
+													(e.target as HTMLInputElement).value,
+												),
+											})
+									" />
+								<span class="text-xs text-zinc-600 shrink-0">sec</span>
+							</div>
+						</div>
+
+						<div v-if="defOf(s.type)?.kind === 'hold'">
+							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">On failure</label>
+							<select
+								:class="su.select"
+								:value="s.failBehavior ?? 'pause'"
+								@change="
+									(e) =>
+										updateBehaviorSuggestion(i, {
+											failBehavior: (e.target as HTMLSelectElement).value as
+												| 'pause'
+												| 'reset',
+										})
+								">
+								<option value="pause">Pause timer</option>
+								<option value="reset">Reset timer</option>
+							</select>
+						</div>
 					</div>
 
 					<p
 						v-if="defOf(s.type)?.kind === 'trigger'"
-						class="text-[11px] text-zinc-500 -mt-1">
-						Leave empty to wait indefinitely for the action.
+						class="text-[11px] text-zinc-600">
+						Leave empty to wait indefinitely.
 					</p>
 
-					<div
-						v-if="defOf(s.type)?.kind === 'hold'"
-						class="flex items-center gap-3">
-						<label :class="[su.label, '!mb-0 flex-1']">On failure</label>
-						<select
-							:class="[su.select, 'w-44']"
-							:value="s.failBehavior ?? 'pause'"
-							@change="
-								(e) =>
-									updateBehaviorSuggestion(i, {
-										failBehavior: (e.target as HTMLSelectElement).value as
-											| 'pause'
-											| 'reset',
-									})
-							">
-							<option value="pause">Pause timer</option>
-							<option value="reset">Reset timer</option>
-						</select>
-					</div>
-
-					<!-- Schema-driven option fields -->
+					<!-- Schema-driven option fields (stacked) -->
 					<template v-if="defOf(s.type) && defOf(s.type)!.fields.length > 0">
 						<div
 							v-for="f in defOf(s.type)!.fields"
-							:key="f.key"
-							class="flex items-start gap-3">
-							<div class="flex-1 min-w-0">
-								<label :class="[su.label, '!mb-0']">{{ f.label }}</label>
-								<p v-if="f.help" class="text-[11px] text-zinc-500 mt-0.5">
-									{{ f.help }}
-								</p>
-							</div>
+							:key="f.key">
+							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">{{ f.label }}</label>
 
 							<input
 								v-if="f.type === 'number'"
-								:class="[su.input, 'w-16 text-right shrink-0']"
+								:class="su.input"
 								type="number"
 								:min="f.min"
 								:max="f.max"
@@ -236,7 +232,7 @@ const groups = computed(() => groupedBehaviors())
 
 							<input
 								v-else-if="f.type === 'text'"
-								:class="[su.input, 'w-44 shrink-0']"
+								:class="su.input"
 								type="text"
 								:value="(s.options?.[f.key] as string) ?? ''"
 								@input="
@@ -250,7 +246,7 @@ const groups = computed(() => groupedBehaviors())
 
 							<textarea
 								v-else-if="f.type === 'longText'"
-								:class="[su.textarea, 'w-44 min-h-[60px] shrink-0']"
+								:class="[su.textarea, 'min-h-[60px]']"
 								:value="(s.options?.[f.key] as string) ?? ''"
 								@input="
 									(e) =>
@@ -263,7 +259,7 @@ const groups = computed(() => groupedBehaviors())
 
 							<select
 								v-else-if="f.type === 'select'"
-								:class="[su.select, 'w-44 shrink-0']"
+								:class="su.select"
 								:value="(s.options?.[f.key] as string) ?? ''"
 								@change="
 									(e) =>
@@ -280,16 +276,21 @@ const groups = computed(() => groupedBehaviors())
 									{{ c.label }}
 								</option>
 							</select>
+
+							<p v-if="f.help" class="text-[11px] text-zinc-600 mt-1 leading-relaxed">
+								{{ f.help }}
+							</p>
 						</div>
 					</template>
 
-					<button
-						:class="su.btnDanger"
-						class="self-end mt-1"
-						type="button"
-						@click="removeBehaviorSuggestion(i)">
-						Remove
-					</button>
+					<div class="flex justify-end pt-1">
+						<button
+							:class="su.btnDanger"
+							type="button"
+							@click="removeBehaviorSuggestion(i)">
+							Remove
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -301,36 +302,5 @@ const groups = computed(() => groupedBehaviors())
 			</button>
 		</div>
 
-		<!-- Reinforcement messages -->
-		<div class="grid md:grid-cols-2 gap-3 pt-3 border-t border-zinc-800">
-			<div>
-				<label :class="su.label">Success message</label>
-				<input
-					:class="su.input"
-					:value="behavior.success?.message ?? ''"
-					placeholder="Well done."
-					@input="
-						(e) =>
-							write('success', {
-								enabled: true,
-								message: (e.target as HTMLInputElement).value,
-							})
-					" />
-			</div>
-			<div>
-				<label :class="su.label">Fail message</label>
-				<input
-					:class="su.input"
-					:value="behavior.fail?.message ?? ''"
-					placeholder="Try again."
-					@input="
-						(e) =>
-							write('fail', {
-								enabled: true,
-								message: (e.target as HTMLInputElement).value,
-							})
-					" />
-			</div>
-		</div>
 	</div>
 </template>

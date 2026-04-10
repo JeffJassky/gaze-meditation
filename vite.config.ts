@@ -313,7 +313,13 @@ export default defineConfig(({ mode }) => {
 			headers: {
 				'Cross-Origin-Opener-Policy': 'same-origin',
 				'Cross-Origin-Embedder-Policy': 'credentialless'
-			}
+			},
+			proxy: {
+				'/assets/file': {
+					target: env.VITE_API_URL || 'http://localhost:3000',
+					changeOrigin: true,
+				},
+			},
 		}
 	}
 })

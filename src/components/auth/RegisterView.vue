@@ -48,7 +48,7 @@ async function submit() {
 			</div>
 
 			<div :class="ui.field">
-				<label :class="ui.label">Email <span class="text-zinc-600 normal-case">(optional)</span></label>
+				<label :class="ui.label">Email <span class="text-content-tertiary normal-case">(optional)</span></label>
 				<input
 					v-model="email"
 					type="email"
@@ -74,7 +74,7 @@ async function submit() {
 				{{ submitting ? 'Creating…' : 'Create account' }}
 			</button>
 
-			<p class="mt-6 text-sm text-zinc-400 text-center">
+			<p class="mt-6 text-sm text-content-secondary text-center">
 				Already have an account?
 				<RouterLink to="/login" :class="ui.link">Sign in</RouterLink>
 			</p>

@@ -18,6 +18,7 @@ export interface ShortcutHandlers {
 	onDelete: () => void
 	onNewScene: () => void
 	onToggleMeta: () => void
+	onToggleTimeline?: () => void
 }
 
 function isEditable(el: EventTarget | null): boolean {
@@ -67,6 +68,11 @@ export function useStudioShortcuts(handlers: ShortcutHandlers) {
 		if (mod && key === 'i') {
 			e.preventDefault()
 			handlers.onToggleMeta()
+			return
+		}
+		if (mod && e.shiftKey && key === 'w') {
+			e.preventDefault()
+			handlers.onToggleTimeline?.()
 			return
 		}
 		if (e.key === 'ArrowDown') {

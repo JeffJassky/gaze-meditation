@@ -6,6 +6,8 @@ import {
   publicSession,
   SESSION_AUDIENCE,
   SESSION_VISIBILITY,
+  VOICE_ORIGIN,
+  VOICE_STRUCTURE,
   type SessionDoc,
 } from '../models/Session.js';
 import { uniqueOwnerSlug } from '../lib/slug.js';
@@ -45,6 +47,9 @@ const PATCHABLE_FIELDS = [
   'coverAssetId',
   'audio',
   'elevenlabsVoiceId',
+  'voiceOrigin',
+  'voiceStructure',
+  'masterAudio',
   'assets',
   'scenes',
   'settings',
@@ -131,11 +136,13 @@ sessionsRouter.get('/', async (req, res, next) => {
 
 // ---------- read one ----------
 
-sessionsRouter.get('/:id', async (req, res, next) => {
+/** Resolve a session by slug or ObjectId for backward compat. */
+sessionsRouter.get('/:idOrSlug', async (req, res, next) => {
   try {
-    if (!Types.ObjectId.isValid(String(req.params.id)))
-      return res.status(404).json({ error: 'not_found' });
-    const session = await Session.findById(req.params.id);
+    const param = String(req.params.idOrSlug);
+    const session = Types.ObjectId.isValid(param)
+      ? await Session.findById(param)
+      : await Session.findOne({ slug: param });
     if (!session) return res.status(404).json({ error: 'not_found' });
     if (!canRead(session, currentUserId(req)))
       return res.status(403).json({ error: 'forbidden' });
@@ -192,6 +199,10 @@ sessionsRouter.patch('/:id', requireAuth, async (req, res, next) => {
         return res.status(400).json({ error: 'invalid_visibility' });
       if (field === 'audience' && !SESSION_AUDIENCE.includes(body[field] as typeof SESSION_AUDIENCE[number]))
         return res.status(400).json({ error: 'invalid_audience' });
+      if (field === 'voiceOrigin' && !VOICE_ORIGIN.includes(body[field] as typeof VOICE_ORIGIN[number]))
+        return res.status(400).json({ error: 'invalid_voice_origin' });
+      if (field === 'voiceStructure' && !VOICE_STRUCTURE.includes(body[field] as typeof VOICE_STRUCTURE[number]))
+        return res.status(400).json({ error: 'invalid_voice_structure' });
       (session as unknown as Record<string, unknown>)[field] = body[field];
     }
 
@@ -202,7 +213,7 @@ sessionsRouter.patch('/:id', requireAuth, async (req, res, next) => {
 
     // `scenes`, `assets`, `audio`, `theme`, `settings` are Mixed/array — marking
     // them modified ensures Mongoose serializes replacements and nested changes.
-    for (const f of ['scenes', 'assets', 'audio', 'theme', 'settings'] as const) {
+    for (const f of ['scenes', 'assets', 'audio', 'theme', 'settings', 'masterAudio'] as const) {
       if (body[f] !== undefined) session.markModified(f);
     }
 

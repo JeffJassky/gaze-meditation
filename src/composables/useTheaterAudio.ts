@@ -63,17 +63,28 @@ export function useTheaterAudio(
 			)
 		}
 
+		// Preload master audio buffer for session-level voice mode.
+		if (session.masterAudio?.key) {
+			try {
+				await audioSession.loadBuffer(session.masterAudio.key)
+			} catch (e) {
+				console.warn('[TheaterAudio] Failed to preload master audio', e)
+			}
+		}
+
 		const bConfig = session.audio?.binaural
-		audioSession.binaural.start({
-			carrierFreq: 100,
-			beatFreq: bConfig?.hertz ?? 6,
-			volume: bConfig?.volume ?? 0.5,
-		})
+		if (bConfig?.enabled !== false) {
+			audioSession.binaural.start({
+				carrierFreq: 100,
+				beatFreq: bConfig?.hertz ?? 6,
+				volume: bConfig?.volume ?? 0.5,
+			})
+		}
 	}
 
 	/** Update binaural settings for a scene-level override. */
 	function applySceneBinaural(scene: Scene) {
-		const b = scene.config.audio?.binaural
+		const b = scene?.config?.audio?.binaural
 		if (!b) return
 		if (audioSession.binaural.isActive) {
 			if (b.hertz !== undefined) audioSession.binaural.setBeatFrequency(b.hertz)
@@ -118,7 +129,7 @@ export function useTheaterAudio(
 		}
 
 		// 3. Trigger one-shots for this specific scene.
-		if (currentScene?.config.audio?.soundboard) {
+		if (currentScene?.config?.audio?.soundboard) {
 			for (const evt of currentScene.config.audio.soundboard) {
 				if (isLoopingSample(evt.id)) continue
 				if (evt.event === 'start') {
@@ -134,7 +145,7 @@ export function useTheaterAudio(
 
 	/** Play a scene-level FX one-shot. */
 	function playSceneFx(scene: Scene) {
-		const fx = scene.config.audio?.fx
+		const fx = scene?.config?.audio?.fx
 		if (!fx) return
 		playOneShot(audioSession, fx.path, 'fx', fx.volume ?? 1, fx.loop ?? false)
 			.then(control => {
@@ -203,6 +214,12 @@ export function useTheaterAudio(
 		activeFxStops.value.clear()
 		activeSoundboardStops.value.forEach(stop => stop(fadeDuration))
 		activeSoundboardStops.value.clear()
+
+		// Suspend the AudioContext so nothing can produce sound even if
+		// a stale setTimeout or resolved promise tries to start a node.
+		if (audioSession.ctx?.state === 'running') {
+			audioSession.ctx.suspend().catch(() => {})
+		}
 	}
 
 	function setMasterVolume(volume: number) {
@@ -215,7 +232,7 @@ export function useTheaterAudio(
 		const activeLoops = new Set<string>()
 		for (let i = 0; i <= targetIndex; i++) {
 			const scene = sessionScenes.value[i]
-			if (scene?.config.audio?.soundboard) {
+			if (scene?.config?.audio?.soundboard) {
 				for (const evt of scene.config.audio.soundboard) {
 					if (!isLoopingSample(evt.id)) continue
 					if (evt.event === 'start') activeLoops.add(evt.id)

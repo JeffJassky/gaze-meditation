@@ -3,6 +3,7 @@ import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
 import SceneTextPanel from './SceneTextPanel.vue'
 import { VOICES_KEY } from './voicesKey'
 import { BEHAVIOR_BY_TYPE } from './behaviorCatalog'
+import { SOUNDBOARD_SAMPLES_KEY } from './soundboardSamplesKey'
 import type { SceneBlock } from '@/api/sessions'
 
 /**
@@ -26,7 +27,11 @@ const emit = defineEmits<{
 void props
 
 const configModel = computed({
-	get: () => scene.value.config ?? {},
+	get: () => {
+		// Ensure the scene always has a config object so mutations propagate.
+		if (!scene.value.config) scene.value.config = {}
+		return scene.value.config
+	},
 	set: (v) => (scene.value.config = v),
 })
 
@@ -83,6 +88,20 @@ const binauralHz = computed<number | null>(() => {
 	if (typeof hz !== 'number' || !Number.isFinite(hz)) return null
 	return hz
 })
+// --- Soundboard events -----------------------------------------------------
+const soundboardSamples = inject(SOUNDBOARD_SAMPLES_KEY, computed(() => []))
+const soundboardEvents = computed(() => {
+	const evts = scene.value.config?.audio?.soundboard
+	if (!evts || evts.length === 0) return []
+	return evts.map((e) => {
+		const sample = soundboardSamples.value.find((s) => s.id === e.id)
+		const name = sample?.path
+			? (sample.path.split('/').pop() ?? sample.id).replace(/\.[^.]+$/, '')
+			: e.id
+		return { event: e.event, name }
+	})
+})
+
 function msToDisplaySeconds(ms: number | undefined): number | null {
 	if (ms === undefined || !Number.isFinite(ms) || ms <= 0) return null
 	return Math.round((ms / 1000) * 10) / 10
@@ -191,7 +210,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		<!-- Script body: voice picker to the left of the voice textarea. -->
 		<div class="flex items-start gap-3">
 			<div
-				v-if="voicesState?.enabled.value"
+				v-if="voicesState?.enabled.value && voicesState?.voiceOrigin.value === 'ai'"
 				class="relative shrink-0 pt-[6px]">
 				<div
 					class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors max-w-[150px] text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
@@ -245,7 +264,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		     the scene container in the right margin so the container
 		     itself stays pure script. -->
 		<div
-			v-if="behaviorSummary || binauralHz !== null"
+			v-if="behaviorSummary || binauralHz !== null || soundboardEvents.length > 0"
 			class="absolute top-4 left-full ml-4 flex flex-col items-start gap-1.5 text-[11px] text-zinc-500 w-[130px] pointer-events-none">
 			<div
 				v-if="behaviorLabels.length > 0"
@@ -275,6 +294,16 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 					<path d="M3 14a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H3z" />
 				</svg>
 				<span>{{ binauralHz }} Hz</span>
+			</div>
+			<div
+				v-for="(ev, idx) in soundboardEvents"
+				:key="'sb-' + idx"
+				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full leading-tight whitespace-nowrap"
+				:class="ev.event === 'start'
+					? 'bg-emerald-950/60 border border-emerald-800/50 text-emerald-300'
+					: 'bg-red-950/60 border border-red-800/50 text-red-300'">
+				<span class="text-[9px]">{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}</span>
+				<span class="truncate max-w-[90px]">{{ ev.name }}</span>
 			</div>
 		</div>
 	</section>

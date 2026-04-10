@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import StudioShell from '@/components/ui/StudioShell.vue'
 import StudioEditorToolbar from './StudioEditorToolbar.vue'
-import SessionMetaDrawer from './SessionMetaDrawer.vue'
 import SceneStack, { type FocusRequest } from './SceneStack.vue'
 import SceneInspector from './SceneInspector.vue'
 import SessionLivePreview from './SessionLivePreview.vue'
@@ -13,6 +11,8 @@ import { useSoftDelete } from './composables/useSoftDelete'
 import { useStudioShortcuts } from './composables/useStudioShortcuts'
 import { useDirtyTracking } from '@/composables/useDirtyTracking'
 import ToastStack from './ToastStack.vue'
+import SessionSettingsPanel from './SessionSettingsPanel.vue'
+import WaveformTimeline from './waveform/WaveformTimeline.vue'
 import {
 	sessionsApi,
 	type SceneBlock,
@@ -20,10 +20,12 @@ import {
 	type SessionAsset,
 } from '@/api/sessions'
 import { assetsApi, type AssetDoc } from '@/api/assets'
+import { assetUrl } from '@/utils/assetUrl'
 import { listElevenLabsVoices, type ElevenLabsVoice } from '@/vendors/elevenlabs'
 import { auth } from '@/state/auth'
 import { VOICES_KEY } from './voicesKey'
 import { AUDIO_ASSETS_KEY } from './audioAssetsKey'
+import { SOUNDBOARD_SAMPLES_KEY } from './soundboardSamplesKey'
 
 /**
  * Top-level session editor — three-pane shell.
@@ -42,9 +44,18 @@ const { dirty, markClean } = useDirtyTracking(session)
 const loading = ref(true)
 const saving = ref(false)
 const error = ref<string | null>(null)
-const metaDrawerOpen = ref(false)
+const timelineOpen = ref(false)
+const inspectorOpen = ref(true)
 const justSaved = ref(false)
 const focusRequest = ref<FocusRequest | null>(null)
+const timelineRef = ref<InstanceType<typeof WaveformTimeline> | null>(null)
+
+// --- Master audio ----------------------------------------------------------
+const hasMasterAudio = computed(() => !!session.value?.masterAudio?.key)
+const masterAudioUrl = computed(() => {
+	const key = session.value?.masterAudio?.key
+	return key ? assetUrl(key) : null
+})
 
 // --- Asset pool ------------------------------------------------------------
 // The editor's audio picker draws from two places, merged:
@@ -53,36 +64,33 @@ const focusRequest = ref<FocusRequest | null>(null)
 //   2. The shared Asset collection (all of the owner's assets across every
 //      session).
 // Merging by `key` dedupes when the same file appears in both places.
-const sharedAudioAssets = ref<AssetDoc[]>([])
-async function loadSharedAudioAssets() {
+const sharedAssets = ref<AssetDoc[]>([])
+async function loadSharedAssets() {
 	try {
-		// Paginate through in case there are many. The server caps limit at 1000
-		// per page, which is plenty for any realistic library.
 		const pages: AssetDoc[] = []
 		let page = 1
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
-			const res = await assetsApi.list({ kind: 'audio', limit: 1000, page })
+			const res = await assetsApi.list({ limit: 1000, page })
 			pages.push(...res.items)
 			if (!res.hasMore) break
 			page++
 		}
-		sharedAudioAssets.value = pages
+		sharedAssets.value = pages
 	} catch (e) {
 		console.warn('[editor] failed to load shared audio assets', e)
 	}
 }
 
-const audioAssets = computed<SessionAsset[]>(() => {
+const allAssets = computed<SessionAsset[]>(() => {
 	const byKey = new Map<string, SessionAsset>()
 	// Embedded first — those win when the same key appears in both (the
 	// embedded copy may have session-specific label edits).
 	for (const a of session.value?.assets ?? []) {
-		if (a.kind !== 'audio') continue
 		byKey.set(a.key, a)
 	}
 	// Then the shared pool, in newest-first order.
-	for (const a of sharedAudioAssets.value) {
+	for (const a of sharedAssets.value) {
 		if (byKey.has(a.key)) continue
 		byKey.set(a.key, {
 			id: a.id,
@@ -130,24 +138,29 @@ async function loadVoices() {
 }
 
 const sessionVoiceId = computed(() => session.value?.elevenlabsVoiceId ?? undefined)
+const sessionVoiceOrigin = computed(() => session.value?.voiceOrigin ?? undefined)
+const sessionBinauralEnabled = computed(() => session.value?.audio?.binaural?.enabled !== false)
 provide(VOICES_KEY, {
 	voices,
 	loading: voicesLoading,
 	error: voicesError,
 	enabled: voicesEnabled,
 	sessionVoiceId,
+	voiceOrigin: sessionVoiceOrigin,
+	binauralEnabled: sessionBinauralEnabled,
 })
-provide(AUDIO_ASSETS_KEY, audioAssets)
+provide(AUDIO_ASSETS_KEY, allAssets)
+provide(SOUNDBOARD_SAMPLES_KEY, computed(() => session.value?.audio?.soundboard ?? []))
 
 async function load() {
 	loading.value = true
 	error.value = null
 	try {
-		const doc = await sessionsApi.get(String(route.params.id))
+		const doc = await sessionsApi.get(String(route.params.slug))
 		// Seed an empty session with a starter scene so the writer always has
-		// somewhere to type. Not saved until the user actually hits Save, so a
-		// pristine untouched session won't get written back with a blank scene.
-		if (doc.scenes.length === 0) {
+		// somewhere to type. Only when voiceStructure is already chosen —
+		// otherwise the voice mode picker shows first.
+		if (doc.scenes.length === 0 && doc.voiceStructure) {
 			doc.scenes = [
 				{ id: crypto.randomUUID(), type: 'scene', label: '', config: {} },
 			]
@@ -181,9 +194,12 @@ async function save() {
 			coverAssetId: s.coverAssetId,
 			audio: s.audio,
 			elevenlabsVoiceId: s.elevenlabsVoiceId,
+			voiceOrigin: s.voiceOrigin,
+			voiceStructure: s.voiceStructure,
 			assets: s.assets,
 			scenes: s.scenes,
 			settings: s.settings,
+			masterAudio: s.masterAudio,
 		})
 		session.value = updated
 		markClean()
@@ -329,29 +345,46 @@ useStudioShortcuts({
 		if (idx < 0) addSceneAtEnd()
 		else addSceneAfter(idx)
 	},
-	onToggleMeta: () => {
-		metaDrawerOpen.value = !metaDrawerOpen.value
+	onToggleMeta: () => {},
+	onToggleTimeline: () => {
+		timelineOpen.value = !timelineOpen.value
 	},
 })
 
 onMounted(() => {
 	load()
 	loadVoices()
-	loadSharedAudioAssets()
+	loadSharedAssets()
 })
 
 // Reload if the route id changes (e.g. duplicate → new edit page).
 watch(
-	() => route.params.id,
-	(id) => {
-		if (id) load()
+	() => route.params.slug,
+	(slug) => {
+		if (slug) load()
+	},
+)
+
+// When voiceStructure is first set (user picks a mode), seed a starter scene
+// and auto-open the timeline for session-level audio.
+watch(
+	() => session.value?.voiceStructure,
+	(vs, prev) => {
+		if (!vs || prev) return // only react to the initial choice
+		if (!session.value) return
+		if (session.value.scenes.length === 0) {
+			session.value.scenes = [
+				{ id: crypto.randomUUID(), type: 'scene', label: '', config: {} },
+			]
+			selection.select(session.value.scenes[0]!.id)
+		}
+		if (vs === 'session') timelineOpen.value = true
 	},
 )
 </script>
 
 <template>
-	<StudioShell>
-		<div class="h-[calc(100vh-3.5rem)] flex flex-col">
+	<div class="h-screen w-full bg-surface text-content flex flex-col">
 			<StudioEditorToolbar
 				:session="session"
 				:dirty="dirty"
@@ -365,59 +398,156 @@ watch(
 				@publish="togglePublish"
 				@unpublish="togglePublish"
 				@update-title="(t) => session && (session.title = t)"
-				@open-meta="metaDrawerOpen = true" />
+				/>
 
 			<div
 				v-if="error"
-				class="px-4 py-2 text-sm text-red-400 border-b border-zinc-800">
+				class="px-4 py-2 text-sm text-danger border-b border-edge">
 				{{ error }}
 			</div>
 
 			<div
 				v-if="loading"
-				class="flex-1 flex items-center justify-center text-zinc-500 text-sm">
+				class="flex-1 flex items-center justify-center text-content-tertiary text-sm">
 				Loading…
 			</div>
 
 			<div
 				v-else-if="session"
-				class="flex-1 grid grid-cols-[1fr_360px] min-h-0">
-				<SceneStack
-					v-model="session.scenes"
-					v-model:session="session"
-					:selected-id="selection.selectedId.value"
-					:focus-request="focusRequest"
-					@select="selection.select"
-					@duplicate="duplicateAt"
-					@remove="removeSceneAt"
-					@advance="(i) => addSceneAfter(i, { focus: true })"
-					@delete-backward="deleteBackwardFrom"
-					@focus-consumed="focusRequest = null" />
+				class="flex-1 flex flex-col min-h-0">
+				<div class="flex-1 flex min-h-0">
+					<SessionSettingsPanel v-model="session" />
 
-				<div class="flex flex-col min-h-0 border-l border-zinc-800 bg-zinc-950/80">
-					<SessionLivePreview
-						class="shrink-0"
-						:session="session"
+					<SceneStack
+						class="flex-1 min-w-0"
+						v-model="session.scenes"
+						v-model:session="session"
 						:selected-id="selection.selectedId.value"
-						:selected-index="selection.selectedIndex.value" />
-					<SceneInspector
-						v-if="selection.selectedScene.value"
-						v-model="session.scenes[selection.selectedIndex.value]!"
-						class="flex-1 min-h-0" />
-					<div v-else class="flex-1" />
+						:focus-request="focusRequest"
+						@select="selection.select"
+						@duplicate="duplicateAt"
+						@remove="removeSceneAt"
+						@advance="(i) => addSceneAfter(i, { focus: true })"
+						@delete-backward="deleteBackwardFrom"
+						@focus-consumed="focusRequest = null" />
+
+					<!-- Right panel: inspector (collapsible) -->
+					<aside
+						class="flex flex-col min-h-0 border-l border-edge bg-surface shrink-0 transition-all overflow-hidden"
+						:class="inspectorOpen ? 'w-[360px]' : 'w-10'">
+						<button
+							type="button"
+							class="shrink-0 text-xs text-content-tertiary hover:text-content transition border-b border-edge"
+							:class="inspectorOpen ? 'h-10 flex items-center gap-2 px-3' : 'flex items-center justify-center w-full flex-1'"
+							:title="inspectorOpen ? 'Collapse inspector' : 'Expand inspector'"
+							@click="inspectorOpen = !inspectorOpen">
+							<span
+								v-if="!inspectorOpen"
+								class="text-[10px] uppercase tracking-wider whitespace-nowrap"
+								style="writing-mode: vertical-lr;">Scene Inspector</span>
+							<template v-else>
+								<span class="text-[10px] uppercase tracking-wider flex-1 text-left">Scene Inspector</span>
+								<svg
+									width="14" height="14" viewBox="0 0 24 24" fill="none"
+									stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+									class="shrink-0">
+									<polyline points="9 18 15 12 9 6" />
+								</svg>
+							</template>
+						</button>
+						<template v-if="inspectorOpen">
+							<SessionLivePreview
+								class="shrink-0"
+								:session="session"
+								:selected-id="selection.selectedId.value"
+								:selected-index="selection.selectedIndex.value" />
+							<SceneInspector
+								v-if="selection.selectedScene.value"
+								v-model="session.scenes[selection.selectedIndex.value]!"
+								class="flex-1 min-h-0" />
+							<div v-else class="flex-1" />
+						</template>
+					</aside>
+				</div>
+
+				<!-- Timeline (collapsible) -->
+				<div class="border-t border-edge flex flex-col shrink-0">
+					<div
+						class="h-7 flex items-center gap-2 px-3 text-xs text-content-tertiary cursor-pointer hover:text-content transition"
+						@click="timelineOpen = !timelineOpen">
+						<svg
+							width="12" height="12" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+							class="shrink-0 transition-transform duration-200"
+							:class="timelineOpen ? 'rotate-180' : ''">
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
+						<span class="text-[10px] uppercase tracking-wider">Timeline</span>
+
+						<!-- Inline toolbar (only when open) -->
+						<template v-if="timelineOpen && timelineRef">
+							<template v-if="timelineRef.isMasterMode">
+								<button
+									type="button"
+									class="ml-2 text-base leading-none hover:text-content transition"
+									:disabled="!timelineRef.isReady"
+									:title="timelineRef.isPlaying ? 'Pause' : 'Play'"
+									@click.stop="timelineRef.togglePlayback">
+									{{ timelineRef.isPlaying ? '⏸' : '▶' }}
+								</button>
+								<span class="text-[10px] tabular-nums">
+									{{ timelineRef.fmt(timelineRef.currentTime) }} / {{ timelineRef.fmt(timelineRef.duration) }}
+								</span>
+								<div class="flex-1" />
+								<button
+									type="button"
+									class="text-[10px] hover:text-content transition"
+									:disabled="!timelineRef.isReady"
+									@click.stop="timelineRef.distributeEvenly">
+									Distribute evenly
+								</button>
+								<button
+									type="button"
+									class="text-[10px] hover:text-content transition"
+									:disabled="!timelineRef.isReady || !timelineRef.decodedBuffer"
+									@click.stop="timelineRef.autoSplit">
+									Auto-split
+								</button>
+								<button
+									type="button"
+									class="text-[10px] hover:text-content transition opacity-50"
+									:disabled="!timelineRef.isReady"
+									@click.stop="timelineRef.clearRegions">
+									Clear
+								</button>
+							</template>
+							<template v-else>
+								<span class="ml-2 text-[10px]">
+									{{ session!.scenes.length }} scene{{ session!.scenes.length === 1 ? '' : 's' }}
+								</span>
+								<span class="text-[10px] tabular-nums">
+									~{{ timelineRef.fmt(timelineRef.totalPerSceneDuration) }}
+								</span>
+								<div class="flex-1" />
+							</template>
+						</template>
+					</div>
+					<WaveformTimeline
+						v-if="timelineOpen"
+						ref="timelineRef"
+						v-model="session.scenes"
+						:audio-url="masterAudioUrl"
+						:selected-id="selection.selectedId.value"
+						@select="selection.select"
+						@update:duration="(d) => { if (session!.masterAudio) session!.masterAudio.duration = d }" />
 				</div>
 			</div>
-		</div>
 
 		<ToastStack
 			:pending="softDelete.pending.value"
 			:window-ms="softDelete.UNDO_WINDOW_MS"
 			@undo="softDelete.undo" />
 
-		<SessionMetaDrawer
-			v-if="session"
-			v-model:open="metaDrawerOpen"
-			v-model:session="session" />
-	</StudioShell>
+	</div>
 </template>
 

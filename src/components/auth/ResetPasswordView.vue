@@ -77,7 +77,7 @@ async function submit() {
 				{{ submitting ? 'Saving…' : 'Reset password' }}
 			</button>
 
-			<p class="mt-6 text-sm text-zinc-400 text-center">
+			<p class="mt-6 text-sm text-content-secondary text-center">
 				<RouterLink to="/login" :class="ui.link">Back to sign in</RouterLink>
 			</p>
 		</form>

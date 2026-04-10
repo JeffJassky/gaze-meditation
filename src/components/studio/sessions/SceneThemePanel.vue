@@ -1,89 +1,107 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { su } from '@/components/ui/studioUi'
 import type { SceneConfig, ThemeConfig } from '@shared/types'
+import { normalizeHex } from '@/utils/colorInput'
 
 const config = defineModel<SceneConfig>({ required: true })
-
-const THEME_KEYS = [
-	['backgroundColor', 'Background'],
-	['uiTextColor', 'UI Text'],
-	['promptTextColor', 'Prompt Text'],
-	['accentColor', 'Accent'],
-	['positiveColor', 'Positive'],
-	['negativeColor', 'Negative'],
-] as const
 
 const theme = computed<ThemeConfig>({
 	get: () => config.value.theme ?? {},
 	set: (v) => (config.value.theme = v),
 })
 
-function setTheme(key: keyof ThemeConfig, value: string) {
+const COLOR_ROWS: [keyof ThemeConfig, string][] = [
+	['backgroundColor', 'Background'],
+]
+
+const TINT_ROW = true // marker to insert tint after background
+
+const REMAINING_ROWS: [keyof ThemeConfig, string][] = [
+	['promptTextColor', 'Prompt text'],
+	['uiTextColor', 'UI text'],
+	['accentColor', 'Accent'],
+]
+
+function setColor(key: keyof ThemeConfig, value: string) {
 	const next = { ...theme.value }
-	if (!value) delete next[key]
-	else (next[key] as string) = value
-	config.value.theme = next
+	const normalized = normalizeHex(value)
+	if (!normalized) delete next[key]
+	else (next[key] as string) = normalized
+	theme.value = next
 }
 
-function tintColor(): string {
-	return (theme.value.tint?.color as string) ?? '#000000'
-}
-function tintOpacity(): number {
-	return (theme.value.tint?.opacity as number) ?? 0
-}
-function setTint(patch: { color?: string; opacity?: number }) {
-	const next = { ...theme.value, tint: { color: tintColor(), opacity: tintOpacity(), ...patch } }
-	config.value.theme = next
+function setTintColor(value: string) {
+	const normalized = normalizeHex(value)
+	if (!normalized) {
+		const next = { ...theme.value }
+		delete next.tint
+		theme.value = next
+	} else {
+		theme.value = {
+			...theme.value,
+			tint: { color: normalized, opacity: theme.value.tint?.opacity ?? 0 },
+		}
+	}
 }
 </script>
 
 <template>
-	<div>
-		<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-			<div v-for="[key, label] in THEME_KEYS" :key="key">
-				<label :class="su.label">{{ label }}</label>
-				<div class="flex items-center gap-2">
-					<input
-						type="color"
-						class="w-10 h-10 rounded border border-zinc-800 bg-zinc-950"
-						:value="(theme[key] as string) || '#000000'"
-						@input="(e) => setTheme(key, (e.target as HTMLInputElement).value)" />
-					<input
-						:class="su.input"
-						:value="(theme[key] as string) || ''"
-						placeholder="#hex"
-						@input="(e) => setTheme(key, (e.target as HTMLInputElement).value)" />
-				</div>
-			</div>
+	<div class="space-y-2">
+		<!-- Background -->
+		<div
+			v-for="[key, label] in COLOR_ROWS"
+			:key="key"
+			class="flex items-center gap-2">
+			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">{{ label }}</span>
+			<input
+				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				:value="(theme[key] as string) || ''"
+				placeholder="default"
+				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
+			<input
+				type="color"
+				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				:value="(theme[key] as string) || '#000000'"
+				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 		</div>
 
-		<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-			<div>
-				<label :class="su.label">Tint color</label>
-				<div class="flex items-center gap-2">
-					<input
-						type="color"
-						class="w-10 h-10 rounded border border-zinc-800 bg-zinc-950"
-						:value="tintColor()"
-						@input="(e) => setTint({ color: (e.target as HTMLInputElement).value })" />
-					<input
-						:class="su.input"
-						:value="tintColor()"
-						@input="(e) => setTint({ color: (e.target as HTMLInputElement).value })" />
-				</div>
-			</div>
-			<div>
-				<label :class="su.label">Tint opacity (0–1)</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.05"
-					min="0"
-					max="1"
-					:value="tintOpacity()"
-					@input="(e) => setTint({ opacity: Number((e.target as HTMLInputElement).value) })" />
-			</div>
+		<!-- Tint color (right after background) -->
+		<div class="flex items-center gap-2">
+			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">Tint color</span>
+			<input
+				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				:value="theme.tint?.color ?? ''"
+				placeholder="default"
+				@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
+			<input
+				type="color"
+				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				:value="theme.tint?.color ?? '#000000'"
+				@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
+		</div>
+
+		<!-- Remaining colors -->
+		<div
+			v-for="[key, label] in REMAINING_ROWS"
+			:key="key"
+			class="flex items-center gap-2">
+			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">{{ label }}</span>
+			<input
+				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				:value="(theme[key] as string) || ''"
+				placeholder="default"
+				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
+			<input
+				type="color"
+				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				:value="(theme[key] as string) || '#000000'"
+				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 		</div>
 	</div>
 </template>
+
+<style scoped>
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 9999px; }
+input[type="color"]::-moz-color-swatch { border: none; border-radius: 9999px; }
+</style>

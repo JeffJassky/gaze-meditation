@@ -1,9 +1,9 @@
 import crypto from 'node:crypto';
 import { Schema, model, Types, type InferSchemaType, type HydratedDocument } from 'mongoose';
-import { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE } from '@shared/constants/session.js';
+import { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE, VOICE_ORIGIN, VOICE_STRUCTURE } from '@shared/constants/session.js';
 
 // Re-export so existing server imports keep working.
-export { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE };
+export { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE, VOICE_ORIGIN, VOICE_STRUCTURE };
 
 /**
  * Sessions are stored as a single document with an embedded `scenes` array.
@@ -24,7 +24,8 @@ export { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE };
 
 // --- Constants ----------------------------------------------------------------
 
-export const ASSET_KINDS = ['audio', 'image', 'video'] as const;
+import { ASSET_KINDS } from '@shared/constants/assets.js';
+export { ASSET_KINDS };
 
 // --- Asset subdocument --------------------------------------------------------
 
@@ -61,6 +62,9 @@ const sceneSchema = new Schema(
     // The full scene payload: text, voice, audio, behavior suggestions, theme, etc.
     // Shape tracks the client-side SceneConfig interface and may evolve freely.
     config: { type: Schema.Types.Mixed, default: {} },
+    // Time range within the session's master audio track (seconds).
+    // Present when voiceStructure === 'session' and the user has aligned scenes.
+    region: { type: Schema.Types.Mixed, default: undefined },
   },
   { _id: false },
 );
@@ -97,6 +101,16 @@ const sessionSchema = new Schema(
     // Default ElevenLabs voice id for this session's spoken text.
     // Individual scenes may override via scene.config.elevenlabsVoiceId.
     elevenlabsVoiceId: { type: String, default: null },
+
+    // Voice configuration — two orthogonal axes:
+    //   voiceOrigin:    who produced the audio (human recording vs AI-generated)
+    //   voiceStructure: how the audio is segmented (one file per session vs per scene)
+    voiceOrigin: { type: String, enum: [...VOICE_ORIGIN, null], default: null },
+    voiceStructure: { type: String, enum: [...VOICE_STRUCTURE, null], default: null },
+
+    // Pre-recorded master audio track (used when voiceStructure === 'session').
+    // Scenes align to time ranges within this single recording.
+    masterAudio: { type: Schema.Types.Mixed, default: undefined },
 
     // All file assets the session references. Scenes link to these by asset.id.
     assets: { type: [assetSchema], default: [] },
@@ -147,6 +161,9 @@ export function publicSession(s: SessionDoc) {
     coverAssetId: s.coverAssetId,
     audio: s.audio,
     elevenlabsVoiceId: s.elevenlabsVoiceId,
+    voiceOrigin: s.voiceOrigin,
+    voiceStructure: s.voiceStructure,
+    masterAudio: s.masterAudio,
     assets: s.assets,
     scenes: s.scenes,
     settings: s.settings,

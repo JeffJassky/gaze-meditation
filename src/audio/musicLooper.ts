@@ -28,10 +28,18 @@ export class MusicLooper {
 		if (this.current) {
 			const ctx = this.session.ctx
 			const now = ctx.currentTime
-			this.current.gain.gain.cancelScheduledValues(now)
-			this.current.gain.gain.setValueAtTime(this.current.gain.gain.value, now)
-			this.current.gain.gain.linearRampToValueAtTime(0, now + fade)
-			this.current.source.stop(now + fade)
+			if (fade > 0) {
+				this.current.gain.gain.cancelScheduledValues(now)
+				this.current.gain.gain.setValueAtTime(this.current.gain.gain.value, now)
+				this.current.gain.gain.linearRampToValueAtTime(0, now + fade)
+				this.current.source.stop(now + fade)
+			} else {
+				try {
+					this.current.source.stop()
+					this.current.source.disconnect()
+					this.current.gain.disconnect()
+				} catch {}
+			}
 		}
 		this.current = undefined
 	}

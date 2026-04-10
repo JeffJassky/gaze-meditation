@@ -3,9 +3,19 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { auth } from '@/state/auth'
 import { authApi } from '@/api/auth'
+import AppShell from '@/components/ui/AppShell.vue'
+import AccountSubnav from '@/components/ui/AccountSubnav.vue'
 import { ui } from './authStyles'
+import { useTheme, type ThemePreference } from '@/composables/useTheme'
 
 const router = useRouter()
+const { preference, setTheme } = useTheme()
+
+const themeOptions: { value: ThemePreference; label: string; icon: string }[] = [
+	{ value: 'system', label: 'System', icon: '\u{1F4BB}' },
+	{ value: 'light', label: 'Light', icon: '\u2600\uFE0F' },
+	{ value: 'dark', label: 'Dark', icon: '\u{1F319}' },
+]
 
 // ---------- Username ----------
 const usernameInput = ref('')
@@ -81,12 +91,6 @@ async function savePassword() {
 }
 
 // ---------- Studio settings ----------
-/**
- * Structured settings sections. The server stores freeform `user.settings`
- * internally and sanitizes sensitive fields (e.g. ElevenLabs API key) out
- * of responses — so the client never sees a raw key. We only ever get a
- * `studio.hasElevenlabsApiKey` boolean back.
- */
 const settings = ref<Record<string, any>>({})
 const hasElevenlabsKey = computed<boolean>(
 	() => !!settings.value.studio?.hasElevenlabsApiKey,
@@ -105,14 +109,11 @@ async function saveElevenlabsKey() {
 	studioMsg.value = null
 	studioBusy.value = true
 	try {
-		// Dot-notation patch — the transport stays dot-notated even though the
-		// UI never exposes that to the user.
 		settings.value = await authApi.updateSettings({
 			'studio.elevenlabsApiKey': elevenlabsKeyInput.value.trim(),
 		})
 		elevenlabsKeyInput.value = ''
 		studioMsg.value = { kind: 'ok', text: 'ElevenLabs API key saved.' }
-		// Refresh the global user so any other page sees the new flag.
 		try {
 			auth.setUser(await authApi.me())
 		} catch {
@@ -163,12 +164,6 @@ async function testElevenlabsKey() {
 	}
 }
 
-// ---------- Sign out ----------
-async function signOut() {
-	await auth.logout()
-	router.push('/login')
-}
-
 onMounted(async () => {
 	await auth.hydrate()
 	if (!auth.state.user) {
@@ -181,41 +176,40 @@ onMounted(async () => {
 </script>
 
 <template>
-	<div class="min-h-screen w-full bg-zinc-950 text-zinc-100 p-6">
+	<AppShell>
+		<template #subnav>
+			<AccountSubnav />
+		</template>
+
+		<div class="p-6">
 		<div class="max-w-2xl mx-auto">
-			<div class="flex items-center justify-between mb-8 gap-4 flex-wrap">
-				<div>
-					<h1 class="text-3xl font-semibold">Account</h1>
-					<p class="text-sm text-zinc-400 mt-1">
-						Signed in as <strong>{{ auth.state.user?.username }}</strong>
-					</p>
-				</div>
-				<div class="flex items-center gap-2 flex-wrap">
-					<RouterLink
-						to="/studio/sessions"
-						class="bg-zinc-100 text-zinc-900 hover:bg-white rounded-lg px-4 py-2 text-sm font-medium">
-						Sessions
-					</RouterLink>
-					<RouterLink
-						to="/studio/playlists"
-						class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg px-4 py-2 text-sm">
-						Playlists
-					</RouterLink>
-					<RouterLink
-						to="/home"
-						class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg px-4 py-2 text-sm">
-						Home
-					</RouterLink>
-					<button
-						@click="signOut"
-						class="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg px-4 py-2 text-sm">
-						Sign out
-					</button>
-				</div>
+			<div class="mb-8">
+				<h1 class="text-3xl font-semibold">Account</h1>
+				<p class="text-sm text-content-secondary mt-1">
+					Signed in as <strong>{{ auth.state.user?.username }}</strong>
+				</p>
 			</div>
 
+			<!-- Theme -->
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
+				<h2 class="text-lg font-semibold mb-4">Theme</h2>
+				<div class="flex gap-3">
+					<button
+						v-for="opt in themeOptions"
+						:key="opt.value"
+						class="flex-1 flex flex-col items-center gap-2 rounded-xl px-4 py-3 border transition-colors"
+						:class="preference === opt.value
+							? 'border-accent bg-accent/10 text-content'
+							: 'border-edge-secondary bg-surface-tertiary/50 text-content-secondary hover:border-edge hover:text-content'"
+						@click="setTheme(opt.value)">
+						<span class="text-xl">{{ opt.icon }}</span>
+						<span class="text-sm font-medium">{{ opt.label }}</span>
+					</button>
+				</div>
+			</section>
+
 			<!-- Username -->
-			<section class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 mb-6">
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
 				<h2 class="text-lg font-semibold mb-4">Username</h2>
 				<form @submit.prevent="saveUsername" class="space-y-3">
 					<input v-model="usernameInput" :class="ui.input" />
@@ -225,34 +219,34 @@ onMounted(async () => {
 						{{ usernameMsg.text }}
 					</div>
 					<button :class="ui.button" :disabled="usernameBusy">
-						{{ usernameBusy ? 'Saving…' : 'Save username' }}
+						{{ usernameBusy ? 'Saving\u2026' : 'Save username' }}
 					</button>
 				</form>
 			</section>
 
 			<!-- Email -->
-			<section class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 mb-6">
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
 				<h2 class="text-lg font-semibold mb-1">Email</h2>
-				<p class="text-sm text-zinc-400 mb-4">
+				<p class="text-sm text-content-secondary mb-4">
 					Current:
-					<span v-if="auth.state.user?.email" class="text-zinc-200">
+					<span v-if="auth.state.user?.email" class="text-content">
 						{{ auth.state.user?.email }}
 						<span
 							v-if="auth.state.user?.emailVerifiedAt"
-							class="ml-2 text-xs text-emerald-400">verified</span>
-						<span v-else class="ml-2 text-xs text-amber-400">unverified</span>
+							class="ml-2 text-xs text-success">verified</span>
+						<span v-else class="ml-2 text-xs text-warning">unverified</span>
 					</span>
-					<span v-else class="text-zinc-500">none</span>
+					<span v-else class="text-content-tertiary">none</span>
 				</p>
 
 				<div
 					v-if="auth.state.user?.pendingEmail"
-					class="text-sm text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-4">
+					class="text-sm text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2 mb-4">
 					Pending change to <strong>{{ auth.state.user.pendingEmail }}</strong> — check
 					that inbox to confirm.
 					<button
 						@click="cancelPendingEmail"
-						class="ml-2 underline underline-offset-2 text-amber-200">
+						class="ml-2 underline underline-offset-2 text-warning">
 						Cancel
 					</button>
 				</div>
@@ -267,13 +261,13 @@ onMounted(async () => {
 						{{ emailMsg.text }}
 					</div>
 					<button :class="ui.button" :disabled="emailBusy || !emailInput">
-						{{ emailBusy ? 'Sending…' : 'Update email' }}
+						{{ emailBusy ? 'Sending\u2026' : 'Update email' }}
 					</button>
 				</form>
 			</section>
 
 			<!-- Password -->
-			<section class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 mb-6">
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
 				<h2 class="text-lg font-semibold mb-4">Password</h2>
 				<form @submit.prevent="savePassword" class="space-y-3">
 					<div>
@@ -292,33 +286,33 @@ onMounted(async () => {
 						{{ pwMsg.text }}
 					</div>
 					<button :class="ui.button" :disabled="pwBusy">
-						{{ pwBusy ? 'Saving…' : 'Change password' }}
+						{{ pwBusy ? 'Saving\u2026' : 'Change password' }}
 					</button>
 				</form>
 			</section>
 
 			<!-- Studio settings -->
-			<section class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 mb-6">
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
 				<h2 class="text-lg font-semibold mb-1">Studio settings</h2>
-				<p class="text-sm text-zinc-400 mb-4">
+				<p class="text-sm text-content-secondary mb-4">
 					Configure integrations used when creating sessions.
 				</p>
 
-				<div class="border-t border-zinc-800 pt-4">
+				<div class="border-t border-edge pt-4">
 					<div class="flex items-center justify-between mb-2 gap-4">
 						<label :class="ui.label">ElevenLabs API key</label>
 						<span
 							v-if="hasElevenlabsKey"
-							class="text-xs rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-2 py-0.5">
+							class="text-xs rounded-full bg-success/10 border border-success/30 text-success px-2 py-0.5">
 							Configured
 						</span>
 						<span
 							v-else
-							class="text-xs rounded-full bg-zinc-700/40 border border-zinc-600 text-zinc-300 px-2 py-0.5">
+							class="text-xs rounded-full bg-surface-tertiary/40 border border-edge-secondary text-content-secondary px-2 py-0.5">
 							Not configured
 						</span>
 					</div>
-					<p class="text-xs text-zinc-500 mb-3">
+					<p class="text-xs text-content-tertiary mb-3">
 						When set, session editors can pick voices from your ElevenLabs account and
 						assign them per scene. Your key is stored securely and never returned to the
 						browser.
@@ -329,7 +323,7 @@ onMounted(async () => {
 							v-model="elevenlabsKeyInput"
 							type="password"
 							:class="ui.input"
-							:placeholder="hasElevenlabsKey ? '••• configured — enter a new key to replace' : 'sk_…'"
+							:placeholder="hasElevenlabsKey ? '\u2022\u2022\u2022 configured \u2014 enter a new key to replace' : 'sk_\u2026'"
 							autocomplete="off" />
 						<button
 							type="submit"
@@ -353,7 +347,7 @@ onMounted(async () => {
 						<button
 							v-if="hasElevenlabsKey"
 							type="button"
-							class="text-sm text-red-300 hover:text-red-200 px-3 py-1.5"
+							class="text-sm text-danger hover:opacity-80 px-3 py-1.5"
 							:disabled="studioBusy"
 							@click="clearElevenlabsKey">
 							Remove key
@@ -368,5 +362,6 @@ onMounted(async () => {
 				</div>
 			</section>
 		</div>
-	</div>
+		</div>
+	</AppShell>
 </template>

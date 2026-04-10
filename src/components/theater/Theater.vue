@@ -29,7 +29,7 @@ import { useTheaterScoring } from '@/composables/useTheaterScoring'
 
 interface TheaterProps {
 	program?: Session
-	sessionId?: string
+	sessionSlug?: string
 	subjectId?: string
 	embedded?: boolean
 	enableBiofeedback?: boolean
@@ -89,7 +89,7 @@ const currentResolvedTheme = computed<ThemeConfig>(() => {
 	const scene = currentScene.value
 	const session = activeSession.value
 	if (scene && session) return getSceneEffectiveTheme(session, scene as any)
-	return session?.theme || DEFAULT_THEME
+	return { ...DEFAULT_THEME, ...session?.theme }
 })
 
 const isPlayingComputed = computed(
@@ -126,7 +126,9 @@ function cleanupSession(fadeDuration = 0.5) {
 	if (transitionTimerRef.value) { clearTimeout(transitionTimerRef.value); transitionTimerRef.value = null }
 	isTransitioningBetweenScenes.value = false
 
-	currentScene.value?.stop()
+	// Stop all scenes (each scene now also stops voice internally)
+	for (const scene of sessionScenes.value) scene.stop()
+	// Belt-and-suspenders: stop voice at the theater level too
 	voiceService.stop()
 
 	audio.stopAll(fadeDuration)
@@ -135,11 +137,11 @@ function cleanupSession(fadeDuration = 0.5) {
 
 function exitSession() {
 	emit('exit')
-	cleanupSession(0.5)
+	cleanupSession(0)
 	router.push('/sessions')
 }
 
-onUnmounted(() => cleanupSession(0.5))
+onUnmounted(() => cleanupSession(0))
 
 // ---------------------------------------------------------------------------
 // Playback controls
@@ -192,7 +194,7 @@ function handleBegin() {
 function transitionToScene(index: number, cooldown: number) {
 	currentScene.value?.stop()
 
-	const rawFade = currentScene.value?.config.fadeOutDuration || 3000
+	const rawFade = currentScene.value?.config?.fadeOutDuration || 3000
 	const fadeMs = rawFade / playbackSpeed.value
 
 	isTransitioningBetweenScenes.value = true
@@ -245,7 +247,7 @@ function nextScene(index: number) {
 			let previousVoiceText: string | undefined
 			if (sceneIndex.value > 0) {
 				const prevScene = sessionScenes.value[sceneIndex.value - 1]
-				if (prevScene?.config.voice) {
+				if (prevScene?.config?.voice) {
 					previousVoiceText = Array.isArray(prevScene.config.voice)
 						? prevScene.config.voice[prevScene.config.voice.length - 1]
 						: prevScene.config.voice as string
@@ -257,6 +259,7 @@ function nextScene(index: number) {
 					triggerReinforcement(success, metrics, result),
 				programId: activeSession.value!.id,
 				previousVoiceText,
+				masterAudioKey: activeSession.value!.masterAudio?.key,
 			})
 		}
 	}, 500 / playbackSpeed.value)
@@ -420,11 +423,11 @@ async function initSession() {
 onMounted(async () => {
 	if (props.program) {
 		activeSession.value = props.program
-	} else if (props.sessionId) {
+	} else if (props.sessionSlug) {
 		try {
-			activeSession.value = await sessionsApi.get(props.sessionId)
+			activeSession.value = await sessionsApi.get(props.sessionSlug)
 		} catch (e) {
-			console.error(`[Theater] Failed to load session ${props.sessionId}`, e)
+			console.error(`[Theater] Failed to load session ${props.sessionSlug}`, e)
 			exitSession()
 			return
 		}
@@ -601,7 +604,7 @@ defineExpose({ jumpToScene, play: handlePlay, pause: handlePause, restart: handl
 					:key="currentScene.id"
 					class="pointer-events-auto"
 					:style="{
-						'--fade-duration': `${currentScene.config.fadeOutDuration || 3000}ms`
+						'--fade-duration': `${currentScene?.config?.fadeOutDuration || 3000}ms`
 					}"
 				/>
 			</Transition>

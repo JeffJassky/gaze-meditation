@@ -1,5 +1,6 @@
 import type { InjectionKey, Ref } from 'vue'
 import type { ElevenLabsVoice } from '@/vendors/elevenlabs'
+import type { VoiceOrigin } from '@shared/types'
 
 /**
  * Shared state for the ElevenLabs voice list inside a session editor.
@@ -15,6 +16,10 @@ export interface VoicesState {
 	enabled: Ref<boolean>
 	/** Session-level voice id (used as the fallback when a scene has no override). */
 	sessionVoiceId: Ref<string | undefined>
+	/** Who produced the voice audio — human or AI. */
+	voiceOrigin: Ref<VoiceOrigin | undefined>
+	/** Whether binaural beats are enabled at the session level. */
+	binauralEnabled: Ref<boolean>
 }
 
 export const VOICES_KEY: InjectionKey<VoicesState> = Symbol('elevenlabs-voices')

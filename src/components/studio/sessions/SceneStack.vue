@@ -3,6 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import SceneStackItem from './SceneStackItem.vue'
 import SessionHeader from './SessionHeader.vue'
+import VoiceModePicker from './VoiceModePicker.vue'
 import type { SceneBlock, Session } from '@/api/sessions'
 
 /**
@@ -195,24 +196,32 @@ useSortable(
 			     outside the sortable container so it can't be dragged. -->
 			<SessionHeader v-model="session" />
 
-			<div ref="listContainer" class="space-y-6">
-				<SceneStackItem
-					v-for="(scene, i) in scenes"
-					:key="scene.id"
-					v-model="scenes[i]!"
-					:index="i"
-					:active="scene.id === selectedId"
-					@select="emit('select', scene.id)"
-					@duplicate="emit('duplicate', i)"
-					@delete="emit('remove', i)"
-					@advance="emit('advance', i)"
-					@delete-backward="emit('deleteBackward', i)" />
-				<div
-					v-if="scenes.length === 0"
-					class="text-center py-20 text-zinc-600 text-sm">
-					No scenes yet.
+			<!-- Voice mode picker — shown until the user chooses a workflow. -->
+			<VoiceModePicker
+				v-if="!session.voiceStructure"
+				v-model="session" />
+
+			<!-- Scene list — only rendered once the voice workflow is set. -->
+			<template v-else>
+				<div ref="listContainer" class="space-y-6">
+					<SceneStackItem
+						v-for="(scene, i) in scenes"
+						:key="scene.id"
+						v-model="scenes[i]!"
+						:index="i"
+						:active="scene.id === selectedId"
+						@select="emit('select', scene.id)"
+						@duplicate="emit('duplicate', i)"
+						@delete="emit('remove', i)"
+						@advance="emit('advance', i)"
+						@delete-backward="emit('deleteBackward', i)" />
+					<div
+						v-if="scenes.length === 0"
+						class="text-center py-20 text-zinc-600 text-sm">
+						No scenes yet.
+					</div>
 				</div>
-			</div>
+			</template>
 		</div>
 	</main>
 </template>

@@ -14,8 +14,8 @@ import { Schema, model, type InferSchemaType, type HydratedDocument } from 'mong
  * to skip regeneration.
  */
 
-export const ASSET_KINDS = ['audio', 'image', 'video'] as const;
-export type AssetKind = (typeof ASSET_KINDS)[number];
+import { ASSET_KINDS, type AssetKind } from '@shared/constants/assets.js';
+export { ASSET_KINDS, type AssetKind };
 
 const assetSchema = new Schema(
   {
@@ -46,6 +46,9 @@ const assetSchema = new Schema(
 
     /** Size in bytes at upload time. */
     size: { type: Number, default: 0 },
+
+    /** System assets are platform-provided defaults visible to all users. */
+    isSystem: { type: Boolean, default: false, index: true },
 
     /**
      * Free-form sidecar metadata. For voice-cache files this holds the
@@ -82,6 +85,7 @@ export function publicAsset(a: AssetDoc) {
     label: a.label,
     contentType: a.contentType,
     size: a.size,
+    isSystem: a.isSystem ?? false,
     meta: a.meta,
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,

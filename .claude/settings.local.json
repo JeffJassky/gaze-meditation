@@ -14,7 +14,10 @@
       "Bash(ls:*)",
       "Bash(node:*)",
       "Bash(wc -l /Users/jeffjassky/Projects/ncrs/src-new/**/*)",
-      "Bash(wc -l /Users/jeffjassky/Projects/ncrs/src/**/*)"
+      "Bash(wc -l /Users/jeffjassky/Projects/ncrs/src/**/*)",
+      "Bash(npx vite:*)",
+      "Bash(find /Users/jeffjassky/Projects/ncrs/src -type f \\\\\\( -name \"*.vue\" -o -name \"*.ts\" \\\\\\) -exec grep -l \"style=\\\\|:style=\\\\|<style\" {} \\\\;)",
+      "Bash(npx tsx:*)"
     ]
   }
 }

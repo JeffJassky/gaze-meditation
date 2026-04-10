@@ -1,4 +1,5 @@
 import { API_BASE, apiRequest } from './client'
+import type { AssetKind } from './assets'
 
 export interface PresignResponse {
 	key: string
@@ -13,20 +14,23 @@ export interface UploadProgress {
 }
 
 /**
- * Ask the server for a presigned S3 upload URL. Returns the object key plus
- * the URL the client should PUT the file to directly.
+ * Ask the server for a presigned S3 upload URL. The `kind` is validated
+ * server-side against the declared content type.
  */
-export async function signUpload(contentType: string, ext?: string): Promise<PresignResponse> {
+export async function signUpload(
+	contentType: string,
+	kind: AssetKind,
+	ext?: string,
+): Promise<PresignResponse> {
 	return apiRequest<PresignResponse>('/uploads/sign', {
 		method: 'POST',
-		body: JSON.stringify({ contentType, ext }),
+		body: JSON.stringify({ contentType, kind, ext }),
 	})
 }
 
 /**
  * PUT a file directly to a presigned URL using XMLHttpRequest so we can
  * report upload progress (fetch() doesn't expose it in browsers today).
- * Resolves when the upload completes; rejects on any error or non-2xx.
  */
 export function putToPresignedUrl(
 	url: string,
@@ -58,28 +62,29 @@ export function putToPresignedUrl(
 }
 
 /**
- * End-to-end helper: sign → PUT. Returns the asset metadata the caller can
- * drop straight into `session.assets`.
+ * End-to-end helper: sign → PUT. The `kind` is required so the server
+ * can validate the content type and file size against the asset kind's rules.
  */
 export async function uploadFile(
 	file: File,
+	kind: AssetKind,
 	onProgress?: (p: UploadProgress) => void,
 ): Promise<{ key: string; publicUrl: string; contentType: string; size: number }> {
 	const ext = file.name.includes('.') ? file.name.split('.').pop() : undefined
 	const { key, uploadUrl, publicUrl } = await signUpload(
 		file.type || 'application/octet-stream',
+		kind,
 		ext,
 	)
 	await putToPresignedUrl(uploadUrl, file, onProgress)
 	return { key, publicUrl, contentType: file.type, size: file.size }
 }
 
-/** Best-effort kind inference from MIME type. */
-export function inferAssetKind(mime: string): 'audio' | 'image' | 'video' | 'audio' {
+/** Best-effort kind inference from MIME type. Use only as a fallback. */
+export function inferAssetKind(mime: string): AssetKind {
 	if (mime.startsWith('image/')) return 'image'
 	if (mime.startsWith('video/')) return 'video'
-	return 'audio'
+	return 'music'
 }
 
-// Re-export for convenience in callers that only import one module.
 export { API_BASE }

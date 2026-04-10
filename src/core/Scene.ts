@@ -1,6 +1,6 @@
 import { markRaw, ref, type Ref } from 'vue'
 import { type SceneConfig, type BehaviorSuggestion } from '@/types'
-import { type SceneBlock } from '@/api/sessions'
+import { type SceneBlock, type SceneRegion } from '@/api/sessions'
 // Side-effect import: each behavior module calls registerBehavior() at load
 // time, populating the registry. Importing the barrel ensures every behavior
 // is registered before Scene tries to look anything up.
@@ -17,6 +17,8 @@ export interface SceneContext {
 	complete(success: boolean, metrics?: any, result?: any): void
 	programId: string
 	previousVoiceText?: string
+	/** Master audio asset key — set when voiceStructure is 'session'. */
+	masterAudioKey?: string
 }
 
 /**
@@ -39,6 +41,8 @@ const enum ScenePhase {
 export class Scene {
 	public id: string
 	public config: SceneConfig
+	/** Time region in the session's master audio (session-level voice mode). */
+	public region?: SceneRegion
 	public behaviors: Behavior[] = []
 	public progress: Ref<number> = ref(0)
 
@@ -57,8 +61,9 @@ export class Scene {
 	private pendingBehaviorResult: any = null
 
 	constructor(block: SceneBlock, options: { skipBehaviors?: boolean; devices?: DeviceContext } = {}) {
-		this.config = block.config
+		this.config = block.config ?? {}
 		this.id = block.id
+		this.region = block.region
 		this.devices = options.devices ?? null
 		if (!options.skipBehaviors) {
 			this.initBehaviors()
@@ -166,9 +171,20 @@ export class Scene {
 		this.isTextVisible.value = false
 
 		// 1. Launch voice & text sequences in parallel.
-		const voicePromise = this.config.voice
-			? this.playVoiceSequence(this.config.voice, context)
-			: Promise.resolve()
+		// Session-level audio: play the region from the master recording.
+		// Per-scene audio: generate/play individual voice clip from text.
+		let voicePromise: Promise<void>
+		if (this.region && context.masterAudioKey) {
+			voicePromise = voiceService.playRegion(
+				context.masterAudioKey,
+				this.region.start,
+				this.region.end,
+			)
+		} else if (this.config.voice) {
+			voicePromise = this.playVoiceSequence(this.config.voice, context)
+		} else {
+			voicePromise = Promise.resolve()
+		}
 		const textPromise = this.config.text
 			? this.playTextSequence(this.config.text)
 			: Promise.resolve()
@@ -213,6 +229,7 @@ export class Scene {
 			this.activeTimer = null
 		}
 		for (const b of this.behaviors) b.stop()
+		voiceService.stop()
 	}
 
 	// ---------------------------------------------------------------------------

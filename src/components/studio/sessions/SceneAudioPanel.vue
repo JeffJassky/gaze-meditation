@@ -3,9 +3,12 @@ import { computed, inject } from 'vue'
 import { su } from '@/components/ui/studioUi'
 import type { SceneConfig, SceneAudioConfig } from '@shared/types'
 import { AUDIO_ASSETS_KEY } from './audioAssetsKey'
+import { VOICES_KEY } from './voicesKey'
 
 const config = defineModel<SceneConfig>({ required: true })
 const audioAssets = inject(AUDIO_ASSETS_KEY, computed(() => []))
+const voicesState = inject(VOICES_KEY, undefined)
+const sessionBinauralEnabled = computed(() => voicesState?.binauralEnabled.value ?? true)
 
 /**
  * Read-or-create an audio subobject. Returning a computed that always has
@@ -90,27 +93,32 @@ const fxAssetId = computed({
 <template>
 	<div>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-			<div>
-				<label :class="su.label">Binaural Hz</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.1"
-					:value="binaural.hertz ?? ''"
-					placeholder="6"
-					@input="(e) => setBinauralHz((e.target as HTMLInputElement).value)" />
-			</div>
-			<div>
-				<label :class="su.label">Binaural volume (0–1)</label>
-				<input
-					:class="su.input"
-					type="number"
-					step="0.05"
-					min="0"
-					max="1"
-					:value="binaural.volume ?? ''"
-					placeholder="0.5"
-					@input="(e) => setBinauralVol((e.target as HTMLInputElement).value)" />
+			<template v-if="sessionBinauralEnabled">
+				<div>
+					<label :class="su.label">Binaural Hz override</label>
+					<input
+						:class="su.input"
+						type="number"
+						step="0.1"
+						:value="binaural.hertz ?? ''"
+						placeholder="6"
+						@input="(e) => setBinauralHz((e.target as HTMLInputElement).value)" />
+				</div>
+				<div>
+					<label :class="su.label">Binaural volume override</label>
+					<input
+						:class="su.input"
+						type="number"
+						step="0.05"
+						min="0"
+						max="1"
+						:value="binaural.volume ?? ''"
+						placeholder="0.5"
+						@input="(e) => setBinauralVol((e.target as HTMLInputElement).value)" />
+				</div>
+			</template>
+			<div v-else class="md:col-span-2 text-xs text-zinc-500">
+				Binaural beats are disabled at the session level.
 			</div>
 
 			<div class="md:col-span-2">

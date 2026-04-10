@@ -17,7 +17,7 @@ router.beforeEach((to, from) => {
 </script>
 
 <template>
-	<div class="w-full min-h-screen bg-black text-white">
+	<div class="w-full min-h-screen bg-surface text-content">
 		<router-view v-slot="{ Component }">
 			<transition v-if="animateRoute" name="fade" mode="out-in">
 				<component :is="Component" />

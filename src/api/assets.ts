@@ -7,7 +7,9 @@ import { apiRequest } from './client'
  * shared-pool assets in a single list.
  */
 
-export type AssetKind = 'audio' | 'image' | 'video'
+import type { AssetKind } from '@shared/constants/assets'
+export type { AssetKind }
+export { ASSET_KINDS, ASSET_KIND_CONFIG, isValidMimeForKind, isValidSizeForKind } from '@shared/constants/assets'
 
 export interface AssetDoc {
 	id: string
@@ -16,6 +18,7 @@ export interface AssetDoc {
 	label: string
 	contentType: string
 	size: number
+	isSystem: boolean
 	meta: Record<string, unknown>
 	createdAt: string
 	updatedAt: string
@@ -70,10 +73,8 @@ export const assetsApi = {
 	byVoiceHash: async (hash: string): Promise<AssetDoc | null> => {
 		try {
 			return await apiRequest<AssetDoc>(`/assets/voice/${hash}`)
-		} catch (e) {
-			const msg = (e as Error).message || ''
-			if (msg === 'not_found' || msg === 'http_404') return null
-			throw e
+		} catch {
+			return null
 		}
 	},
 	register: (body: RegisterAssetInput) =>

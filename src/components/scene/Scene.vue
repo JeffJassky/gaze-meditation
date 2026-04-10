@@ -26,7 +26,7 @@ const trackColor = computed(() => {
 const progress = computed(() => props.scene.progress.value)
 const showProgress = computed(
 	() =>
-		props.scene.config.duration !== undefined ||
+		props.scene.config?.duration !== undefined ||
 		props.scene.behaviors.some(b => b.hasExplicitDuration)
 )
 

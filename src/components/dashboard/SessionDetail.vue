@@ -67,35 +67,35 @@ const duration = computed(() => {
 </script>
 
 <template>
-	<div class="bg-black/50 p-6 rounded-lg border border-zinc-800 space-y-6">
-		<div class="flex justify-between items-end border-b border-zinc-800 pb-4">
+	<div class="bg-surface/50 p-6 rounded-lg border border-edge space-y-6">
+		<div class="flex justify-between items-end border-b border-edge pb-4">
 			<div>
-				<h3 class="text-white text-lg font-bold">Session Analysis</h3>
-				<p class="text-zinc-500 text-xs font-mono">ID: {{ session.id }}</p>
+				<h3 class="text-content text-lg font-bold">Session Analysis</h3>
+				<p class="text-content-tertiary text-xs font-mono">ID: {{ session.id }}</p>
 			</div>
 			<div class="text-right">
-				<div class="text-zinc-400 text-xs uppercase tracking-wider">Duration</div>
-				<div class="text-cyan-400 font-mono">{{ duration }}</div>
+				<div class="text-content-secondary text-xs uppercase tracking-wider">Duration</div>
+				<div class="text-accent font-mono">{{ duration }}</div>
 			</div>
 		</div>
 
 		<!-- Biometrics Summary (If Available) -->
-		<div v-if="session.biometrics" class="bg-zinc-900/50 p-6 rounded-lg border border-zinc-800 space-y-6">
-			<h3 class="text-sm uppercase tracking-widest text-center mb-6 opacity-80 text-zinc-400">
+		<div v-if="session.biometrics" class="bg-surface-secondary/50 p-6 rounded-lg border border-edge space-y-6">
+			<h3 class="text-sm uppercase tracking-widest text-center mb-6 opacity-80 text-content-secondary">
 				Physiological Depth Summary
 			</h3>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 				<!-- Stillness -->
 				<div class="space-y-2">
-					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Stillness</span>
 						<span class="text-emerald-400">+{{ (session.biometrics.stillness.improvement * 100).toFixed(0) }}%</span>
 					</div>
-					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<!-- Background Bar (Start) -->
 						<div
-							class="absolute top-0 left-0 h-full bg-zinc-600"
+							class="absolute top-0 left-0 h-full bg-content-tertiary"
 							:style="{ width: `${session.biometrics.stillness.start * 100}%` }"
 						></div>
 						<!-- Foreground Bar (Best) -->
@@ -108,13 +108,13 @@ const duration = computed(() => {
 
 				<!-- Visual Focus (Inv Blink Rate) -->
 				<div class="space-y-2">
-					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Visual Focus</span>
 						<span class="text-blue-400">+{{ (session.biometrics.blinkRate.improvement * 100).toFixed(0) }}%</span>
 					</div>
-					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<div
-							class="absolute top-0 left-0 h-full bg-zinc-600"
+							class="absolute top-0 left-0 h-full bg-content-tertiary"
 							:style="{ width: `${Math.min(100, (session.biometrics.blinkRate.start / 30) * 100)}%` }"
 						></div>
 						<div
@@ -122,7 +122,7 @@ const duration = computed(() => {
 							:style="{ width: `${Math.min(100, (session.biometrics.blinkRate.best / 30) * 100)}%` }"
 						></div>
 					</div>
-					<div class="flex justify-between text-[10px] opacity-40 text-zinc-400">
+					<div class="flex justify-between text-[10px] opacity-40 text-content-secondary">
 						<span>Start: {{ session.biometrics.blinkRate.start.toFixed(1) }} BPM</span>
 						<span>Best: {{ session.biometrics.blinkRate.best.toFixed(1) }} BPM</span>
 					</div>
@@ -130,13 +130,13 @@ const duration = computed(() => {
 
 				<!-- Blink Speed -->
 				<div class="space-y-2">
-					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Blink Duration</span>
 						<span class="text-rose-400">+{{ (session.biometrics.blinkSpeed.improvement * 100).toFixed(0) }}%</span>
 					</div>
-					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<div
-							class="absolute top-0 left-0 h-full bg-zinc-600"
+							class="absolute top-0 left-0 h-full bg-content-tertiary"
 							:style="{ width: `${Math.min(100, (session.biometrics.blinkSpeed.start / 300) * 100)}%` }"
 						></div>
 						<div
@@ -144,7 +144,7 @@ const duration = computed(() => {
 							:style="{ width: `${Math.min(100, (session.biometrics.blinkSpeed.best / 300) * 100)}%` }"
 						></div>
 					</div>
-					<div class="flex justify-between text-[10px] opacity-40 text-zinc-400">
+					<div class="flex justify-between text-[10px] opacity-40 text-content-secondary">
 						<span>Start: {{ session.biometrics.blinkSpeed.start.toFixed(0) }} ms</span>
 						<span>Best: {{ session.biometrics.blinkSpeed.best.toFixed(0) }} ms</span>
 					</div>
@@ -152,13 +152,13 @@ const duration = computed(() => {
 
 				<!-- Facial Relaxation -->
 				<div class="space-y-2">
-					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Facial Release</span>
 						<span class="text-purple-400">+{{ (session.biometrics.relaxation.improvement * 100).toFixed(0) }}%</span>
 					</div>
-					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<div
-							class="absolute top-0 left-0 h-full bg-zinc-600"
+							class="absolute top-0 left-0 h-full bg-content-tertiary"
 							:style="{ width: `${session.biometrics.relaxation.start * 100}%` }"
 						></div>
 						<div
@@ -170,13 +170,13 @@ const duration = computed(() => {
 
 				<!-- Eye Droop -->
 				<div class="space-y-2">
-					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-zinc-300">
+					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Gaze Softening</span>
 						<span class="text-orange-400">{{ (session.biometrics.eyeDroop.start * 100).toFixed(0) }}% -> {{ (session.biometrics.eyeDroop.best * 100).toFixed(0) }}%</span>
 					</div>
-					<div class="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<div
-							class="absolute top-0 left-0 h-full bg-zinc-600"
+							class="absolute top-0 left-0 h-full bg-content-tertiary"
 							:style="{ width: `${session.biometrics.eyeDroop.start * 100}%` }"
 						></div>
 						<div
@@ -188,7 +188,7 @@ const duration = computed(() => {
 			</div>
 		</div>
 
-		<div v-if="metrics.length === 0" class="text-center text-zinc-600 py-8">
+		<div v-if="metrics.length === 0" class="text-center text-content-tertiary py-8">
 			No physiological data recorded for this session.
 		</div>
 
@@ -196,10 +196,10 @@ const duration = computed(() => {
 			<!-- Blink Rate -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Blink Rate</span>
-					<span class="text-zinc-600">0 - 60 BPM</span>
+					<span class="text-content-secondary">Blink Rate</span>
+					<span class="text-content-tertiary">0 - 60 BPM</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<!-- Grid Lines -->
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<!-- Data -->
@@ -210,10 +210,10 @@ const duration = computed(() => {
 			<!-- Stillness -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Stillness (Focus)</span>
-					<span class="text-zinc-600">0 - 100%</span>
+					<span class="text-content-secondary">Stillness (Focus)</span>
+					<span class="text-content-tertiary">0 - 100%</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('stillness')" fill="none" stroke="#06b6d4" stroke-width="2" class="opacity-80"/>
 				</svg>
@@ -222,10 +222,10 @@ const duration = computed(() => {
 			<!-- Jaw Relaxation -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Jaw Relaxation</span>
-					<span class="text-zinc-600">0 - 0.5 Openness</span>
+					<span class="text-content-secondary">Jaw Relaxation</span>
+					<span class="text-content-tertiary">0 - 0.5 Openness</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('mouthOpenness')" fill="none" stroke="#93c5fd" stroke-width="2" class="opacity-80"/>
 				</svg>
@@ -234,10 +234,10 @@ const duration = computed(() => {
 			<!-- Head Roll -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Neck Relaxation (Roll)</span>
-					<span class="text-zinc-600">0 - 30°</span>
+					<span class="text-content-secondary">Neck Relaxation (Roll)</span>
+					<span class="text-content-tertiary">0 - 30°</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('headRoll')" fill="none" stroke="#a5b4fc" stroke-width="2" class="opacity-80"/>
 				</svg>
@@ -246,10 +246,10 @@ const duration = computed(() => {
 			<!-- Brow Tension -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Brow Tension</span>
-					<span class="text-zinc-600">Low - High</span>
+					<span class="text-content-secondary">Brow Tension</span>
+					<span class="text-content-tertiary">Low - High</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('browRaise')" fill="none" stroke="#fda4af" stroke-width="2" class="opacity-80"/>
 				</svg>
@@ -258,10 +258,10 @@ const duration = computed(() => {
 			<!-- Blink Speed (Duration) -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Blink Duration</span>
-					<span class="text-zinc-600">0 - 500ms</span>
+					<span class="text-content-secondary">Blink Duration</span>
+					<span class="text-content-tertiary">0 - 500ms</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('blinkSpeed')" fill="none" stroke="#a855f7" stroke-width="2" class="opacity-80"/>
 				</svg>
@@ -270,10 +270,10 @@ const duration = computed(() => {
 			<!-- Head Motion (Yaw/Pitch) -->
 			<div class="space-y-2">
 				<div class="flex justify-between text-xs uppercase tracking-wider">
-					<span class="text-zinc-400">Head Motion (Yaw/Pitch)</span>
-					<span class="text-zinc-600">Center Deviation</span>
+					<span class="text-content-secondary">Head Motion (Yaw/Pitch)</span>
+					<span class="text-content-tertiary">Center Deviation</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-zinc-900/50 rounded border border-zinc-800">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-24 bg-surface-secondary/50 rounded border border-edge">
 					<line x1="0" :y1="height/2" :x2="width" :y2="height/2" stroke="#333" stroke-width="1" stroke-dasharray="4 4"/>
 					<path :d="createPath('headYaw')" fill="none" stroke="#f59e0b" stroke-width="1.5" class="opacity-60"/>
 					<path :d="createPath('headPitch')" fill="none" stroke="#ef4444" stroke-width="1.5" class="opacity-60"/>

@@ -11,6 +11,12 @@ export const SESSION_VISIBILITY = ['private', 'public'] as const
  * Audience categorization. `f4a` = "female for all", etc.
  * Kept loose — add values here as the taxonomy grows.
  */
+/** Who produced the voice audio. */
+export const VOICE_ORIGIN = ['human', 'ai'] as const
+
+/** How the voice audio is structured across the session. */
+export const VOICE_STRUCTURE = ['session', 'scene'] as const
+
 export const SESSION_AUDIENCE = [
 	'f4a',
 	'm4a',

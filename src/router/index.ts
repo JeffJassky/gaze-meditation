@@ -52,7 +52,7 @@ const routes = [
     component: DeviceDebug
   },
   {
-    path: '/theater/:sessionId/:subjectId?',
+    path: '/theater/:sessionSlug/:subjectId?',
     name: 'theater',
     component: Theater,
     props: true
@@ -74,7 +74,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/studio/sessions/:id',
+    path: '/studio/sessions/:slug',
     name: 'studio-session-edit',
     component: SessionEditorView,
     meta: { requiresAuth: true }

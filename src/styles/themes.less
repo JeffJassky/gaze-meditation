@@ -1,0 +1,243 @@
+@import './framework.less';
+
+@brand-color: #694eff;
+@brand-color-dark: #322662;
+
+// ════════════════════════════════════════════════════════════════
+// COLOR CHANNELS
+//
+// Tailwind needs bare R G B channels (space-separated) so it can
+// inject `/ <alpha>` for opacity modifiers like bg-surface/80.
+// Each semantic token gets a `-rgb` channel variable that the
+// Tailwind config references, plus a ready-to-use `rgb()` var
+// for direct CSS consumption (e.g. in style.css).
+// ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// LIGHT THEME (default)
+// ════════════════════════════════════════════════════════════════
+:root {
+  // Brand
+  --brand-color: @brand-color;
+  --brand-color-dark: @brand-color-dark;
+  --brand-rgb: 105 78 255;
+  --brand-dark-rgb: 50 38 98;
+
+  // ── Text ───────────────────────────────────────────────────
+  --text-primary-rgb: 51 51 51;          // gray-3 #333
+  --text-secondary-rgb: 145 145 145;     // gray-5 #919191
+  --text-tertiary-rgb: 199 199 199;      // gray-6 #c7c7c7
+  --color-text-primary: rgb(var(--text-primary-rgb));
+  --color-text-secondary: rgb(var(--text-secondary-rgb));
+  --color-text-tertiary: rgb(var(--text-tertiary-rgb));
+  --color-text-warning: var(--color-default-red);
+  --color-text-link: rgb(28, 126, 255);
+
+  // ── Backgrounds ────────────────────────────────────────────
+  --surface-rgb: 255 255 255;            // white
+  --surface-secondary-rgb: 245 245 245;  // gray-9 #f5f5f5
+  --surface-tertiary-rgb: 236 236 236;   // gray-7 #ececec
+  --color-background-primary: rgb(var(--surface-rgb));
+  --color-background-secondary: rgb(var(--surface-secondary-rgb));
+  --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  --color-background-modal: rgb(255 255 255 / 0.9);
+  --color-background-warning: rgb(255 0 0 / 0.25);
+
+  // ── Borders ────────────────────────────────────────────────
+  --edge-rgb: 220 220 220;              // ~gray-7
+  --edge-secondary-rgb: 200 200 200;    // ~gray-6ish
+  --color-border: rgb(var(--edge-rgb));
+  --color-border-secondary: rgb(var(--edge-secondary-rgb));
+
+  // ── Accent ─────────────────────────────────────────────────
+  --accent-rgb: 14 116 144;             // cyan-700
+  --accent-muted-rgb: 22 78 99;         // cyan-900
+  --accent-subtle-rgb: 14 116 144;      // (used with low alpha)
+  --accent-text-rgb: 14 116 144;        // cyan-700
+
+  // ── Active / selection ─────────────────────────────────────
+  --color-active: rgb(37, 103, 189);
+  --color-background-active: #ccdcf0;
+
+  // ── Buttons ────────────────────────────────────────────────
+  --color-button-background: var(--brand-color);
+  --color-button-text: #fff;
+
+  // ── Shadows ────────────────────────────────────────────────
+  --shadow-large: 0 0.25em 1.75em rgb(0 0 0 / 0.15);
+  --shadow-small: 0 0.25em 0.5em rgb(0 0 0 / 0.1);
+
+  // ── Status: success ────────────────────────────────────────
+  --success-rgb: 5 150 105;             // emerald-600
+  --color-success: rgb(var(--success-rgb));
+
+  // ── Status: danger ─────────────────────────────────────────
+  --danger-rgb: 220 38 38;              // red-600
+  --color-danger: rgb(var(--danger-rgb));
+
+  // ── Status: warning ────────────────────────────────────────
+  --warning-rgb: 217 119 6;             // amber-600
+  --color-warning: rgb(var(--warning-rgb));
+
+  // ── Status: info ───────────────────────────────────────────
+  --info-rgb: 2 132 199;                // sky-600
+  --color-info: rgb(var(--info-rgb));
+
+  // ── System colors ──────────────────────────────────────────
+  --color-system-default: var(--color-text-primary);
+  --color-system-default-background: var(--color-background-tertiary);
+
+  --color-system-red: var(--color-default-red);
+  --color-system-red-background: var(--color-default-red);
+  --color-system-pink: var(--color-default-pink);
+  --color-system-pink-background: var(--color-default-pink);
+  --color-system-purple: var(--color-default-purple);
+  --color-system-purple-background: var(--color-default-purple);
+  --color-system-indigo: var(--color-default-indigo);
+  --color-system-indigo-background: var(--color-default-indigo);
+  --color-system-blue: var(--color-default-blue);
+  --color-system-blue-background: var(--color-default-blue);
+  --color-system-cyan: var(--color-default-cyan);
+  --color-system-cyan-background: var(--color-default-cyan);
+  --color-system-teal: var(--color-default-teal);
+  --color-system-teal-background: var(--color-default-teal);
+  --color-system-green: var(--color-default-green);
+  --color-system-green-background: var(--color-default-green);
+  --color-system-lime: var(--color-default-lime);
+  --color-system-lime-background: var(--color-default-lime);
+  --color-system-yellow: var(--color-default-yellow);
+  --color-system-yellow-background: var(--color-default-yellow);
+  --color-system-amber: var(--color-default-amber);
+  --color-system-amber-background: var(--color-default-amber);
+  --color-system-orange: var(--color-default-orange);
+  --color-system-orange-background: var(--color-default-orange);
+  --color-system-brown: var(--color-default-brown);
+  --color-system-brown-background: var(--color-default-brown);
+  --color-system-grey: var(--color-default-grey);
+  --color-system-grey-background: var(--color-default-grey);
+  --color-system-blue-grey: var(--color-default-blue-grey);
+  --color-system-blue-grey-background: var(--color-default-blue-grey);
+
+  .low-contrast {
+    --surface-rgb: 245 245 245;
+    --surface-secondary-rgb: 238 238 238;
+    --surface-tertiary-rgb: 236 236 236;
+    --color-background-primary: rgb(var(--surface-rgb));
+    --color-background-secondary: rgb(var(--surface-secondary-rgb));
+    --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// DARK THEME
+// Mapped from the existing Tailwind zinc/cyan palette.
+// ════════════════════════════════════════════════════════════════
+html.dark {
+  // Brand
+  --brand-color: @brand-color;
+  --brand-color-dark: @brand-color-dark;
+  --brand-rgb: 105 78 255;
+  --brand-dark-rgb: 50 38 98;
+
+  // ── Text ───────────────────────────────────────────────────
+  --text-primary-rgb: 244 244 245;      // zinc-100
+  --text-secondary-rgb: 161 161 170;    // zinc-400
+  --text-tertiary-rgb: 113 113 122;     // zinc-500
+  --color-text-primary: rgb(var(--text-primary-rgb));
+  --color-text-secondary: rgb(var(--text-secondary-rgb));
+  --color-text-tertiary: rgb(var(--text-tertiary-rgb));
+  --color-text-warning: var(--color-default-red);
+  --color-text-active: var(--color-default-blue);
+
+  // ── Backgrounds ────────────────────────────────────────────
+  --surface-rgb: 9 9 11;                // zinc-950
+  --surface-secondary-rgb: 24 24 27;    // zinc-900
+  --surface-tertiary-rgb: 39 39 42;     // zinc-800
+  --color-background-primary: rgb(var(--surface-rgb));
+  --color-background-secondary: rgb(var(--surface-secondary-rgb));
+  --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  --color-background-modal: rgb(9 9 11 / 0.85);
+  --color-background-warning: rgb(255 0 0 / 0.15);
+
+  // ── Borders ────────────────────────────────────────────────
+  --edge-rgb: 39 39 42;                 // zinc-800
+  --edge-secondary-rgb: 63 63 70;       // zinc-700
+  --color-border: rgb(var(--edge-rgb));
+  --color-border-secondary: rgb(var(--edge-secondary-rgb));
+
+  // ── Accent (cyan) ──────────────────────────────────────────
+  --accent-rgb: 34 211 238;             // cyan-400
+  --accent-muted-rgb: 8 51 68;          // cyan-950
+  --accent-subtle-rgb: 34 211 238;      // (used with low alpha)
+  --accent-text-rgb: 103 232 249;       // cyan-300
+
+  // ── Active / selection ─────────────────────────────────────
+  --color-active: rgb(24, 135, 215);
+  --color-background-active: #1d2631;
+  --color-border-active: #2a3c5d;
+  --color-background-selected-text: rgb(81 77 117 / 0.47);
+
+  // ── Shadows ────────────────────────────────────────────────
+  --shadow-large: 0 0.25em 1.75em rgb(0 0 0 / 0.5);
+  --shadow-small: 0 0.25em 0.5em rgb(0 0 0 / 0.4);
+
+  // ── Status: success (emerald) ──────────────────────────────
+  --success-rgb: 110 231 183;           // emerald-300
+  --color-success: rgb(var(--success-rgb));
+
+  // ── Status: danger (red) ───────────────────────────────────
+  --danger-rgb: 248 113 113;            // red-400
+  --color-danger: rgb(var(--danger-rgb));
+
+  // ── Status: warning (amber) ────────────────────────────────
+  --warning-rgb: 251 191 36;            // amber-400
+  --color-warning: rgb(var(--warning-rgb));
+
+  // ── Status: info (sky) ─────────────────────────────────────
+  --info-rgb: 56 189 248;               // sky-400
+  --color-info: rgb(var(--info-rgb));
+
+  // ── System colors ──────────────────────────────────────────
+  --color-system-default: var(--color-text-primary);
+  --color-system-default-background: var(--color-background-tertiary);
+
+  --color-system-red: var(--color-default-red);
+  --color-system-red-background: var(--color-default-red);
+  --color-system-pink: var(--color-default-pink);
+  --color-system-pink-background: var(--color-default-pink);
+  --color-system-purple: var(--color-default-purple);
+  --color-system-purple-background: var(--color-default-purple);
+  --color-system-indigo: var(--color-default-indigo);
+  --color-system-indigo-background: var(--color-default-indigo);
+  --color-system-blue: var(--color-default-blue);
+  --color-system-blue-background: var(--color-default-blue);
+  --color-system-cyan: var(--color-default-cyan);
+  --color-system-cyan-background: var(--color-default-cyan);
+  --color-system-teal: var(--color-default-teal);
+  --color-system-teal-background: var(--color-default-teal);
+  --color-system-green: var(--color-default-green);
+  --color-system-green-background: var(--color-default-green);
+  --color-system-lime: var(--color-default-lime);
+  --color-system-lime-background: var(--color-default-lime);
+  --color-system-yellow: var(--color-default-yellow);
+  --color-system-yellow-background: var(--color-default-yellow);
+  --color-system-amber: var(--color-default-amber);
+  --color-system-amber-background: var(--color-default-amber);
+  --color-system-orange: var(--color-default-orange);
+  --color-system-orange-background: var(--color-default-orange);
+  --color-system-brown: var(--color-default-brown);
+  --color-system-brown-background: var(--color-default-brown);
+  --color-system-grey: var(--color-default-grey);
+  --color-system-grey-background: var(--color-default-grey);
+  --color-system-blue-grey: var(--color-default-blue-grey);
+  --color-system-blue-grey-background: var(--color-default-blue-grey);
+
+  .low-contrast {
+    --surface-rgb: 24 24 27;
+    --surface-secondary-rgb: 39 39 42;
+    --surface-tertiary-rgb: 63 63 70;
+    --color-background-primary: rgb(var(--surface-rgb));
+    --color-background-secondary: rgb(var(--surface-secondary-rgb));
+    --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  }
+}

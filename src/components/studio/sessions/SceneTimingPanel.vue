@@ -1,13 +1,8 @@
 <script setup lang="ts">
-import { su } from '@/components/ui/studioUi'
 import type { SceneConfig } from '@shared/types'
 
 const config = defineModel<SceneConfig>({ required: true })
 
-// All three timing fields (duration, fadeOutDuration, cooldown) are stored
-// in milliseconds to match existing program data and what the runtime
-// reads. The editor's inputs show seconds for friendliness and convert
-// at the boundary.
 function msToSeconds(ms: unknown): number | '' {
 	if (typeof ms !== 'number' || Number.isNaN(ms)) return ''
 	return ms / 1000
@@ -21,52 +16,41 @@ function setSecondsField(key: 'duration' | 'fadeInDuration' | 'fadeOutDuration' 
 	if (!Number.isFinite(n)) return
 	config.value[key] = Math.round(n * 1000)
 }
+
+const fields = [
+	{ key: 'fadeInDuration' as const, label: 'Fade in', step: 0.1, placeholder: 'auto' },
+	{ key: 'duration' as const, label: 'Duration', step: 0.5, placeholder: 'auto' },
+	{ key: 'fadeOutDuration' as const, label: 'Fade out', step: 0.1, placeholder: 'auto' },
+	{ key: 'cooldown' as const, label: 'Break after', step: 0.1, placeholder: 'auto' },
+]
 </script>
 
 <template>
-	<div class="flex flex-col gap-2">
-		<div class="flex items-center gap-3">
-			<label :class="[su.label, '!mb-0 flex-1']">Forced duration (s)</label>
-			<input
-				:class="[su.input, 'w-16 text-right']"
-				type="number"
-				step="0.5"
-				:value="msToSeconds(config.duration)"
-				placeholder="auto"
-				@input="(e) => setSecondsField('duration', (e.target as HTMLInputElement).value)" />
+	<div class="flex gap-3">
+		<!-- Timeline indicator -->
+		<div class="flex flex-col items-center pt-1.5 shrink-0 w-3">
+			<template v-for="(f, i) in fields" :key="f.key">
+				<div class="w-2 h-2 rounded-full shrink-0"
+					:class="config[f.key] ? 'bg-zinc-400' : 'bg-zinc-700 ring-1 ring-zinc-600'" />
+				<div v-if="i < fields.length - 1" class="w-px flex-1 min-h-[16px] bg-zinc-800" />
+			</template>
 		</div>
-		<div class="flex items-center gap-3">
-			<label :class="[su.label, '!mb-0 flex-1']">Fade in (s)</label>
-			<input
-				:class="[su.input, 'w-16 text-right']"
-				type="number"
-				step="0.1"
-				:value="msToSeconds(config.fadeInDuration)"
-				@input="
-					(e) => setSecondsField('fadeInDuration', (e.target as HTMLInputElement).value)
-				" />
-		</div>
-		<div class="flex items-center gap-3">
-			<label :class="[su.label, '!mb-0 flex-1']">Fade out (s)</label>
-			<input
-				:class="[su.input, 'w-16 text-right']"
-				type="number"
-				step="0.1"
-				:value="msToSeconds(config.fadeOutDuration)"
-				@input="
-					(e) => setSecondsField('fadeOutDuration', (e.target as HTMLInputElement).value)
-				" />
-		</div>
-		<div class="flex items-center gap-3">
-			<label :class="[su.label, '!mb-0 flex-1']">Break (s)</label>
-			<input
-				:class="[su.input, 'w-16 text-right']"
-				type="number"
-				step="0.1"
-				:value="msToSeconds(config.cooldown)"
-				@input="
-					(e) => setSecondsField('cooldown', (e.target as HTMLInputElement).value)
-				" />
+
+		<!-- Fields -->
+		<div class="flex-1 space-y-2.5">
+			<div v-for="f in fields" :key="f.key">
+				<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">{{ f.label }}</label>
+				<div class="flex items-center gap-2">
+					<input
+						class="w-16 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 tabular-nums text-right focus:outline-none focus:border-zinc-600 transition"
+						type="number"
+						:step="f.step"
+						:placeholder="f.placeholder"
+						:value="msToSeconds(config[f.key])"
+						@input="(e) => setSecondsField(f.key, (e.target as HTMLInputElement).value)" />
+					<span class="text-[10px] text-zinc-600">sec</span>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, inject } from 'vue'
 import InspectorSection from './InspectorSection.vue'
-import SceneAudioPanel from './SceneAudioPanel.vue'
+import SceneBinauralPanel from './SceneBinauralPanel.vue'
+import SoundboardEventsPanel from './SoundboardEventsPanel.vue'
 import SceneBehaviorPanel from './SceneBehaviorPanel.vue'
 import SceneThemePanel from './SceneThemePanel.vue'
 import SceneTimingPanel from './SceneTimingPanel.vue'
+import { VOICES_KEY } from './voicesKey'
 import type { SceneBlock } from '@/api/sessions'
 
 /**
@@ -20,36 +22,18 @@ const configModel = computed({
 	set: (v) => (scene.value.config = v),
 })
 
-const themeOverrideEnabled = ref(
-	!!scene.value.config?.theme &&
-		Object.keys(scene.value.config.theme).length > 0,
-)
-
-watch(
-	() => scene.value.id,
-	() => {
-		const t = scene.value.config?.theme
-		themeOverrideEnabled.value = !!t && Object.keys(t).length > 0
-	},
-)
-
-watch(themeOverrideEnabled, (v) => {
-	if (!v && scene.value.config?.theme !== undefined) {
-		delete scene.value.config.theme
-	} else if (v && !scene.value.config?.theme) {
-		scene.value.config.theme = {}
-	}
-})
 
 const behaviorCount = computed(() => {
 	const b = scene.value.config?.behavior
 	return Array.isArray(b?.suggestions) ? b.suggestions.length : 0
 })
 
-const hasAudio = computed(() => {
-	const a = scene.value.config?.audio
-	return !!(a?.binaural || a?.fx?.path)
-})
+const voicesState = inject(VOICES_KEY, undefined)
+const sessionBinauralEnabled = computed(() => voicesState?.binauralEnabled.value ?? true)
+
+const hasSoundboard = computed(() =>
+	(scene.value.config?.audio?.soundboard?.length ?? 0) > 0,
+)
 </script>
 
 <template>
@@ -63,8 +47,20 @@ const hasAudio = computed(() => {
 				<SceneBehaviorPanel v-model="configModel" />
 			</InspectorSection>
 
-			<InspectorSection title="Audio" storage-key="audio" :default-open="hasAudio">
-				<SceneAudioPanel v-model="configModel" />
+			<InspectorSection
+				v-if="sessionBinauralEnabled"
+				title="Binaural"
+				storage-key="binaural"
+				:default-open="false">
+				<SceneBinauralPanel v-model="configModel" />
+			</InspectorSection>
+
+			<InspectorSection
+				title="Soundboard"
+				storage-key="soundboard"
+				:default-open="hasSoundboard"
+				:badge="hasSoundboard ? scene.config?.audio?.soundboard?.length : undefined">
+				<SoundboardEventsPanel v-model="configModel" />
 			</InspectorSection>
 
 			<InspectorSection
@@ -75,14 +71,10 @@ const hasAudio = computed(() => {
 			</InspectorSection>
 
 			<InspectorSection
-				title="Theme override"
+				title="Colors"
 				storage-key="theme"
 				:default-open="false">
-				<label class="flex items-center gap-2 text-xs text-zinc-400 mb-3">
-					<input type="checkbox" v-model="themeOverrideEnabled" />
-					Override session theme for this scene
-				</label>
-				<SceneThemePanel v-if="themeOverrideEnabled" v-model="configModel" />
+				<SceneThemePanel v-model="configModel" />
 			</InspectorSection>
 		</div>
 	</aside>

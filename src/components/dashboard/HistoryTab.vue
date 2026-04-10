@@ -53,15 +53,15 @@ function runAsSessionLog(r: SessionRun): SessionLog {
 
 <template>
 	<div class="max-w-6xl mx-auto">
-		<h2 class="text-3xl font-light text-white mb-6 text-center">History</h2>
+		<h2 class="text-3xl font-light text-content mb-6 text-center">History</h2>
 
-		<div v-if="error" class="mb-4 text-xs text-red-400/80 text-center">
+		<div v-if="error" class="mb-4 text-xs text-danger/80 text-center">
 			{{ error }}
 		</div>
 
-		<div class="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+		<div class="bg-surface-secondary border border-edge rounded-xl overflow-hidden">
 			<table class="w-full text-left text-sm">
-				<thead class="bg-zinc-800/50 text-zinc-400 uppercase text-xs font-medium">
+				<thead class="bg-surface-tertiary/50 text-content-secondary uppercase text-xs font-medium">
 					<tr>
 						<th class="px-6 py-4">Session</th>
 						<th class="px-6 py-4">Date</th>
@@ -70,27 +70,27 @@ function runAsSessionLog(r: SessionRun): SessionLog {
 						<th class="px-6 py-4 text-right">Score</th>
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-zinc-800">
+				<tbody class="divide-y divide-edge">
 					<template v-for="row in rows" :key="row.id">
 						<tr
 							@click="toggleExpand(row.id)"
-							class="hover:bg-zinc-800/30 cursor-pointer transition-colors"
-							:class="expandedSessionId === row.id ? 'bg-zinc-800/20' : ''">
-							<td class="px-6 py-4 text-white font-medium">{{ row.title }}</td>
-							<td class="px-6 py-4 text-zinc-400">
+							class="hover:bg-surface-tertiary/30 cursor-pointer transition-colors"
+							:class="expandedSessionId === row.id ? 'bg-surface-tertiary/20' : ''">
+							<td class="px-6 py-4 text-content font-medium">{{ row.title }}</td>
+							<td class="px-6 py-4 text-content-secondary">
 								{{ new Date(row.startTime).toLocaleString() }}
 							</td>
-							<td class="px-6 py-4 text-right font-mono text-zinc-400">
+							<td class="px-6 py-4 text-right font-mono text-content-secondary">
 								{{ formatDuration(row.durationMs) }}
 							</td>
-							<td class="px-6 py-4 text-right text-zinc-400">
+							<td class="px-6 py-4 text-right text-content-secondary">
 								{{ row.completeness }}%
 							</td>
-							<td class="px-6 py-4 text-right font-mono text-cyan-400">
+							<td class="px-6 py-4 text-right font-mono text-accent">
 								{{ row.totalScore }}
 							</td>
 						</tr>
-						<tr v-if="expandedSessionId === row.id" class="bg-zinc-900/50">
+						<tr v-if="expandedSessionId === row.id" class="bg-surface-secondary/50">
 							<td colspan="5" class="p-4">
 								<SessionDetail
 									:session="
@@ -104,10 +104,10 @@ function runAsSessionLog(r: SessionRun): SessionLog {
 				</tbody>
 			</table>
 
-			<div v-if="loading && rows.length === 0" class="p-8 text-center text-zinc-500">
+			<div v-if="loading && rows.length === 0" class="p-8 text-center text-content-tertiary">
 				Loading...
 			</div>
-			<div v-else-if="rows.length === 0" class="p-8 text-center text-zinc-500">
+			<div v-else-if="rows.length === 0" class="p-8 text-center text-content-tertiary">
 				No history yet. Finish a session to see it here.
 			</div>
 		</div>

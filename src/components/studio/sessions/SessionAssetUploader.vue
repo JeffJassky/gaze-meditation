@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { uploadFile, inferAssetKind, type UploadProgress } from '@/api/uploads'
 import { assetsApi } from '@/api/assets'
+import type { AssetKind } from '@/api/assets'
 import type { SessionAsset } from '@/api/sessions'
 
 /**
@@ -14,7 +15,7 @@ import type { SessionAsset } from '@/api/sessions'
  * global asset picker. The emitted payload still carries the session-embed
  * shape so the parent can keep populating `session.assets` for backcompat.
  */
-const props = defineProps<{ file: File }>()
+const props = defineProps<{ file: File; kind?: AssetKind }>()
 const emit = defineEmits<{
 	done: [asset: Omit<SessionAsset, 'id'> & { id?: string }]
 	error: [message: string]
@@ -26,10 +27,10 @@ const errorMsg = ref('')
 
 async function run() {
 	try {
-		const { key, contentType, size } = await uploadFile(props.file, (p) => {
+		const kind = props.kind ?? inferAssetKind(props.file.type || '')
+		const { key, contentType, size } = await uploadFile(props.file, kind, (p) => {
 			progress.value = p
 		})
-		const kind = inferAssetKind(props.file.type || '')
 
 		// Register in the shared Asset collection. Best-effort: if the
 		// registration fails (network blip, auth loss) we still emit the

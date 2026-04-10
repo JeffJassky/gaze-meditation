@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
-import type { Session } from '@/api/sessions'
+import { computed, inject, nextTick, ref, watch } from 'vue'
+import type { Session, SessionAsset } from '@/api/sessions'
 import { SESSION_AUDIENCE } from '@shared/constants/session'
+import { VOICES_KEY } from './voicesKey'
+import { uploadFile } from '@/api/uploads'
+import { assetsApi } from '@/api/assets'
+import { assetUrl } from '@/utils/assetUrl'
 
 /**
  * Blog-style session header rendered at the top of the scrolling script
@@ -75,6 +79,90 @@ const tagsText = computed({
 })
 
 // ──────────────────────────────────────────────────────────────────────
+// Voice — display label (set via VoiceModePicker, editable here only to reset)
+// ──────────────────────────────────────────────────────────────────────
+const voicesState = inject(VOICES_KEY, undefined)
+const voices = computed(() => voicesState?.voices.value ?? [])
+
+const voiceLabel = computed(() => {
+	const origin = session.value.voiceOrigin
+	if (!origin) return 'voice not set'
+	if (origin === 'human') return 'human voice'
+	// AI — show the ElevenLabs voice name if we can resolve it.
+	const vid = session.value.elevenlabsVoiceId
+	if (vid) {
+		const v = voices.value.find((v) => v.voice_id === vid)
+		return v ? v.name : vid
+	}
+	return 'ai voice'
+})
+
+function resetVoiceConfig() {
+	session.value.voiceOrigin = undefined
+	session.value.voiceStructure = undefined
+	session.value.elevenlabsVoiceId = null
+	session.value.masterAudio = undefined
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Cover image
+// ──────────────────────────────────────────────────────────────────────
+const coverUploading = ref(false)
+
+const coverUrl = computed(() => {
+	const id = session.value.coverAssetId
+	if (!id) return null
+	const asset = session.value.assets?.find((a) => a.id === id)
+	return asset ? assetUrl(asset.key) : null
+})
+
+function browseCoverImage() {
+	const input = document.createElement('input')
+	input.type = 'file'
+	input.accept = 'image/*'
+	input.onchange = () => {
+		const file = input.files?.[0]
+		if (file) uploadCover(file)
+	}
+	input.click()
+}
+
+async function uploadCover(file: File) {
+	coverUploading.value = true
+	try {
+		const { key, contentType, size } = await uploadFile(file, 'image')
+		const kind = 'image' as const
+
+		let registeredId: string | undefined
+		try {
+			const registered = await assetsApi.register({
+				kind, key, label: file.name, contentType, size,
+			})
+			registeredId = registered.id
+		} catch (e) {
+			console.warn('[SessionHeader] asset register failed', e)
+		}
+
+		const asset: SessionAsset = {
+			id: registeredId ?? crypto.randomUUID(),
+			kind, key, label: file.name, contentType, size,
+		}
+		if (!session.value.assets.some((a) => a.key === key)) {
+			session.value.assets = [...session.value.assets, asset]
+		}
+		session.value.coverAssetId = asset.id
+	} catch (e) {
+		console.error('[SessionHeader] cover upload failed', e)
+	} finally {
+		coverUploading.value = false
+	}
+}
+
+function removeCover() {
+	session.value.coverAssetId = null
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // Helpers — human-readable labels for the metadata chips.
 // ──────────────────────────────────────────────────────────────────────
 const audienceLabel = computed(() => session.value.audience || 'unspecified')
@@ -85,16 +173,40 @@ const visibilityLabel = computed(() =>
 
 <template>
 	<header class="pb-10 mb-10 border-b border-zinc-900">
-		<!-- Status pill -->
-		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider mb-3"
-			:class="
-				session.status === 'published'
-					? 'bg-emerald-950/60 border border-emerald-800/60 text-emerald-300'
-					: 'bg-orange-950/60 border border-orange-800/60 text-orange-300'
-			">
-			{{ session.status }}
-		</span>
+		<!-- Cover image -->
+		<div v-if="coverUrl" class="relative -mx-1 mb-4 rounded-lg overflow-hidden group">
+			<img
+				:src="coverUrl!"
+				alt="Session cover"
+				class="w-full h-40 object-cover" />
+			<button
+				type="button"
+				class="absolute top-2 right-2 px-2 py-1 rounded bg-black/60 text-[10px] text-zinc-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+				@click="removeCover">
+				Remove
+			</button>
+		</div>
+
+		<!-- Status pill + cover upload button -->
+		<div class="flex items-center justify-between mb-3">
+			<span
+				class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider"
+				:class="
+					session.status === 'published'
+						? 'bg-emerald-950/60 border border-emerald-800/60 text-emerald-300'
+						: 'bg-orange-950/60 border border-orange-800/60 text-orange-300'
+				">
+				{{ session.status }}
+			</span>
+			<button
+				v-if="!coverUrl"
+				type="button"
+				class="text-[11px] text-zinc-600 hover:text-zinc-300 transition-colors"
+				:disabled="coverUploading"
+				@click="browseCoverImage">
+				{{ coverUploading ? 'Uploading...' : '+ Cover Image' }}
+			</button>
+		</div>
 
 		<!-- Title -->
 		<h1
@@ -115,6 +227,21 @@ const visibilityLabel = computed(() =>
 
 		<!-- Metadata row: audience · visibility · adult · tags -->
 		<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+			<!-- Voice (display + reset) -->
+			<span class="text-zinc-500">
+				{{ voiceLabel }}
+			</span>
+			<button
+				v-if="session.voiceStructure"
+				type="button"
+				class="text-zinc-700 hover:text-zinc-400 transition-colors"
+				title="Reset voice configuration"
+				@click="resetVoiceConfig">
+				&times;
+			</button>
+
+			<span class="text-zinc-800">·</span>
+
 			<!-- Audience -->
 			<label class="relative group">
 				<span class="hover:text-zinc-300 transition-colors cursor-pointer">

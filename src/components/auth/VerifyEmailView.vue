@@ -41,7 +41,7 @@ onMounted(async () => {
 			<div v-else-if="status === 'ok'" :class="[ui.success, 'mb-4']">{{ message }}</div>
 			<div v-else :class="[ui.error, 'mb-4']">{{ message }}</div>
 
-			<div class="text-sm text-zinc-400 text-center mt-4">
+			<div class="text-sm text-content-secondary text-center mt-4">
 				<RouterLink to="/account" :class="ui.link">Go to account</RouterLink>
 			</div>
 		</div>

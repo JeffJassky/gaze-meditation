@@ -134,7 +134,7 @@ class VoiceService {
 					// Verify the asset actually exists on S3 before committing
 					// to playback. A HEAD request is cheap and lets us fall
 					// through to regeneration if the asset row is stale.
-					const check = await fetch(assetUrl(key), { method: 'HEAD' })
+					const check = await fetch(assetUrl(key), { method: 'HEAD', credentials: 'include' })
 
 					if (this.currentGenerationId !== myId) return
 
@@ -250,7 +250,78 @@ class VoiceService {
 		})
 	}
 
+	/**
+	 * Play a time region from a pre-loaded audio buffer (session-level voice).
+	 * The buffer should already be decoded and cached by audioSession.loadBuffer.
+	 */
+	async playRegion(audioKey: string, startSec: number, endSec: number): Promise<void> {
+		this._isSpeaking = true
+		try {
+			const myId = ++this.currentGenerationId
+			this.stop_source()
+
+			if (!audioSession.ctx) {
+				console.warn('[VoiceService] AudioSession not initialized')
+				return
+			}
+			if (audioSession.ctx.state === 'suspended') {
+				await audioSession.ctx.resume()
+			}
+
+			let buffer: AudioBuffer
+			try {
+				buffer = await audioSession.loadBuffer(audioKey)
+			} catch (e) {
+				console.error('[VoiceService] Failed to load master audio buffer', e)
+				return
+			}
+
+			if (this.currentGenerationId !== myId) return
+
+			const duration = Math.max(0, endSec - startSec)
+			if (duration <= 0) return
+
+			return new Promise((resolve) => {
+				console.log(`[VoiceService] Playing region ${startSec.toFixed(2)}–${endSec.toFixed(2)}s (ID: ${myId})`)
+
+				const source = audioSession.ctx.createBufferSource()
+				source.buffer = buffer
+				source.loop = false
+				source.connect(audioSession.buses.voice)
+
+				this.currentSource = source
+
+				source.onended = () => {
+					if (this.currentSource === source) {
+						this.currentSource = null
+					}
+					resolve()
+				}
+
+				source.start(0, startSec, duration)
+			})
+		} finally {
+			this._isSpeaking = false
+		}
+	}
+
+	private stop_source() {
+		if (this.currentSource) {
+			try {
+				this.currentSource.stop()
+				this.currentSource.disconnect()
+			} catch (e) {
+				// Ignore if already stopped
+			}
+			this.currentSource = null
+		}
+	}
+
 	stop() {
+		// Invalidate any in-flight generation so it won't start playback.
+		this.currentGenerationId++
+		this._isSpeaking = false
+
 		if (this.currentSource) {
 			console.log('[VoiceService] Stopping current source')
 			try {
@@ -259,9 +330,6 @@ class VoiceService {
 			} catch (e) {
 				// Ignore if already stopped
 			}
-			// We do NOT set currentSource to null here immediately.
-			// We let source.stop() trigger onended, which handles the cleanup and resolution.
-			// This ensures the Promise returned by playAudio resolves naturally.
 			this.currentSource = null
 		}
 	}

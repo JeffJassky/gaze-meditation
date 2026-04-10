@@ -94,17 +94,39 @@ export class BinauralEngine {
 			this.gain.gain.setValueAtTime(this.gain.gain.value, now)
 			this.gain.gain.linearRampToValueAtTime(0, now + fade)
 		}
-		
+
 		if (this.left) this.left.stop(now + fade)
 		if (this.right) this.right.stop(now + fade)
 
-		setTimeout(() => {
-			this.left = undefined
-			this.right = undefined
-			this.gain = undefined
-			this.isActive = false
-			this.currentConfig = undefined
+		// Clean up references immediately so nothing can restart them.
+		// The scheduled stop/ramp will still execute on the audio thread.
+		this.isActive = false
+		this.currentConfig = undefined
+
+		const left = this.left
+		const right = this.right
+		const gain = this.gain
+		this.left = undefined
+		this.right = undefined
+		this.gain = undefined
+
+		// Disconnect nodes after fade completes to avoid clicks.
+		if (fade > 0) {
+			setTimeout(() => {
+				try {
+					left?.disconnect()
+					right?.disconnect()
+					gain?.disconnect()
+				} catch {}
+				console.log('[BinauralEngine] Stopped and cleaned up.')
+			}, fade * 1000 + 100)
+		} else {
+			try {
+				left?.disconnect()
+				right?.disconnect()
+				gain?.disconnect()
+			} catch {}
 			console.log('[BinauralEngine] Stopped and cleaned up.')
-		}, fade * 1000 + 100)
+		}
 	}
 }

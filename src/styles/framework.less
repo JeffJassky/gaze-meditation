@@ -1,0 +1,102 @@
+// Framework — foundational CSS custom properties.
+// Colors, spacing scales, typography tokens, z-indices.
+// These are raw values consumed by theme files; components should
+// reference the semantic --color-* / --shadow-* vars from themes.less.
+
+:root {
+  --unit: 0.57rem;
+
+  // ── Gray scale ─────────────────────────────────────────────
+  --color-black: #000;
+  --color-gray-1: #191919;
+  --color-gray-2: #232323;
+  --color-gray-3: #333333;
+  --color-gray-4: #5a5a5a;
+  --color-gray-5: #919191;
+  --color-gray-6: #c7c7c7;
+  --color-gray-7: #ececec;
+  --color-gray-8: #eeeeee;
+  --color-gray-9: #f5f5f5;
+  --color-white: #fff;
+
+  // ── System palette ─────────────────────────────────────────
+  --color-default-red: #f44336;
+  --color-default-pink: #e91e63;
+  --color-default-purple: #9c27b0;
+  --color-default-indigo: #3f51b5;
+  --color-default-blue: #2196f3;
+  --color-default-cyan: #00bcd4;
+  --color-default-teal: #009688;
+  --color-default-green: #4caf50;
+  --color-default-lime: #cddc39;
+  --color-default-yellow: #ffeb3b;
+  --color-default-amber: #ffc107;
+  --color-default-orange: #ff9800;
+  --color-default-brown: #795548;
+  --color-default-grey: #9e9e9e;
+  --color-default-blue-grey: #607d8b;
+
+  // ── Border radius ──────────────────────────────────────────
+  --radius-xs: calc(0.4 * var(--unit, 8px));
+  --radius-s: calc(0.7 * var(--unit, 8px));
+  --radius-m: calc(1 * var(--unit, 8px));
+  --radius-l: calc(2 * var(--unit, 8px));
+  --radius-xl: calc(3 * var(--unit, 8px));
+
+  // ── Spacing ────────────────────────────────────────────────
+  --space-xs: calc(0.25 * var(--unit, 8px));
+  --space-s: calc(0.5 * var(--unit, 8px));
+  --space-m: calc(1 * var(--unit, 8px));
+  --space-l: calc(2 * var(--unit, 8px));
+  --space-xl: calc(3 * var(--unit, 8px));
+  --space-xxl: calc(5 * var(--unit, 8px));
+  --space-xxxl: calc(8 * var(--unit, 8px));
+
+  // ── Typography ─────────────────────────────────────────────
+  --font-size-xs: calc(1.25 * var(--unit, 8px));
+  --font-size-s: calc(1.5 * var(--unit, 8px));
+  --font-size-m: calc(1.75 * var(--unit, 8px));
+  --font-size-l: calc(2.25 * var(--unit, 8px));
+  --font-size-xl: calc(3 * var(--unit, 8px));
+  --font-size-xxl: calc(3.75 * var(--unit, 8px));
+  --font-size-xxxl: calc(5 * var(--unit, 8px));
+
+  --line-height-xs: 0.7;
+  --line-height-s: 1.3;
+  --line-height-m: 1.6;
+  --line-height-l: 1.7;
+  --line-height-xl: 1.8;
+  --line-height-xxl: 2;
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: Georgia, serif;
+  --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --weight-thin: 100;
+  --weight-light: 300;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  // ── Form fields ────────────────────────────────────────────
+  --formFieldBorderWidth: 1px;
+  --formFieldBorderWidthFocus: 2px;
+  --formFieldHeight: calc(4.5 * var(--unit, 8px));
+  --formFieldRadius: calc(2.25 * var(--unit, 8px));
+  --formFieldHorizontalPadding: calc(2 * var(--unit, 8px));
+
+  // ── Z-indices ──────────────────────────────────────────────
+  --z-index-modal: 200;
+  --z-index-modal-backdrop: 300;
+  --z-index-floating: 400;
+  --z-index-dropdown: 500;
+
+  // ── Breakpoints (informational — use @media in code) ──────
+  --breakpoint-1: 400px;
+  --breakpoint-2: 600px;
+  --breakpoint-3: 800px;
+  --breakpoint-4: 1000px;
+  --breakpoint-5: 1300px;
+  --breakpoint-6: 1500px;
+}

@@ -20,7 +20,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	save: []
-	openMeta: []
 	undo: []
 	redo: []
 	publish: []
@@ -103,12 +102,6 @@ function onTitleKey(e: KeyboardEvent) {
 				title="Redo (⌘⇧Z)"
 				@click="$emit('redo')">
 				↷
-			</button>
-			<button
-				type="button"
-				:class="[su.btnSecondary, '!py-1.5 text-sm']"
-				@click="$emit('openMeta')">
-				Assets
 			</button>
 			<button
 				v-if="session && session.status === 'draft'"

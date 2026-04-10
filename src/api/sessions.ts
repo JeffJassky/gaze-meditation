@@ -12,12 +12,16 @@ export type {
 	SessionStatus,
 	SessionListResult,
 	SceneBlock,
+	SceneRegion,
 	SessionAsset,
 	SessionAudio,
 	SessionSettings,
 	SessionVisibility,
 	SessionAudience,
 	AssetKind,
+	MasterAudio,
+	VoiceOrigin,
+	VoiceStructure,
 } from '@shared/types'
 
 // --- Client ------------------------------------------------------------------
@@ -37,7 +41,7 @@ export interface ListSessionsParams {
 export const sessionsApi = {
 	list: (params: ListSessionsParams = {}) =>
 		apiRequest<SessionListResult>(`/sessions${qs(params as Record<string, unknown>)}`),
-	get: (id: string) => apiRequest<Session>(`/sessions/${id}`),
+	get: (idOrSlug: string) => apiRequest<Session>(`/sessions/${idOrSlug}`),
 	create: (body: Partial<Session>) =>
 		apiRequest<Session>('/sessions', { method: 'POST', body: JSON.stringify(body) }),
 	update: (id: string, body: Partial<Session>) =>

@@ -91,7 +91,7 @@ export class AudioSession {
 		const url = assetUrl(key)
 		console.log(`[AudioSession] Loading buffer: ${key}${url !== key ? ` → ${url}` : ''}`)
 		try {
-			const res = await fetch(url)
+			const res = await fetch(url, { credentials: 'include' })
 			if (!res.ok) throw new Error(`HTTP ${res.status}`)
 			
 			const contentType = res.headers.get('content-type')

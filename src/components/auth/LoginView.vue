@@ -61,7 +61,7 @@ async function submit() {
 				{{ submitting ? 'Signing in…' : 'Sign in' }}
 			</button>
 
-			<div class="mt-6 text-sm text-zinc-400 flex justify-between">
+			<div class="mt-6 text-sm text-content-secondary flex justify-between">
 				<RouterLink to="/forgot-password" :class="ui.link">Forgot password?</RouterLink>
 				<RouterLink to="/register" :class="ui.link">Create account</RouterLink>
 			</div>
