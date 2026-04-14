@@ -71,10 +71,10 @@ const fxKey = computed({
 					<label class="flex items-center gap-2 pb-2">
 						<input
 							type="checkbox"
-							class="w-4 h-4 accent-zinc-200"
+							class="w-4 h-4 accent-content-secondary"
 							:checked="!!fx.loop"
 							@change="(e) => setFxLoop((e.target as HTMLInputElement).checked)" />
-						<span class="text-sm text-zinc-300">Loop</span>
+						<span class="text-sm text-content-secondary">Loop</span>
 					</label>
 				</div>
 			</div>

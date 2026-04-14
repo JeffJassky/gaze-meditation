@@ -3,8 +3,12 @@ import { onMounted, reactive, ref, computed } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { auth } from '@/state/auth'
 import { authApi } from '@/api/auth'
+import { uploadFile } from '@/api/uploads'
+import { assetsApi } from '@/api/assets'
+import { API_BASE } from '@/api/client'
 import AppShell from '@/components/ui/AppShell.vue'
 import AccountSubnav from '@/components/ui/AccountSubnav.vue'
+import LevelBadge from '@/components/profile/LevelBadge.vue'
 import { ui } from './authStyles'
 import { useTheme, type ThemePreference } from '@/composables/useTheme'
 
@@ -16,6 +20,69 @@ const themeOptions: { value: ThemePreference; label: string; icon: string }[] = 
 	{ value: 'light', label: 'Light', icon: '\u2600\uFE0F' },
 	{ value: 'dark', label: 'Dark', icon: '\u{1F319}' },
 ]
+
+// ---------- Profile (bio + avatar) ----------
+const bioInput = ref('')
+const bioBusy = ref(false)
+const bioMsg = ref<{ kind: 'ok' | 'err'; text: string } | null>(null)
+
+const avatarUploading = ref(false)
+const avatarMsg = ref<{ kind: 'ok' | 'err'; text: string } | null>(null)
+
+const avatarUrl = computed(() => {
+	if (!auth.state.user?.avatarAssetKey) return null
+	return `${API_BASE}/users/${encodeURIComponent(auth.state.user.username)}/avatar?t=${Date.now()}`
+})
+
+const avatarInitial = computed(() =>
+	(auth.state.user?.username ?? '?')[0]!.toUpperCase(),
+)
+
+async function saveBio() {
+	bioMsg.value = null
+	bioBusy.value = true
+	try {
+		const user = await authApi.updateProfile({ bio: bioInput.value })
+		auth.setUser(user)
+		bioMsg.value = { kind: 'ok', text: 'Bio updated.' }
+	} catch (e) {
+		bioMsg.value = { kind: 'err', text: (e as Error).message }
+	} finally {
+		bioBusy.value = false
+	}
+}
+
+async function onAvatarFileChange(e: Event) {
+	const file = (e.target as HTMLInputElement).files?.[0]
+	if (!file) return
+	avatarMsg.value = null
+	avatarUploading.value = true
+	try {
+		const { key, contentType, size } = await uploadFile(file, 'profile-image')
+		await assetsApi.register({ kind: 'profile-image', key, contentType, size, label: 'avatar' })
+		const user = await authApi.updateProfile({ avatarAssetKey: key })
+		auth.setUser(user)
+		avatarMsg.value = { kind: 'ok', text: 'Avatar updated.' }
+	} catch (e) {
+		avatarMsg.value = { kind: 'err', text: (e as Error).message }
+	} finally {
+		avatarUploading.value = false
+	}
+}
+
+async function removeAvatar() {
+	avatarMsg.value = null
+	avatarUploading.value = true
+	try {
+		const user = await authApi.updateProfile({ avatarAssetKey: null })
+		auth.setUser(user)
+		avatarMsg.value = { kind: 'ok', text: 'Avatar removed.' }
+	} catch (e) {
+		avatarMsg.value = { kind: 'err', text: (e as Error).message }
+	} finally {
+		avatarUploading.value = false
+	}
+}
 
 // ---------- Username ----------
 const usernameInput = ref('')
@@ -171,6 +238,7 @@ onMounted(async () => {
 		return
 	}
 	usernameInput.value = auth.state.user.username
+	bioInput.value = auth.state.user.bio ?? ''
 	await loadSettings()
 })
 </script>
@@ -189,6 +257,93 @@ onMounted(async () => {
 					Signed in as <strong>{{ auth.state.user?.username }}</strong>
 				</p>
 			</div>
+
+			<!-- Profile -->
+			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="text-lg font-semibold">Profile</h2>
+					<RouterLink
+						v-if="auth.state.user"
+						:to="`/profile/${auth.state.user.username}`"
+						class="text-sm text-content-secondary hover:text-content transition"
+					>
+						View profile &rarr;
+					</RouterLink>
+				</div>
+
+				<!-- Avatar -->
+				<div class="flex items-center gap-4 mb-5">
+					<div
+						class="shrink-0 w-16 h-16 rounded-full bg-surface-tertiary border border-edge flex items-center justify-center overflow-hidden"
+					>
+						<img
+							v-if="avatarUrl"
+							:src="avatarUrl"
+							alt="Avatar"
+							class="w-full h-full object-cover"
+						/>
+						<span v-else class="text-xl font-bold text-content-tertiary">
+							{{ avatarInitial }}
+						</span>
+					</div>
+					<div class="flex flex-col gap-2">
+						<label
+							class="cursor-pointer text-sm px-3 py-1.5 rounded-lg bg-surface-tertiary text-content hover:opacity-80 transition inline-block"
+							:class="{ 'opacity-50 pointer-events-none': avatarUploading }"
+						>
+							{{ avatarUploading ? 'Uploading\u2026' : 'Upload photo' }}
+							<input
+								type="file"
+								accept="image/*"
+								class="hidden"
+								@change="onAvatarFileChange"
+								:disabled="avatarUploading"
+							/>
+						</label>
+						<button
+							v-if="auth.state.user?.avatarAssetKey"
+							type="button"
+							class="text-sm text-danger hover:opacity-80 text-left"
+							:disabled="avatarUploading"
+							@click="removeAvatar"
+						>
+							Remove
+						</button>
+					</div>
+				</div>
+				<div v-if="avatarMsg" :class="[avatarMsg.kind === 'ok' ? ui.success : ui.error, 'mb-4']">
+					{{ avatarMsg.text }}
+				</div>
+
+				<!-- Bio -->
+				<form @submit.prevent="saveBio" class="space-y-3">
+					<div>
+						<label :class="ui.label">Bio</label>
+						<textarea
+							v-model="bioInput"
+							:class="ui.input"
+							class="!h-24 resize-none"
+							maxlength="500"
+							placeholder="Tell people about yourself..."
+						/>
+						<div class="text-xs text-content-tertiary text-right mt-1">
+							{{ bioInput.length }}/500
+						</div>
+					</div>
+					<div v-if="bioMsg" :class="bioMsg.kind === 'ok' ? ui.success : ui.error">
+						{{ bioMsg.text }}
+					</div>
+					<button :class="ui.button" :disabled="bioBusy">
+						{{ bioBusy ? 'Saving\u2026' : 'Save bio' }}
+					</button>
+				</form>
+
+				<!-- Level summary -->
+				<div v-if="auth.state.user" class="mt-5 pt-4 border-t border-edge flex items-center gap-4">
+					<LevelBadge :level="auth.state.user.level" :progress="auth.state.user.levelProgress" size="md" />
+					<span class="text-sm text-content-secondary">{{ auth.state.user.xp.toLocaleString() }} XP</span>
+				</div>
+			</section>
 
 			<!-- Theme -->
 			<section class="bg-surface-secondary/80 border border-edge rounded-2xl p-6 mb-6">

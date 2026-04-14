@@ -190,7 +190,7 @@ useSortable(
 </script>
 
 <template>
-	<main ref="scrollRoot" class="overflow-y-auto bg-zinc-950 min-h-0">
+	<main ref="scrollRoot" class="overflow-y-auto bg-surface min-h-0">
 		<div class="max-w-2xl mx-auto px-10 py-10">
 			<!-- Blog-style session header sits above the scene list and
 			     outside the sortable container so it can't be dragged. -->
@@ -217,7 +217,7 @@ useSortable(
 						@delete-backward="emit('deleteBackward', i)" />
 					<div
 						v-if="scenes.length === 0"
-						class="text-center py-20 text-zinc-600 text-sm">
+						class="text-center py-20 text-content-tertiary text-sm">
 						No scenes yet.
 					</div>
 				</div>

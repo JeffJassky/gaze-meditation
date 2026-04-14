@@ -168,7 +168,7 @@ export function useTheaterAudio(
 		}
 	}
 
-	/** Switch music/binaural when transitioning to a new session. */
+	/** Switch music/binaural/soundboard/master-audio when transitioning to a new session. */
 	async function switchSession(session: Session) {
 		if (session.audio?.musicTrack && session.audio.musicTrack !== 'none') {
 			try {
@@ -181,6 +181,30 @@ export function useTheaterAudio(
 			}
 		} else {
 			audioSession.musicLooper.stop(2)
+		}
+
+		// Preload master audio buffer for session-level voice mode.
+		if (session.masterAudio?.key) {
+			try {
+				await audioSession.loadBuffer(session.masterAudio.key)
+			} catch (e) {
+				console.warn('[TheaterAudio] Failed to preload master audio on session switch', e)
+			}
+		}
+
+		// Preload & validate soundboard samples.
+		soundboardErrors.value.clear()
+		if (session.audio?.soundboard) {
+			await Promise.allSettled(
+				session.audio.soundboard.map(async sample => {
+					try {
+						await audioSession.loadBuffer(sample.path)
+					} catch (e) {
+						console.error(`[TheaterAudio] Failed to load soundboard sample: ${sample.id}`, e)
+						soundboardErrors.value.add(sample.id)
+					}
+				}),
+			)
 		}
 
 		const bConfig = session.audio?.binaural

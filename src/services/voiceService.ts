@@ -115,9 +115,10 @@ class VoiceService {
 
 			// Increment ID to invalidate any previous pending operations
 			const myId = ++this.currentGenerationId
-			
-			// Stop any currently playing voice
-			this.stop()
+
+			// Stop any currently playing source (but don't bump the generation
+			// ID again — that would invalidate the ID we just grabbed).
+			this.stop_source()
 
 			const hash = await textToHash(fullText)
 

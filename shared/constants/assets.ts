@@ -4,7 +4,7 @@
  * (file picker accept filters, size warnings).
  */
 
-export const ASSET_KINDS = ['music', 'fx', 'voice', 'session-audio', 'image', 'spiral', 'video'] as const
+export const ASSET_KINDS = ['music', 'fx', 'voice', 'session-audio', 'image', 'spiral', 'video', 'profile-image'] as const
 
 export type AssetKind = (typeof ASSET_KINDS)[number]
 
@@ -71,6 +71,13 @@ export const ASSET_KIND_CONFIG: Record<AssetKind, AssetKindConfig> = {
 		maxBytes: 100 * MB,
 		maxSizeLabel: '100 MB',
 		accept: 'video/*',
+	},
+	'profile-image': {
+		label: 'Profile image',
+		mimePatterns: ['image/'],
+		maxBytes: 5 * MB,
+		maxSizeLabel: '5 MB',
+		accept: 'image/*',
 	},
 }
 

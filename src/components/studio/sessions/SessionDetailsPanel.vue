@@ -98,8 +98,8 @@ const voicesState = inject(VOICES_KEY, undefined)
 						<input
 							type="checkbox"
 							v-model="session.isAdult"
-							class="w-4 h-4 accent-zinc-200" />
-						<span class="text-sm text-zinc-300">Adults only (18+)</span>
+							class="w-4 h-4 accent-content-secondary" />
+						<span class="text-sm text-content-secondary">Adults only (18+)</span>
 					</label>
 				</div>
 			</div>
@@ -129,14 +129,14 @@ const voicesState = inject(VOICES_KEY, undefined)
 							{{ v.name }}{{ v.category ? ` (${v.category})` : '' }}
 						</option>
 					</select>
-					<p v-if="voicesState.loading.value" class="text-xs text-zinc-500 mt-1">
+					<p v-if="voicesState.loading.value" class="text-xs text-content-tertiary mt-1">
 						Loading voices…
 					</p>
-					<p v-else-if="voicesState.error.value" class="text-xs text-red-400 mt-1">
+					<p v-else-if="voicesState.error.value" class="text-xs text-danger mt-1">
 						{{ voicesState.error.value }}
 					</p>
 				</template>
-				<p v-else class="text-xs text-zinc-500">
+				<p v-else class="text-xs text-content-tertiary">
 					Add your ElevenLabs API key in
 					<RouterLink to="/account" class="underline underline-offset-2">
 						account settings

@@ -119,7 +119,7 @@ const groups = computed(() => groupedBehaviors())
 <template>
 	<div>
 		<div class="mb-4">
-			<div v-if="suggestions.length === 0" class="text-xs text-zinc-500 mb-3">
+			<div v-if="suggestions.length === 0" class="text-xs text-content-tertiary mb-3">
 				None. Without any, the scene runs for a fixed duration.
 			</div>
 
@@ -127,10 +127,10 @@ const groups = computed(() => groupedBehaviors())
 				<div
 					v-for="(s, i) in suggestions"
 					:key="i"
-					class="bg-zinc-950 border border-zinc-800 rounded-lg p-4 space-y-3">
+					class="bg-surface border border-edge rounded-lg p-4 space-y-3">
 					<!-- Type picker (full width) -->
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Behavior</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Behavior</label>
 						<select
 							:class="su.select"
 							:value="s.type"
@@ -149,14 +149,14 @@ const groups = computed(() => groupedBehaviors())
 						</select>
 					</div>
 
-					<p v-if="defOf(s.type)" class="text-xs text-zinc-500 leading-relaxed">
+					<p v-if="defOf(s.type)" class="text-xs text-content-tertiary leading-relaxed">
 						{{ defOf(s.type)!.description }}
 					</p>
 
 					<!-- Duration + failure in a compact grid -->
 					<div class="grid grid-cols-2 gap-2">
 						<div>
-							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">
+							<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">
 								{{ defOf(s.type)?.kind === 'trigger' ? 'Time limit' : 'Duration' }}
 							</label>
 							<div class="flex items-center gap-1.5">
@@ -175,12 +175,12 @@ const groups = computed(() => groupedBehaviors())
 												),
 											})
 									" />
-								<span class="text-xs text-zinc-600 shrink-0">sec</span>
+								<span class="text-xs text-content-tertiary shrink-0">sec</span>
 							</div>
 						</div>
 
 						<div v-if="defOf(s.type)?.kind === 'hold'">
-							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">On failure</label>
+							<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">On failure</label>
 							<select
 								:class="su.select"
 								:value="s.failBehavior ?? 'pause'"
@@ -200,7 +200,7 @@ const groups = computed(() => groupedBehaviors())
 
 					<p
 						v-if="defOf(s.type)?.kind === 'trigger'"
-						class="text-[11px] text-zinc-600">
+						class="text-[11px] text-content-tertiary">
 						Leave empty to wait indefinitely.
 					</p>
 
@@ -209,7 +209,7 @@ const groups = computed(() => groupedBehaviors())
 						<div
 							v-for="f in defOf(s.type)!.fields"
 							:key="f.key">
-							<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">{{ f.label }}</label>
+							<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">{{ f.label }}</label>
 
 							<input
 								v-if="f.type === 'number'"
@@ -277,7 +277,7 @@ const groups = computed(() => groupedBehaviors())
 								</option>
 							</select>
 
-							<p v-if="f.help" class="text-[11px] text-zinc-600 mt-1 leading-relaxed">
+							<p v-if="f.help" class="text-[11px] text-content-tertiary mt-1 leading-relaxed">
 								{{ f.help }}
 							</p>
 						</div>

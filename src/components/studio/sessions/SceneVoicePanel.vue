@@ -51,13 +51,13 @@ function playPreview() {
 			<button
 				v-if="currentVoice?.preview_url"
 				type="button"
-				class="text-zinc-400 hover:text-zinc-100 px-2 py-1 rounded border border-zinc-800 hover:bg-zinc-900 text-sm shrink-0"
+				class="text-content-secondary hover:text-content px-2 py-1 rounded border border-edge hover:bg-surface-secondary text-sm shrink-0"
 				@click="playPreview"
 				title="Preview voice">
 				▶
 			</button>
 		</div>
-		<p v-else class="text-xs text-zinc-500">
+		<p v-else class="text-xs text-content-tertiary">
 			Connect ElevenLabs in account settings to choose voices.
 		</p>
 	</div>

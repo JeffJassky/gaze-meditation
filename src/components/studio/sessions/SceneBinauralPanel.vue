@@ -44,10 +44,10 @@ function clearHz() {
 <template>
 	<div>
 		<div class="flex items-center justify-between mb-2">
-			<label class="text-[10px] uppercase tracking-wider text-zinc-500">Frequency</label>
+			<label class="text-[10px] uppercase tracking-wider text-content-tertiary">Frequency</label>
 			<span
 				v-if="hasHz"
-				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-800/60 text-purple-300 text-[10px] tabular-nums leading-tight">
+				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand/10 border border-brand/30 text-brand text-[10px] tabular-nums leading-tight">
 				<svg
 					width="10" height="10" viewBox="0 0 24 24" fill="none"
 					stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -58,13 +58,13 @@ function clearHz() {
 				{{ binaural.hertz }} Hz
 				<button
 					type="button"
-					class="text-purple-500 hover:text-purple-200 transition ml-0.5"
+					class="text-brand hover:text-brand transition ml-0.5"
 					v-tooltip="'Reset to session default'"
 					@click.stop="clearHz">
 					&times;
 				</button>
 			</span>
-			<span v-else class="text-[10px] text-zinc-700">default</span>
+			<span v-else class="text-[10px] text-content-tertiary">default</span>
 		</div>
 		<input
 			type="range"

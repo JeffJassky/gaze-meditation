@@ -11,10 +11,10 @@ const iconFor: Record<NotificationType, string> = {
 }
 
 const colorFor: Record<NotificationType, string> = {
-	info: 'border-zinc-600 text-zinc-200',
-	success: 'border-emerald-700 text-emerald-300',
-	warning: 'border-amber-700 text-amber-300',
-	error: 'border-red-700 text-red-300',
+	info: 'border-edge-secondary text-content',
+	success: 'border-success/50 text-success',
+	warning: 'border-warning/50 text-warning',
+	error: 'border-danger/50 text-danger',
 }
 </script>
 
@@ -26,12 +26,12 @@ const colorFor: Record<NotificationType, string> = {
 				<div
 					v-for="n in notifications"
 					:key="n.id"
-					class="pointer-events-auto bg-zinc-900/95 backdrop-blur border rounded-lg shadow-xl px-4 py-3 flex items-start gap-3 relative overflow-hidden"
+					class="pointer-events-auto bg-surface-secondary/95 backdrop-blur border rounded-lg shadow-theme-lg px-4 py-3 flex items-start gap-3 relative overflow-hidden"
 					:class="colorFor[n.type]">
 					<span class="text-sm font-bold mt-0.5 shrink-0">{{ iconFor[n.type] }}</span>
 					<span class="text-sm leading-snug flex-1">{{ n.message }}</span>
 					<button
-						class="text-zinc-500 hover:text-zinc-300 text-xs mt-0.5 shrink-0"
+						class="text-content-tertiary hover:text-content-secondary text-xs mt-0.5 shrink-0"
 						@click="dismiss(n.id)">
 						dismiss
 					</button>

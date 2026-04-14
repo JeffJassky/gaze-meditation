@@ -117,7 +117,7 @@ const fxAssetId = computed({
 						@input="(e) => setBinauralVol((e.target as HTMLInputElement).value)" />
 				</div>
 			</template>
-			<div v-else class="md:col-span-2 text-xs text-zinc-500">
+			<div v-else class="md:col-span-2 text-xs text-content-tertiary">
 				Binaural beats are disabled at the session level.
 			</div>
 
@@ -147,10 +147,10 @@ const fxAssetId = computed({
 					<label class="flex items-center gap-2 pb-2">
 						<input
 							type="checkbox"
-							class="w-4 h-4 accent-zinc-200"
+							class="w-4 h-4 accent-content-secondary"
 							:checked="!!fx.loop"
 							@change="(e) => setFxLoop((e.target as HTMLInputElement).checked)" />
-						<span class="text-sm text-zinc-300">Loop</span>
+						<span class="text-sm text-content-secondary">Loop</span>
 					</label>
 				</div>
 			</template>

@@ -35,17 +35,17 @@ watch(open, (v) => {
 </script>
 
 <template>
-	<div class="border-b border-zinc-800">
+	<div class="border-b border-edge">
 		<button
 			type="button"
-			class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-zinc-900/40 transition-colors"
+			class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-surface-secondary/40 transition-colors"
 			@click="open = !open">
-			<span class="text-xs uppercase tracking-wider text-zinc-300 font-semibold flex-1">
+			<span class="text-xs uppercase tracking-wider text-content-secondary font-semibold flex-1">
 				{{ title }}
 			</span>
 			<span
 				v-if="badge"
-				class="text-[10px] bg-zinc-800 text-zinc-300 rounded-full px-2 py-0.5">
+				class="text-[10px] bg-surface-tertiary text-content-secondary rounded-full px-2 py-0.5">
 				{{ badge }}
 			</span>
 			<svg
@@ -57,7 +57,7 @@ watch(open, (v) => {
 				stroke-width="2"
 				stroke-linecap="round"
 				stroke-linejoin="round"
-				class="text-zinc-500 transition-transform duration-200 shrink-0"
+				class="text-content-tertiary transition-transform duration-200 shrink-0"
 				:class="open ? 'rotate-180' : ''"
 				aria-hidden="true">
 				<polyline points="6 9 12 15 18 9" />

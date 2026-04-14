@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { auth } from '@/state/auth'
+import LevelBadge from '@/components/profile/LevelBadge.vue'
 
 const route = useRoute()
 const isSidebarOpen = ref(false)
@@ -9,6 +10,7 @@ const isSidebarOpen = ref(false)
 const mainNav = [
 	{ to: '/home', label: 'Home', match: ['/home'] },
 	{ to: '/sessions', label: 'Sessions', match: ['/sessions'] },
+	{ to: '/leaderboard', label: 'Leaderboard', match: ['/leaderboard'] },
 ]
 
 const studioNav = { to: '/studio/sessions', label: 'Studio', match: ['/studio'], authOnly: true }
@@ -57,10 +59,11 @@ function inSection(prefix: string): boolean {
 					<template v-if="auth.state.user">
 						<RouterLink
 							to="/account"
-							class="hidden md:inline text-sm transition"
+							class="hidden md:flex items-center gap-2 text-sm transition"
 							:class="inSection('/account') ? 'text-content' : 'text-content-secondary hover:text-content'"
 						>
-							Me
+							<LevelBadge :level="auth.state.user.level" :progress="auth.state.user.levelProgress" size="sm" />
+							<span>{{ auth.state.user.username }}</span>
 						</RouterLink>
 					</template>
 					<template v-else>
@@ -103,7 +106,10 @@ function inSection(prefix: string): boolean {
 				>{{ studioNav.label }}</RouterLink>
 				<div class="border-t border-edge mt-2 pt-2 flex flex-col gap-1">
 					<template v-if="auth.state.user">
-						<RouterLink to="/account" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-content-secondary">Me</RouterLink>
+						<RouterLink to="/account" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-content-secondary flex items-center gap-2">
+							<LevelBadge :level="auth.state.user.level" :progress="auth.state.user.levelProgress" size="sm" />
+							<span>{{ auth.state.user.username }}</span>
+						</RouterLink>
 					</template>
 					<template v-else>
 						<RouterLink to="/login" @click="isSidebarOpen = false" class="px-3 py-2 rounded-lg text-sm text-content-secondary">Sign in</RouterLink>

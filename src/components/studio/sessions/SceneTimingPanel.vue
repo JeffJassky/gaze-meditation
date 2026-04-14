@@ -31,24 +31,24 @@ const fields = [
 		<div class="flex flex-col items-center pt-1.5 shrink-0 w-3">
 			<template v-for="(f, i) in fields" :key="f.key">
 				<div class="w-2 h-2 rounded-full shrink-0"
-					:class="config[f.key] ? 'bg-zinc-400' : 'bg-zinc-700 ring-1 ring-zinc-600'" />
-				<div v-if="i < fields.length - 1" class="w-px flex-1 min-h-[16px] bg-zinc-800" />
+					:class="config[f.key] ? 'bg-content-secondary' : 'bg-edge-secondary ring-1 ring-edge-secondary'" />
+				<div v-if="i < fields.length - 1" class="w-px flex-1 min-h-[16px] bg-edge" />
 			</template>
 		</div>
 
 		<!-- Fields -->
 		<div class="flex-1 space-y-2.5">
 			<div v-for="f in fields" :key="f.key">
-				<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">{{ f.label }}</label>
+				<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">{{ f.label }}</label>
 				<div class="flex items-center gap-2">
 					<input
-						class="w-16 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 tabular-nums text-right focus:outline-none focus:border-zinc-600 transition"
+						class="w-16 bg-surface border border-edge rounded px-2 py-1 text-xs text-content-secondary tabular-nums text-right focus:outline-none focus:border-edge-secondary transition"
 						type="number"
 						:step="f.step"
 						:placeholder="f.placeholder"
 						:value="msToSeconds(config[f.key])"
 						@input="(e) => setSecondsField(f.key, (e.target as HTMLInputElement).value)" />
-					<span class="text-[10px] text-zinc-600">sec</span>
+					<span class="text-[10px] text-content-tertiary">sec</span>
 				</div>
 			</div>
 		</div>

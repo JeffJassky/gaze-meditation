@@ -281,12 +281,12 @@ defineExpose({
             <span
               v-for="(bl, bi) in ov.behaviorLabels"
               :key="'b-' + bi"
-              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-cyan-900/35 border border-cyan-800/40 text-sky-300">
+              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-info/10 border border-info/30 text-info">
               {{ bl }}
             </span>
             <span
               v-if="ov.binauralHz !== null"
-              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-purple-900/35 border border-purple-800/40 text-purple-300">
+              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-brand/10 border border-brand/30 text-brand">
               {{ ov.binauralHz }} Hz
             </span>
             <span
@@ -294,8 +294,8 @@ defineExpose({
               :key="'sb-' + ei"
               class="inline-flex items-center gap-0.5 px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap"
               :class="ev.event === 'start'
-                ? 'bg-emerald-900/35 border border-emerald-800/40 text-emerald-300'
-                : 'bg-red-900/35 border border-red-800/40 text-red-300'">
+                ? 'bg-success/10 border border-success/30 text-success'
+                : 'bg-danger/10 border border-danger/30 text-danger'">
               <span class="text-[7px]">{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}</span>
               {{ ev.name }}
             </span>
@@ -313,7 +313,7 @@ defineExpose({
           :key="'text-' + ov.id"
           class="absolute top-0 overflow-hidden pointer-events-none"
           :style="{ left: ov.leftPct, width: ov.widthPct }">
-          <span class="block px-1 text-[11px] leading-none text-zinc-200 truncate">
+          <span class="block px-1 text-[11px] leading-none text-content truncate">
             {{ ov.voiceText }}
           </span>
         </div>
@@ -375,12 +375,12 @@ defineExpose({
             <span
               v-for="(bl, bi) in block.behaviorLabels"
               :key="'b-' + bi"
-              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-cyan-900/35 border border-cyan-800/40 text-sky-300">
+              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-info/10 border border-info/30 text-info">
               {{ bl }}
             </span>
             <span
               v-if="block.binauralHz !== null"
-              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-purple-900/35 border border-purple-800/40 text-purple-300">
+              class="inline-flex items-center px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap bg-brand/10 border border-brand/30 text-brand">
               {{ block.binauralHz }} Hz
             </span>
             <span
@@ -388,15 +388,15 @@ defineExpose({
               :key="'sb-' + ei"
               class="inline-flex items-center gap-0.5 px-1 py-px rounded-full text-[9px] leading-tight whitespace-nowrap"
               :class="ev.event === 'start'
-                ? 'bg-emerald-900/35 border border-emerald-800/40 text-emerald-300'
-                : 'bg-red-900/35 border border-red-800/40 text-red-300'">
+                ? 'bg-success/10 border border-success/30 text-success'
+                : 'bg-danger/10 border border-danger/30 text-danger'">
               <span class="text-[7px]">{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}</span>
               {{ ev.name }}
             </span>
           </div>
 
           <!-- Voice text: below block -->
-          <span class="absolute top-full mt-1 left-1 max-w-[calc(100%-8px)] text-[11px] leading-none text-zinc-200 truncate">
+          <span class="absolute top-full mt-1 left-1 max-w-[calc(100%-8px)] text-[11px] leading-none text-content truncate">
             {{ block.voiceText }}
           </span>
         </button>

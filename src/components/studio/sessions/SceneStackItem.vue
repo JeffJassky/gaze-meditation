@@ -138,9 +138,9 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		:data-scene-id="scene.id"
 		class="group scroll-mt-10 relative rounded-lg transition-colors cursor-text px-4 py-4 -mx-4"
 		:class="[
-			active ? 'ring-1 ring-zinc-700' : '',
-			!themeOverride?.backgroundColor && active ? 'bg-zinc-900/60' : '',
-			!themeOverride?.backgroundColor && !active ? 'hover:bg-zinc-900/20' : '',
+			active ? 'ring-1 ring-edge-secondary' : '',
+			!themeOverride?.backgroundColor && active ? 'bg-surface-secondary/60' : '',
+			!themeOverride?.backgroundColor && !active ? 'hover:bg-surface-secondary/20' : '',
 		]"
 		:style="
 			themeOverride?.backgroundColor
@@ -152,14 +152,14 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		     visible when the scene is selected. -->
 		<span
 			v-if="active && fadeInSeconds !== null"
-			class="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-mono tracking-wider text-zinc-400 pointer-events-none">
+			class="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary border border-edge-secondary text-[10px] font-mono tracking-wider text-content-secondary pointer-events-none">
 			{{ fadeInSeconds }}s fade in
 		</span>
 		<!-- Fade-out pill straddles the bottom border of the scene. Only
 		     visible when the scene is selected. -->
 		<span
 			v-if="active && fadeOutSeconds !== null"
-			class="absolute -bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-[10px] font-mono tracking-wider text-zinc-400 pointer-events-none">
+			class="absolute -bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary border border-edge-secondary text-[10px] font-mono tracking-wider text-content-secondary pointer-events-none">
 			{{ fadeOutSeconds }}s fade out
 		</span>
 
@@ -172,7 +172,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 			<button
 				type="button"
 				tabindex="-1"
-				class="scene-drag-handle flex items-center justify-center p-1.5 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 cursor-grab active:cursor-grabbing transition-colors"
+				class="scene-drag-handle flex items-center justify-center p-1.5 rounded-md text-content-tertiary hover:text-content hover:bg-surface-tertiary cursor-grab active:cursor-grabbing transition-colors"
 				v-tooltip="'Drag or click for options'"
 				@click.stop="toggleMenu">
 				<svg
@@ -191,16 +191,16 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 			</button>
 			<div
 				v-if="menuOpen"
-				class="absolute left-6 top-0 w-36 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-20 py-1">
+				class="absolute left-6 top-0 w-36 bg-surface-secondary border border-edge rounded-lg shadow-xl z-20 py-1">
 				<button
 					type="button"
-					class="w-full text-left px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
+					class="w-full text-left px-3 py-1.5 text-sm text-content hover:bg-surface-tertiary"
 					@click.stop="$emit('duplicate'); menuOpen = false">
 					Duplicate
 				</button>
 				<button
 					type="button"
-					class="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-zinc-800"
+					class="w-full text-left px-3 py-1.5 text-sm text-danger hover:bg-surface-tertiary"
 					@click.stop="$emit('delete'); menuOpen = false">
 					Delete
 				</button>
@@ -213,7 +213,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 				v-if="voicesState?.enabled.value && voicesState?.voiceOrigin.value === 'ai'"
 				class="relative shrink-0 pt-[6px]">
 				<div
-					class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors max-w-[150px] text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200"
+					class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors max-w-[150px] text-content-secondary hover:bg-surface-tertiary/60 hover:text-content"
 					:title="`Voice: ${currentVoiceName}`">
 					<!-- Speaking head icon -->
 					<svg
@@ -265,10 +265,10 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		     itself stays pure script. -->
 		<div
 			v-if="behaviorSummary || binauralHz !== null || soundboardEvents.length > 0"
-			class="absolute top-4 left-full ml-4 flex flex-col items-start gap-1.5 text-[11px] text-zinc-500 w-[130px] pointer-events-none">
+			class="absolute top-4 left-full ml-4 flex flex-col items-start gap-1.5 text-[11px] text-content-tertiary w-[130px] pointer-events-none">
 			<div
 				v-if="behaviorLabels.length > 0"
-				class="inline-flex items-center flex-wrap px-2 py-0.5 rounded-full bg-sky-950/60 border border-sky-800/60 text-sky-300 leading-tight gap-x-1"
+				class="inline-flex items-center flex-wrap px-2 py-0.5 rounded-full bg-info/10 border border-info/30 text-info leading-tight gap-x-1"
 				:title="behaviorSummary">
 				<template v-for="(label, idx) in behaviorLabels" :key="idx">
 					<span v-if="idx > 0" class="text-white font-bold">+</span>
@@ -277,7 +277,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 			</div>
 			<div
 				v-if="binauralHz !== null"
-				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-950/60 border border-purple-800/60 text-purple-300 tabular-nums leading-tight"
+				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand/10 border border-brand/30 text-brand tabular-nums leading-tight"
 				:title="`Binaural ${binauralHz} Hz`">
 				<svg
 					width="10"
@@ -300,8 +300,8 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 				:key="'sb-' + idx"
 				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full leading-tight whitespace-nowrap"
 				:class="ev.event === 'start'
-					? 'bg-emerald-950/60 border border-emerald-800/50 text-emerald-300'
-					: 'bg-red-950/60 border border-red-800/50 text-red-300'">
+					? 'bg-success/10 border border-success/30 text-success'
+					: 'bg-danger/10 border border-danger/30 text-danger'">
 				<span class="text-[9px]">{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}</span>
 				<span class="truncate max-w-[90px]">{{ ev.name }}</span>
 			</div>
@@ -316,7 +316,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 		class="flex justify-center -mt-3 -mb-3 cursor-text"
 		@click="$emit('select')">
 		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full bg-zinc-900 text-[10px] font-mono tracking-wider text-zinc-500">
+			class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-secondary text-[10px] font-mono tracking-wider text-content-tertiary">
 			{{ cooldownSeconds }}s break
 		</span>
 	</div>

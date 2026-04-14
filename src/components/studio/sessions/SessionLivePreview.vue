@@ -304,7 +304,7 @@ const stageStyle = computed(() => {
 </script>
 
 <template>
-	<div class="bg-black border-b border-zinc-800">
+	<div class="bg-black border-b border-edge">
 		<!-- Permission gate takes over the preview area while active, at
 		     editor-native size rather than squashed into the scaled stage. -->
 		<PreviewPermissionGate
@@ -314,7 +314,7 @@ const stageStyle = computed(() => {
 			@cancel="onPermissionCancel" />
 		<div v-else class="flex justify-center px-4 pt-4">
 			<div
-				class="relative overflow-hidden rounded-md bg-black ring-1 ring-zinc-800"
+				class="relative overflow-hidden rounded-md bg-black ring-1 ring-edge"
 				:style="stageStyle.box">
 				<div class="absolute top-0 left-0" :style="stageStyle.inner">
 					<Theater
@@ -331,11 +331,11 @@ const stageStyle = computed(() => {
 		</div>
 
 		<!-- Transport -->
-		<div class="flex items-center justify-between gap-2 px-3 py-2 text-zinc-400">
+		<div class="flex items-center justify-between gap-2 px-3 py-2 text-content-secondary">
 			<div class="flex items-center gap-1">
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content"
 					title="Restart"
 					@click="restart">
 					<svg
@@ -353,7 +353,7 @@ const stageStyle = computed(() => {
 				</button>
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content disabled:opacity-30"
 					title="Previous scene"
 					:disabled="currentIndex === 0"
 					@click="prev">
@@ -364,7 +364,7 @@ const stageStyle = computed(() => {
 				</button>
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content"
 					:title="isPlaying ? 'Pause' : 'Play'"
 					@click="isPlaying ? pause() : play()">
 					<svg
@@ -387,7 +387,7 @@ const stageStyle = computed(() => {
 				</button>
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content disabled:opacity-30"
 					title="Next scene"
 					:disabled="currentIndex >= sceneCount - 1"
 					@click="next">
@@ -398,15 +398,15 @@ const stageStyle = computed(() => {
 				</button>
 			</div>
 
-			<div class="text-[10px] font-mono tabular-nums text-zinc-500">
+			<div class="text-[10px] font-mono tabular-nums text-content-tertiary">
 				{{ currentIndex + 1 }} / {{ sceneCount }}
 			</div>
 
 			<div class="flex items-center gap-1">
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100"
-					:class="biofeedbackEnabled ? 'text-emerald-400 hover:text-emerald-300' : ''"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content"
+					:class="biofeedbackEnabled ? 'text-success hover:text-success' : ''"
 					:title="
 						biofeedbackEnabled
 							? 'Biofeedback enabled — click to disable'
@@ -427,7 +427,7 @@ const stageStyle = computed(() => {
 				</button>
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content"
 					:title="
 						orientation === 'landscape' ? 'Switch to portrait' : 'Switch to landscape'
 					"
@@ -459,7 +459,7 @@ const stageStyle = computed(() => {
 				</button>
 				<button
 					type="button"
-					class="p-1.5 rounded hover:bg-zinc-900 hover:text-zinc-100"
+					class="p-1.5 rounded hover:bg-surface-secondary hover:text-content"
 					:title="isMuted ? 'Unmute' : 'Mute'"
 					@click="toggleMute">
 					<svg

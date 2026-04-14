@@ -172,7 +172,7 @@ const visibilityLabel = computed(() =>
 </script>
 
 <template>
-	<header class="pb-10 mb-10 border-b border-zinc-900">
+	<header class="pb-10 mb-10 border-b border-surface-secondary">
 		<!-- Cover image -->
 		<div v-if="coverUrl" class="relative -mx-1 mb-4 rounded-lg overflow-hidden group">
 			<img
@@ -181,7 +181,7 @@ const visibilityLabel = computed(() =>
 				class="w-full h-40 object-cover" />
 			<button
 				type="button"
-				class="absolute top-2 right-2 px-2 py-1 rounded bg-black/60 text-[10px] text-zinc-300 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+				class="absolute top-2 right-2 px-2 py-1 rounded bg-black/60 text-[10px] text-content-secondary hover:text-content opacity-0 group-hover:opacity-100 transition-opacity"
 				@click="removeCover">
 				Remove
 			</button>
@@ -193,15 +193,15 @@ const visibilityLabel = computed(() =>
 				class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider"
 				:class="
 					session.status === 'published'
-						? 'bg-emerald-950/60 border border-emerald-800/60 text-emerald-300'
-						: 'bg-orange-950/60 border border-orange-800/60 text-orange-300'
+						? 'bg-success/10 border border-success/30 text-success'
+						: 'bg-warning/10 border border-warning/30 text-warning'
 				">
 				{{ session.status }}
 			</span>
 			<button
 				v-if="!coverUrl"
 				type="button"
-				class="text-[11px] text-zinc-600 hover:text-zinc-300 transition-colors"
+				class="text-[11px] text-content-tertiary hover:text-content-secondary transition-colors"
 				:disabled="coverUploading"
 				@click="browseCoverImage">
 				{{ coverUploading ? 'Uploading...' : '+ Cover Image' }}
@@ -211,7 +211,7 @@ const visibilityLabel = computed(() =>
 		<!-- Title -->
 		<h1
 			ref="titleEl"
-			class="text-4xl font-semibold tracking-tight text-zinc-100 outline-none rounded px-1 -mx-1 focus:bg-zinc-900/60 focus:ring-1 focus:ring-zinc-700 empty:before:content-['Untitled_session'] empty:before:text-zinc-700"
+			class="text-4xl font-semibold tracking-tight text-content outline-none rounded px-1 -mx-1 focus:bg-surface-secondary/60 focus:ring-1 focus:ring-edge-secondary empty:before:content-['Untitled_session'] empty:before:text-content-tertiary"
 			:contenteditable="true"
 			spellcheck="false"
 			@input="onTitleInput"
@@ -220,31 +220,31 @@ const visibilityLabel = computed(() =>
 		<!-- Description -->
 		<p
 			ref="descEl"
-			class="mt-3 text-[17px] leading-[1.6] text-zinc-400 font-serif italic outline-none rounded px-1 -mx-1 focus:bg-zinc-900/60 focus:ring-1 focus:ring-zinc-700 empty:before:content-['Add_a_description…'] empty:before:text-zinc-700 empty:before:not-italic empty:before:font-sans"
+			class="mt-3 text-[17px] leading-[1.6] text-content-secondary font-serif italic outline-none rounded px-1 -mx-1 focus:bg-surface-secondary/60 focus:ring-1 focus:ring-edge-secondary empty:before:content-['Add_a_description…'] empty:before:text-content-tertiary empty:before:not-italic empty:before:font-sans"
 			:contenteditable="true"
 			spellcheck="false"
 			@input="onDescInput" />
 
 		<!-- Metadata row: audience · visibility · adult · tags -->
-		<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+		<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-mono uppercase tracking-wider text-content-tertiary">
 			<!-- Voice (display + reset) -->
-			<span class="text-zinc-500">
+			<span class="text-content-tertiary">
 				{{ voiceLabel }}
 			</span>
 			<button
 				v-if="session.voiceStructure"
 				type="button"
-				class="text-zinc-700 hover:text-zinc-400 transition-colors"
+				class="text-content-tertiary hover:text-content-secondary transition-colors"
 				title="Reset voice configuration"
 				@click="resetVoiceConfig">
 				&times;
 			</button>
 
-			<span class="text-zinc-800">·</span>
+			<span class="text-edge">·</span>
 
 			<!-- Audience -->
 			<label class="relative group">
-				<span class="hover:text-zinc-300 transition-colors cursor-pointer">
+				<span class="hover:text-content-secondary transition-colors cursor-pointer">
 					{{ audienceLabel }}
 				</span>
 				<select
@@ -254,11 +254,11 @@ const visibilityLabel = computed(() =>
 				</select>
 			</label>
 
-			<span class="text-zinc-800">·</span>
+			<span class="text-edge">·</span>
 
 			<!-- Visibility -->
 			<label class="relative group">
-				<span class="hover:text-zinc-300 transition-colors cursor-pointer">
+				<span class="hover:text-content-secondary transition-colors cursor-pointer">
 					{{ visibilityLabel }}
 				</span>
 				<select
@@ -269,25 +269,25 @@ const visibilityLabel = computed(() =>
 				</select>
 			</label>
 
-			<span class="text-zinc-800">·</span>
+			<span class="text-edge">·</span>
 
 			<!-- Adult -->
-			<label class="flex items-center gap-1.5 cursor-pointer hover:text-zinc-300 transition-colors">
+			<label class="flex items-center gap-1.5 cursor-pointer hover:text-content-secondary transition-colors">
 				<input
 					type="checkbox"
 					v-model="session.isAdult"
-					class="w-3 h-3 accent-zinc-300" />
+					class="w-3 h-3 accent-content-secondary" />
 				<span>18+</span>
 			</label>
 
-			<span class="text-zinc-800">·</span>
+			<span class="text-edge">·</span>
 
 			<!-- Tags -->
 			<div class="flex items-center gap-1.5 flex-1 min-w-[12ch]">
-				<span class="text-zinc-700">#</span>
+				<span class="text-content-tertiary">#</span>
 				<input
 					v-model="tagsText"
-					class="flex-1 bg-transparent border-0 outline-none text-[11px] font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-300 focus:text-zinc-300 placeholder-zinc-800 transition-colors"
+					class="flex-1 bg-transparent border-0 outline-none text-[11px] font-mono uppercase tracking-wider text-content-tertiary hover:text-content-secondary focus:text-content-secondary placeholder-content-tertiary transition-colors"
 					placeholder="tags, comma, separated" />
 			</div>
 		</div>

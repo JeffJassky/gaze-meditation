@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Types } from 'mongoose';
 import { requireAuth } from '../auth/middleware.js';
 import { SessionRun, publicSessionRun } from '../models/SessionRun.js';
-import type { UserDoc } from '../models/User.js';
+import { User, type UserDoc } from '../models/User.js';
 
 /**
  * /history — per-user session playthrough logs (a.k.a. SessionRuns).
@@ -111,6 +111,13 @@ historyRouter.post('/', async (req, res, next) => {
     if (!doc.startTime) doc.startTime = new Date();
 
     const run = await SessionRun.create(doc);
+
+    // Recalculate user stats when a completed run is created.
+    if (run.endTime) {
+      const user = await User.findById(run.owner);
+      if (user) user.recalculateStats().catch(() => {});
+    }
+
     res.status(201).json(publicSessionRun(run));
   } catch (err) {
     next(err);
@@ -137,6 +144,13 @@ historyRouter.patch('/:id', async (req, res, next) => {
       if (body[f] !== undefined) run.markModified(f);
     }
     await run.save();
+
+    // Recalculate stats when endTime is set (session completed).
+    if (body.endTime) {
+      const user = await User.findById(run.owner);
+      if (user) user.recalculateStats().catch(() => {});
+    }
+
     res.json(publicSessionRun(run));
   } catch (err) {
     next(err);

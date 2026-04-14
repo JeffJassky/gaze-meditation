@@ -57,7 +57,7 @@ async function remove(p: PlaylistDoc) {
 			<div :class="su.header">
 				<div>
 					<h1 :class="su.h1">Playlists</h1>
-					<p class="text-sm text-zinc-400 mt-1">Group your sessions into shareable lists.</p>
+					<p class="text-sm text-content-secondary mt-1">Group your sessions into shareable lists.</p>
 				</div>
 				<button :class="su.btn" @click="createNew">+ New playlist</button>
 			</div>
@@ -68,10 +68,10 @@ async function remove(p: PlaylistDoc) {
 
 			<div v-if="error" :class="[su.error, 'mb-6']">{{ error }}</div>
 
-			<div v-if="loading && items.length === 0" class="text-zinc-500 text-sm py-12 text-center">
+			<div v-if="loading && items.length === 0" class="text-content-tertiary text-sm py-12 text-center">
 				Loading…
 			</div>
-			<div v-else-if="filtered.length === 0" class="text-zinc-500 text-sm py-12 text-center">
+			<div v-else-if="filtered.length === 0" class="text-content-tertiary text-sm py-12 text-center">
 				No playlists yet.
 			</div>
 
@@ -79,22 +79,22 @@ async function remove(p: PlaylistDoc) {
 				<div
 					v-for="p in filtered"
 					:key="p.id"
-					class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 flex items-start gap-4 hover:border-zinc-700 transition">
+					class="bg-surface-secondary/80 border border-edge rounded-xl p-4 flex items-start gap-4 hover:border-edge-secondary transition">
 					<div class="flex-1 min-w-0">
 						<div class="flex items-center gap-2 mb-1">
 							<RouterLink
 								:to="`/studio/playlists/${p.id}`"
-								class="font-medium text-zinc-100 hover:text-white truncate">
+								class="font-medium text-content hover:text-content truncate">
 								{{ p.title }}
 							</RouterLink>
 							<span :class="p.visibility === 'public' ? su.badgePublic : su.badgePrivate">
 								{{ p.visibility }}
 							</span>
 						</div>
-						<p v-if="p.description" class="text-sm text-zinc-400 line-clamp-1">
+						<p v-if="p.description" class="text-sm text-content-secondary line-clamp-1">
 							{{ p.description }}
 						</p>
-						<div class="text-xs text-zinc-500 mt-2">{{ p.sessions.length }} sessions</div>
+						<div class="text-xs text-content-tertiary mt-2">{{ p.sessions.length }} sessions</div>
 					</div>
 					<button :class="su.btnDanger" @click="remove(p)">Delete</button>
 				</div>

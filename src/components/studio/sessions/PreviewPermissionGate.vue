@@ -110,8 +110,8 @@ if (!hasAnyRequirement) {
 
 <template>
 	<div class="p-4 text-sm">
-		<h3 class="text-zinc-100 font-semibold mb-1">Enable biofeedback</h3>
-		<p class="text-zinc-400 text-xs leading-relaxed mb-3">
+		<h3 class="text-content font-semibold mb-1">Enable biofeedback</h3>
+		<p class="text-content-secondary text-xs leading-relaxed mb-3">
 			This session uses behaviors that need hardware access. Grant permission
 			below to test them in the preview.
 		</p>
@@ -119,19 +119,19 @@ if (!hasAnyRequirement) {
 		<ul class="space-y-1 mb-4 text-xs">
 			<li
 				v-if="requirements.camera"
-				class="flex items-center gap-2 text-zinc-300">
-				<span class="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+				class="flex items-center gap-2 text-content-secondary">
+				<span class="w-1.5 h-1.5 rounded-full bg-success" />
 				Camera — face tracking, blink &amp; gaze behaviors
 			</li>
 			<li
 				v-if="requirements.microphone"
-				class="flex items-center gap-2 text-zinc-300">
-				<span class="w-1.5 h-1.5 rounded-full bg-sky-400" />
+				class="flex items-center gap-2 text-content-secondary">
+				<span class="w-1.5 h-1.5 rounded-full bg-info" />
 				Microphone — speech behaviors
 			</li>
 			<li
 				v-if="requirements.accelerometer"
-				class="flex items-center gap-2 text-zinc-300">
+				class="flex items-center gap-2 text-content-secondary">
 				<span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400" />
 				Motion — tilt &amp; impact behaviors
 			</li>
@@ -139,21 +139,21 @@ if (!hasAnyRequirement) {
 
 		<div
 			v-if="errorMessage"
-			class="text-xs text-red-400 mb-3 p-2 rounded bg-red-950/30 border border-red-900/60">
+			class="text-xs text-danger mb-3 p-2 rounded bg-danger/10 border border-danger/30">
 			{{ errorMessage }}
 		</div>
 
 		<div class="flex items-center gap-2">
 			<button
 				type="button"
-				class="px-3 py-1.5 text-xs rounded bg-zinc-100 text-zinc-900 font-medium hover:bg-white disabled:opacity-50"
+				class="px-3 py-1.5 text-xs rounded bg-content text-surface-secondary font-medium hover:bg-content disabled:opacity-50"
 				:disabled="requesting"
 				@click="requestAccess">
 				{{ requesting ? 'Requesting…' : 'Grant access' }}
 			</button>
 			<button
 				type="button"
-				class="px-3 py-1.5 text-xs rounded text-zinc-400 hover:text-zinc-200"
+				class="px-3 py-1.5 text-xs rounded text-content-secondary hover:text-content"
 				:disabled="requesting"
 				@click="emit('cancel')">
 				Cancel

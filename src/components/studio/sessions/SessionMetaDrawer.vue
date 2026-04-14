@@ -43,14 +43,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 			<!-- Panel -->
 			<aside
-				class="absolute top-0 right-0 h-full w-full sm:w-[480px] bg-zinc-950 border-l border-zinc-800 shadow-2xl transition-transform duration-300 flex flex-col pointer-events-auto"
+				class="absolute top-0 right-0 h-full w-full sm:w-[480px] bg-surface border-l border-edge shadow-2xl transition-transform duration-300 flex flex-col pointer-events-auto"
 				:class="open ? 'translate-x-0' : 'translate-x-full'">
 				<header
-					class="h-12 px-4 flex items-center justify-between border-b border-zinc-800 shrink-0">
-					<h2 class="text-sm font-semibold text-zinc-200">Assets</h2>
+					class="h-12 px-4 flex items-center justify-between border-b border-edge shrink-0">
+					<h2 class="text-sm font-semibold text-content">Assets</h2>
 					<button
 						type="button"
-						class="text-zinc-500 hover:text-zinc-200 text-xl leading-none px-2"
+						class="text-content-tertiary hover:text-content text-xl leading-none px-2"
 						@click="close"
 						aria-label="Close">
 						×

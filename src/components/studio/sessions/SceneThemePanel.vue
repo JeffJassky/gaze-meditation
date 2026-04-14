@@ -52,30 +52,30 @@ function setTintColor(value: string) {
 			v-for="[key, label] in COLOR_ROWS"
 			:key="key"
 			class="flex items-center gap-2">
-			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">{{ label }}</span>
+			<span class="text-[10px] uppercase tracking-wider text-content-tertiary w-20 shrink-0">{{ label }}</span>
 			<input
-				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 				:value="(theme[key] as string) || ''"
 				placeholder="default"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 			<input
 				type="color"
-				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 				:value="(theme[key] as string) || '#000000'"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 		</div>
 
 		<!-- Tint color (right after background) -->
 		<div class="flex items-center gap-2">
-			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">Tint color</span>
+			<span class="text-[10px] uppercase tracking-wider text-content-tertiary w-20 shrink-0">Tint color</span>
 			<input
-				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 				:value="theme.tint?.color ?? ''"
 				placeholder="default"
 				@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
 			<input
 				type="color"
-				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 				:value="theme.tint?.color ?? '#000000'"
 				@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
 		</div>
@@ -85,15 +85,15 @@ function setTintColor(value: string) {
 			v-for="[key, label] in REMAINING_ROWS"
 			:key="key"
 			class="flex items-center gap-2">
-			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">{{ label }}</span>
+			<span class="text-[10px] uppercase tracking-wider text-content-tertiary w-20 shrink-0">{{ label }}</span>
 			<input
-				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 				:value="(theme[key] as string) || ''"
 				placeholder="default"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 			<input
 				type="color"
-				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 				:value="(theme[key] as string) || '#000000'"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 		</div>

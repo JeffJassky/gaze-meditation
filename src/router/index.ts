@@ -66,6 +66,25 @@ const routes = [
   { path: '/verify-email', name: 'verify-email', component: VerifyEmailView },
   { path: '/account', name: 'account', component: AccountView, meta: { requiresAuth: true } },
 
+  // --- Profile & Leaderboard (public) ---
+  {
+    path: '/profile/:username',
+    name: 'profile',
+    component: () => import('@/components/profile/PublicProfileView.vue'),
+  },
+  {
+    path: '/leaderboard',
+    name: 'leaderboard',
+    component: () => import('@/components/profile/LeaderboardView.vue'),
+  },
+
+  // --- Legal ---
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/components/legal/PrivacyPolicyView.vue'),
+  },
+
   // --- Studio (content management) ---
   {
     path: '/studio/sessions',

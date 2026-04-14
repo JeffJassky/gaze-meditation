@@ -63,7 +63,7 @@ function kindIcon(kind: string): string {
 		<div class="flex items-center justify-between mb-4">
 			<div>
 				<h2 :class="su.h2">Assets</h2>
-				<p class="text-xs text-zinc-500 mt-1">
+				<p class="text-xs text-content-tertiary mt-1">
 					Upload audio, images, or video. Scenes reference assets by id — re-uploads stay wired.
 				</p>
 			</div>
@@ -84,7 +84,7 @@ function kindIcon(kind: string): string {
 
 		<div
 			v-if="session.assets.length === 0 && inFlight.length === 0"
-			class="text-sm text-zinc-500 py-6 text-center border border-dashed border-zinc-800 rounded-lg">
+			class="text-sm text-content-tertiary py-6 text-center border border-dashed border-edge rounded-lg">
 			No assets yet.
 		</div>
 
@@ -92,11 +92,11 @@ function kindIcon(kind: string): string {
 			<div
 				v-for="asset in session.assets"
 				:key="asset.id"
-				class="flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+				class="flex items-center gap-3 bg-surface border border-edge rounded-lg px-3 py-2">
 				<span class="text-xl">{{ kindIcon(asset.kind) }}</span>
 				<div class="flex-1 min-w-0">
-					<div class="text-sm text-zinc-200 truncate">{{ asset.label || asset.key }}</div>
-					<div class="text-xs text-zinc-500 truncate">
+					<div class="text-sm text-content truncate">{{ asset.label || asset.key }}</div>
+					<div class="text-xs text-content-tertiary truncate">
 						{{ asset.contentType }} · {{ asset.kind }}
 					</div>
 				</div>

@@ -14,20 +14,20 @@ defineEmits<{ undo: [id: string] }>()
 				<div
 					v-for="p in pending"
 					:key="p.id"
-					class="relative pointer-events-auto bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl px-4 py-3 flex items-center gap-4 min-w-[280px] overflow-hidden">
-					<span class="text-sm text-zinc-200 truncate max-w-[320px]">
+					class="relative pointer-events-auto bg-surface-secondary border border-edge-secondary rounded-lg shadow-xl px-4 py-3 flex items-center gap-4 min-w-[280px] overflow-hidden">
+					<span class="text-sm text-content truncate max-w-[320px]">
 						Scene removed<span
 							v-if="sceneFirstLine(p.scene, 40)"
-							class="text-zinc-500">
+							class="text-content-tertiary">
 							· {{ sceneFirstLine(p.scene, 40) }}</span>
 					</span>
 					<button
-						class="text-sm text-sky-400 hover:text-sky-300 font-medium ml-auto"
+						class="text-sm text-info hover:text-info font-medium ml-auto"
 						@click="$emit('undo', p.id)">
 						Undo
 					</button>
 					<div
-						class="absolute bottom-0 left-0 h-0.5 bg-zinc-600 toast-progress"
+						class="absolute bottom-0 left-0 h-0.5 bg-edge-secondary toast-progress"
 						:style="{ animationDuration: windowMs + 'ms' }" />
 				</div>
 			</TransitionGroup>

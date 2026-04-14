@@ -132,51 +132,51 @@ const musicKey = computed({
 			<InspectorSection title="Background" storage-key="session-visuals" :default-open="true">
 				<div class="space-y-3">
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Color</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Color</label>
 						<div class="flex items-center gap-2">
 							<input
-								class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+								class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 								:value="(theme.backgroundColor as string) || ''"
 								placeholder="#000000"
 								@input="(e) => setBackgroundColor((e.target as HTMLInputElement).value)" />
 							<input
 								type="color"
-								class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+								class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 								:value="(theme.backgroundColor as string) || '#000000'"
 								@input="(e) => setBackgroundColor((e.target as HTMLInputElement).value)" />
 						</div>
 					</div>
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Spiral</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Spiral</label>
 						<AssetPicker
 							v-model="spiralKey"
 							:kind="['spiral', 'image']"
 							placeholder="None" />
 					</div>
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Video BG</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Video BG</label>
 						<AssetPicker
 							v-model="videoKey"
 							kind="video"
 							placeholder="None" />
 					</div>
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Tint color</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Tint color</label>
 						<div class="flex items-center gap-2">
 							<input
-								class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+								class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 								:value="theme.tint?.color ?? ''"
 								placeholder="#000000"
 								@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
 							<input
 								type="color"
-								class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+								class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 								:value="theme.tint?.color ?? '#000000'"
 								@input="(e) => setTintColor((e.target as HTMLInputElement).value)" />
 						</div>
 					</div>
 					<div>
-						<label class="text-[10px] uppercase tracking-wider text-zinc-500 mb-1 block">Tint opacity</label>
+						<label class="text-[10px] uppercase tracking-wider text-content-tertiary mb-1 block">Tint opacity</label>
 						<input
 							type="range"
 							class="w-full h-1 rounded-full appearance-none cursor-pointer binaural-slider"
@@ -196,15 +196,15 @@ const musicKey = computed({
 
 			<InspectorSection title="Binaural" storage-key="session-binaural" :default-open="false">
 				<div class="space-y-3">
-					<label class="flex items-center gap-2 text-xs text-zinc-400">
-						<input type="checkbox" v-model="binauralEnabled" class="accent-zinc-300" />
+					<label class="flex items-center gap-2 text-xs text-content-secondary">
+						<input type="checkbox" v-model="binauralEnabled" class="accent-content-secondary" />
 						Enable binaural beats
 					</label>
 					<template v-if="binauralEnabled">
 						<div>
 							<div class="flex items-center justify-between mb-1">
-								<label class="text-[10px] uppercase tracking-wider text-zinc-500">Frequency</label>
-								<span class="text-[10px] text-zinc-500 tabular-nums">{{ session.audio?.binaural?.hertz ?? 6 }} Hz</span>
+								<label class="text-[10px] uppercase tracking-wider text-content-tertiary">Frequency</label>
+								<span class="text-[10px] text-content-tertiary tabular-nums">{{ session.audio?.binaural?.hertz ?? 6 }} Hz</span>
 							</div>
 							<input
 								type="range"
@@ -215,8 +215,8 @@ const musicKey = computed({
 						</div>
 						<div>
 							<div class="flex items-center justify-between mb-1">
-								<label class="text-[10px] uppercase tracking-wider text-zinc-500">Volume</label>
-								<span class="text-[10px] text-zinc-500 tabular-nums">{{ Math.round((session.audio?.binaural?.volume ?? 0.5) * 100) }}%</span>
+								<label class="text-[10px] uppercase tracking-wider text-content-tertiary">Volume</label>
+								<span class="text-[10px] text-content-tertiary tabular-nums">{{ Math.round((session.audio?.binaural?.volume ?? 0.5) * 100) }}%</span>
 							</div>
 							<input
 								type="range"

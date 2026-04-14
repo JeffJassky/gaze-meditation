@@ -59,30 +59,30 @@ function onTitleKey(e: KeyboardEvent) {
 
 <template>
 	<div
-		class="px-4 h-12 flex items-center justify-between border-b border-zinc-800 bg-zinc-950">
+		class="px-4 h-12 flex items-center justify-between border-b border-edge bg-surface">
 		<div class="flex items-center gap-3 min-w-0">
 			<RouterLink
 				to="/studio/sessions"
-				class="text-sm text-zinc-400 hover:text-white shrink-0">
+				class="text-sm text-content-secondary hover:text-content shrink-0">
 				← Sessions
 			</RouterLink>
-			<span class="text-zinc-700">/</span>
+			<span class="text-content-tertiary">/</span>
 			<span
 				ref="titleEl"
-				class="text-sm text-zinc-200 truncate outline-none rounded px-1 -mx-1 focus:bg-zinc-900 focus:ring-1 focus:ring-zinc-700 empty:before:content-['Untitled'] empty:before:text-zinc-600"
+				class="text-sm text-content truncate outline-none rounded px-1 -mx-1 focus:bg-surface-secondary focus:ring-1 focus:ring-edge-secondary empty:before:content-['Untitled'] empty:before:text-content-tertiary"
 				:contenteditable="!!session"
 				spellcheck="false"
 				@input="onTitleInput"
 				@keydown="onTitleKey" />
 			<span
 				v-if="justSaved"
-				class="text-xs text-emerald-400 shrink-0 ml-2 transition-colors">
+				class="text-xs text-success shrink-0 ml-2 transition-colors">
 				✓ Saved
 			</span>
-			<span v-else-if="dirty" class="text-xs text-amber-300 shrink-0 ml-2">
+			<span v-else-if="dirty" class="text-xs text-warning shrink-0 ml-2">
 				<span class="mr-1">●</span>Unsaved
 			</span>
-			<span v-else-if="session" class="text-xs text-zinc-500 shrink-0 ml-2">
+			<span v-else-if="session" class="text-xs text-content-tertiary shrink-0 ml-2">
 				Saved
 			</span>
 		</div>

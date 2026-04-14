@@ -73,20 +73,20 @@ run()
 </script>
 
 <template>
-	<div class="flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+	<div class="flex items-center gap-3 bg-surface border border-edge rounded-lg px-3 py-2">
 		<div class="flex-1 min-w-0">
-			<div class="text-sm text-zinc-200 truncate">{{ file.name }}</div>
-			<div class="mt-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+			<div class="text-sm text-content truncate">{{ file.name }}</div>
+			<div class="mt-1 h-1.5 rounded-full bg-surface-tertiary overflow-hidden">
 				<div
 					class="h-full transition-all"
 					:class="{
-						'bg-zinc-300': status === 'uploading',
-						'bg-emerald-500': status === 'done',
-						'bg-red-500': status === 'error',
+						'bg-content-secondary': status === 'uploading',
+						'bg-success': status === 'done',
+						'bg-danger': status === 'error',
 					}"
 					:style="{ width: (status === 'done' ? 100 : progress.percent) + '%' }" />
 			</div>
-			<div class="text-xs mt-1" :class="status === 'error' ? 'text-red-400' : 'text-zinc-500'">
+			<div class="text-xs mt-1" :class="status === 'error' ? 'text-danger' : 'text-content-tertiary'">
 				<span v-if="status === 'uploading'">{{ progress.percent }}%</span>
 				<span v-else-if="status === 'done'">Uploaded</span>
 				<span v-else>Error: {{ errorMsg }}</span>

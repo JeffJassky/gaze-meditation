@@ -18,6 +18,14 @@ export interface AuthUser {
 	emailVerifiedAt: string | null
 	pendingEmail: string | null
 	settings: UserSettings
+	bio: string
+	avatarAssetKey: string | null
+	xp: number
+	level: number
+	levelProgress: number
+	currentStreak: number
+	totalSessions: number
+	totalMinutes: number
 }
 
 export const authApi = {
@@ -48,6 +56,11 @@ export const authApi = {
 		apiRequest<AuthUser>('/users/me', {
 			method: 'PATCH',
 			body: JSON.stringify({ username }),
+		}),
+	updateProfile: (body: { username?: string; bio?: string; avatarAssetKey?: string | null }) =>
+		apiRequest<AuthUser>('/users/me', {
+			method: 'PATCH',
+			body: JSON.stringify(body),
 		}),
 	requestEmailChange: (email: string) =>
 		apiRequest<AuthUser>('/users/me/email', {

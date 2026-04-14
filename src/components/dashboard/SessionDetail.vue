@@ -90,7 +90,7 @@ const duration = computed(() => {
 				<div class="space-y-2">
 					<div class="flex justify-between text-xs uppercase tracking-wider opacity-60 text-content-secondary">
 						<span>Stillness</span>
-						<span class="text-emerald-400">+{{ (session.biometrics.stillness.improvement * 100).toFixed(0) }}%</span>
+						<span class="text-success">+{{ (session.biometrics.stillness.improvement * 100).toFixed(0) }}%</span>
 					</div>
 					<div class="relative h-2 bg-surface-tertiary rounded-full overflow-hidden">
 						<!-- Background Bar (Start) -->

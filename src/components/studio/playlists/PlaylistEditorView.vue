@@ -96,14 +96,14 @@ onMounted(() => {
 		<div :class="su.container">
 			<div :class="su.header">
 				<div>
-					<RouterLink to="/studio/playlists" class="text-sm text-zinc-400 hover:text-white">
+					<RouterLink to="/studio/playlists" class="text-sm text-content-secondary hover:text-content">
 						← Playlists
 					</RouterLink>
 					<h1 :class="[su.h1, 'mt-1']">
 						{{ playlist?.title || (loading ? 'Loading…' : 'Playlist') }}
 					</h1>
-					<p class="text-xs text-zinc-500 mt-1">
-						<span v-if="dirty" class="text-amber-300">Unsaved changes</span>
+					<p class="text-xs text-content-tertiary mt-1">
+						<span v-if="dirty" class="text-warning">Unsaved changes</span>
 						<span v-else-if="playlist">All changes saved</span>
 					</p>
 				</div>
@@ -114,7 +114,7 @@ onMounted(() => {
 
 			<div v-if="error" :class="[su.error, 'mb-6']">{{ error }}</div>
 
-			<div v-if="loading" class="text-zinc-500 text-sm py-12 text-center">Loading…</div>
+			<div v-if="loading" class="text-content-tertiary text-sm py-12 text-center">Loading…</div>
 
 			<template v-else-if="playlist">
 				<section :class="su.card">
@@ -144,14 +144,14 @@ onMounted(() => {
 					<div class="flex items-center justify-between mb-4">
 						<div>
 							<h2 :class="su.h2">Sessions</h2>
-							<p class="text-xs text-zinc-500 mt-1">Drag to reorder.</p>
+							<p class="text-xs text-content-tertiary mt-1">Drag to reorder.</p>
 						</div>
 						<button :class="su.btn" @click="pickerOpen = true">+ Add sessions</button>
 					</div>
 
 					<div
 						v-if="playlist.sessions.length === 0"
-						class="text-sm text-zinc-500 py-8 text-center border border-dashed border-zinc-800 rounded-lg">
+						class="text-sm text-content-tertiary py-8 text-center border border-dashed border-edge rounded-lg">
 						No sessions yet.
 					</div>
 
@@ -159,18 +159,18 @@ onMounted(() => {
 						<div
 							v-for="(sid, i) in playlist.sessions"
 							:key="sid"
-							class="flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-lg p-3"
+							class="flex items-center gap-3 bg-surface border border-edge rounded-lg p-3"
 							:draggable="true"
 							@dragstart="onDragStart(i)"
 							@dragover.prevent
 							@drop.prevent="onDrop(i)">
-							<span class="cursor-grab active:cursor-grabbing text-zinc-500">⋮⋮</span>
-							<span class="text-xs font-mono text-zinc-500 w-6 text-right">{{ i + 1 }}</span>
+							<span class="cursor-grab active:cursor-grabbing text-content-tertiary">⋮⋮</span>
+							<span class="text-xs font-mono text-content-tertiary w-6 text-right">{{ i + 1 }}</span>
 							<div class="flex-1 min-w-0">
-								<div class="text-sm text-zinc-100 truncate">
+								<div class="text-sm text-content truncate">
 									{{ sessionsById.get(sid)?.title || sid }}
 								</div>
-								<div class="text-xs text-zinc-500 truncate">
+								<div class="text-xs text-content-tertiary truncate">
 									{{ sessionsById.get(sid)?.description || '' }}
 								</div>
 							</div>

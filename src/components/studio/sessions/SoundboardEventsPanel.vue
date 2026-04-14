@@ -52,12 +52,12 @@ function sampleDisplayName(id: string): string {
 
 <template>
 	<div>
-		<div v-if="sessionSamples.length === 0" class="text-[11px] text-zinc-500 leading-relaxed">
+		<div v-if="sessionSamples.length === 0" class="text-[11px] text-content-tertiary leading-relaxed">
 			No samples defined yet. Add samples in the Settings panel's Soundboard section.
 		</div>
 
 		<template v-else>
-			<div v-if="events.length === 0" class="text-[11px] text-zinc-500 mb-2">
+			<div v-if="events.length === 0" class="text-[11px] text-content-tertiary mb-2">
 				No events on this scene.
 			</div>
 
@@ -71,8 +71,8 @@ function sampleDisplayName(id: string): string {
 						type="button"
 						class="shrink-0 text-[10px] font-semibold uppercase w-10 text-center py-0.5 rounded transition"
 						:class="ev.event === 'start'
-							? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/25'
-							: 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'"
+							? 'bg-success/15 text-success ring-1 ring-success/25'
+							: 'bg-danger/10 text-danger ring-1 ring-danger/20'"
 						v-tooltip="ev.event === 'start' ? 'Start playing this sample' : 'Stop this sample'"
 						@click="updateEvent(i, { event: ev.event === 'start' ? 'stop' : 'start' })">
 						{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}
@@ -80,7 +80,7 @@ function sampleDisplayName(id: string): string {
 
 					<!-- Sample selector (shows filename) -->
 					<div class="relative flex-1 min-w-0" v-tooltip="'Choose which sample to trigger'">
-						<div class="text-[11px] text-zinc-300 truncate px-1.5 py-1 rounded bg-zinc-900/60 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition">
+						<div class="text-[11px] text-content-secondary truncate px-1.5 py-1 rounded bg-surface-secondary/60 border border-edge cursor-pointer hover:border-edge-secondary transition">
 							{{ sampleDisplayName(ev.id) }}
 						</div>
 						<select
@@ -99,7 +99,7 @@ function sampleDisplayName(id: string): string {
 					<!-- Remove -->
 					<button
 						type="button"
-						class="shrink-0 text-zinc-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition text-sm leading-none"
+						class="shrink-0 text-content-tertiary hover:text-danger opacity-0 group-hover:opacity-100 transition text-sm leading-none"
 						@click="removeEvent(i)">
 						&times;
 					</button>
@@ -108,7 +108,7 @@ function sampleDisplayName(id: string): string {
 
 			<button
 				type="button"
-				class="w-full text-[11px] text-zinc-600 hover:text-zinc-300 py-1 transition text-center"
+				class="w-full text-[11px] text-content-tertiary hover:text-content-secondary py-1 transition text-center"
 				v-tooltip="'Start or stop a soundboard sample at this scene'"
 				@click="addEvent">
 				+ Add event

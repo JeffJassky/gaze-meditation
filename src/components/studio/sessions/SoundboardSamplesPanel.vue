@@ -72,12 +72,12 @@ function displayName(s: SoundboardSample): string {
 			v-if="samples.length === 0"
 			class="text-center py-3"
 		>
-			<p class="text-[11px] text-zinc-500 mb-3 leading-relaxed">
+			<p class="text-[11px] text-content-tertiary mb-3 leading-relaxed">
 				Add audio that scenes can trigger — ambient loops, sound effects, music.
 			</p>
 			<button
 				type="button"
-				class="text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-lg px-3 py-1.5 transition"
+				class="text-xs text-content-secondary hover:text-content border border-edge-secondary hover:border-edge-secondary rounded-lg px-3 py-1.5 transition"
 				@click="addSample"
 			>
 				+ Add sample
@@ -94,8 +94,8 @@ function displayName(s: SoundboardSample): string {
 				class="rounded-lg transition-colors overflow-hidden"
 				:class="
 					expandedIndex === i
-						? 'bg-zinc-900/80 ring-1 ring-zinc-800'
-						: 'hover:bg-zinc-900/30'
+						? 'bg-surface-secondary/80 ring-1 ring-edge'
+						: 'hover:bg-surface-secondary/30'
 				"
 			>
 				<!-- Header row -->
@@ -107,9 +107,9 @@ function displayName(s: SoundboardSample): string {
 				>
 					<span
 						class="shrink-0 w-[3px] h-5 rounded-full"
-						:class="s.loop ? 'bg-sky-500' : 'bg-amber-500'"
+						:class="s.loop ? 'bg-info' : 'bg-warning'"
 					/>
-					<span class="flex-1 min-w-0 text-[11px] text-zinc-200 truncate">
+					<span class="flex-1 min-w-0 text-[11px] text-content truncate">
 						{{ displayName(s) }}
 					</span>
 					<svg
@@ -121,7 +121,7 @@ function displayName(s: SoundboardSample): string {
 						stroke-width="2.5"
 						stroke-linecap="round"
 						stroke-linejoin="round"
-						class="text-zinc-600 transition-transform duration-150 shrink-0"
+						class="text-content-tertiary transition-transform duration-150 shrink-0"
 						:class="expandedIndex === i ? 'rotate-180' : ''"
 					>
 						<polyline points="6 9 12 15 18 9" />
@@ -142,7 +142,7 @@ function displayName(s: SoundboardSample): string {
 
 					<!-- Volume -->
 					<div>
-						<span class="text-[10px] text-zinc-600 mb-0.5 block">Vol</span>
+						<span class="text-[10px] text-content-tertiary mb-0.5 block">Vol</span>
 						<input
 							type="range"
 							class="w-full h-1 rounded-full appearance-none cursor-pointer range-track"
@@ -166,8 +166,8 @@ function displayName(s: SoundboardSample): string {
 							class="shrink-0 text-[10px] px-2 py-1 rounded transition flex items-center gap-1"
 							:class="
 								s.loop
-									? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/30'
-									: 'bg-zinc-800/60 text-zinc-500 ring-1 ring-zinc-700/40 hover:text-zinc-300'
+									? 'bg-info/15 text-info ring-1 ring-info/30'
+									: 'bg-surface-tertiary/60 text-content-tertiary ring-1 ring-edge-secondary/40 hover:text-content-secondary'
 							"
 							v-tooltip="
 								s.loop
@@ -198,12 +198,12 @@ function displayName(s: SoundboardSample): string {
 						<div class="flex-1 grid grid-cols-2 gap-1.5">
 							<div class="flex items-center gap-1">
 								<span
-									class="text-[9px] text-zinc-600 shrink-0"
+									class="text-[9px] text-content-tertiary shrink-0"
 									v-tooltip="'Fade in duration in seconds'"
 									>In</span
 								>
 								<input
-									class="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 tabular-nums focus:outline-none focus:border-zinc-600 transition text-center"
+									class="w-full bg-surface border border-edge rounded px-1.5 py-0.5 text-[10px] text-content-secondary tabular-nums focus:outline-none focus:border-edge-secondary transition text-center"
 									type="number"
 									min="0"
 									step="0.5"
@@ -221,12 +221,12 @@ function displayName(s: SoundboardSample): string {
 							</div>
 							<div class="flex items-center gap-1">
 								<span
-									class="text-[9px] text-zinc-600 shrink-0"
+									class="text-[9px] text-content-tertiary shrink-0"
 									v-tooltip="'Fade out duration in seconds'"
 									>Out</span
 								>
 								<input
-									class="w-full bg-zinc-950 border border-zinc-800 rounded px-1.5 py-0.5 text-[10px] text-zinc-400 tabular-nums focus:outline-none focus:border-zinc-600 transition text-center"
+									class="w-full bg-surface border border-edge rounded px-1.5 py-0.5 text-[10px] text-content-secondary tabular-nums focus:outline-none focus:border-edge-secondary transition text-center"
 									type="number"
 									min="0"
 									step="0.5"
@@ -249,7 +249,7 @@ function displayName(s: SoundboardSample): string {
 					<div class="flex justify-end">
 						<button
 							type="button"
-							class="text-[10px] text-zinc-700 hover:text-red-400 transition"
+							class="text-[10px] text-content-tertiary hover:text-danger transition"
 							@click="removeSample(i)"
 						>
 							Remove
@@ -260,7 +260,7 @@ function displayName(s: SoundboardSample): string {
 
 			<button
 				type="button"
-				class="w-full text-[11px] text-zinc-600 hover:text-zinc-300 py-1.5 transition text-center"
+				class="w-full text-[11px] text-content-tertiary hover:text-content-secondary py-1.5 transition text-center"
 				@click="addSample"
 			>
 				+ Add sample

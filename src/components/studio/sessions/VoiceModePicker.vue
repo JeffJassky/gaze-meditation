@@ -97,18 +97,18 @@ async function startUpload(file: File) {
 	<div class="flex flex-col items-center justify-center py-16 px-6">
 		<!-- ── Step 1: Pick mode ─────────────────────────────────────── -->
 		<template v-if="step === 'pick'">
-			<p class="text-sm text-zinc-500 mb-8">How will this session's voice audio be created?</p>
+			<p class="text-sm text-content-tertiary mb-8">How will this session's voice audio be created?</p>
 
 			<div class="grid grid-cols-2 gap-4 w-full max-w-lg">
 				<button
 					type="button"
-					class="group flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-8 hover:border-zinc-600 hover:bg-zinc-900 transition-all text-center"
+					class="group flex flex-col items-center gap-3 rounded-xl border border-edge bg-surface-secondary/50 px-6 py-8 hover:border-edge-secondary hover:bg-surface-secondary transition-all text-center"
 					@click="browseFile">
-					<div class="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 flex items-center justify-center text-lg transition-colors">
+					<div class="w-10 h-10 rounded-full bg-surface-tertiary group-hover:bg-edge-secondary flex items-center justify-center text-lg transition-colors">
 						&#x1F399;
 					</div>
-					<span class="text-sm font-medium text-zinc-200">Upload voice track</span>
-					<span class="text-xs text-zinc-500 leading-relaxed">
+					<span class="text-sm font-medium text-content">Upload voice track</span>
+					<span class="text-xs text-content-tertiary leading-relaxed">
 						Upload a pre-recorded audio file.<br />
 						Scenes align to sections of the recording.
 					</span>
@@ -116,13 +116,13 @@ async function startUpload(file: File) {
 
 				<button
 					type="button"
-					class="group flex flex-col items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-8 hover:border-zinc-600 hover:bg-zinc-900 transition-all text-center"
+					class="group flex flex-col items-center gap-3 rounded-xl border border-edge bg-surface-secondary/50 px-6 py-8 hover:border-edge-secondary hover:bg-surface-secondary transition-all text-center"
 					@click="startAiFlow">
-					<div class="w-10 h-10 rounded-full bg-zinc-800 group-hover:bg-zinc-700 flex items-center justify-center text-lg transition-colors">
+					<div class="w-10 h-10 rounded-full bg-surface-tertiary group-hover:bg-edge-secondary flex items-center justify-center text-lg transition-colors">
 						&#x2728;
 					</div>
-					<span class="text-sm font-medium text-zinc-200">AI-generated voice</span>
-					<span class="text-xs text-zinc-500 leading-relaxed">
+					<span class="text-sm font-medium text-content">AI-generated voice</span>
+					<span class="text-xs text-content-tertiary leading-relaxed">
 						Write scene scripts and generate<br />
 						voice audio with ElevenLabs.
 					</span>
@@ -132,44 +132,44 @@ async function startUpload(file: File) {
 
 		<!-- ── Step 2a: Voice selection (AI path) ────────────────────── -->
 		<template v-else-if="step === 'voice-select'">
-			<p class="text-sm text-zinc-500 mb-6">Choose an ElevenLabs voice for this session</p>
+			<p class="text-sm text-content-tertiary mb-6">Choose an ElevenLabs voice for this session</p>
 
-			<div v-if="voicesLoading" class="text-xs text-zinc-600">
+			<div v-if="voicesLoading" class="text-xs text-content-tertiary">
 				Loading voices...
 			</div>
 
 			<div v-else-if="!voicesEnabled" class="text-center max-w-sm">
-				<p class="text-sm text-zinc-400 mb-4">
+				<p class="text-sm text-content-secondary mb-4">
 					No ElevenLabs API key configured. Add one in your account settings to use AI-generated voices.
 				</p>
 				<button
 					type="button"
-					class="text-xs text-zinc-500 hover:text-zinc-300 transition"
+					class="text-xs text-content-tertiary hover:text-content-secondary transition"
 					@click="step = 'pick'">
 					&larr; Back
 				</button>
 			</div>
 
 			<div v-else class="w-full max-w-md">
-				<div class="max-h-64 overflow-y-auto rounded-lg border border-zinc-800 divide-y divide-zinc-800/60">
+				<div class="max-h-64 overflow-y-auto rounded-lg border border-edge divide-y divide-edge/60">
 					<button
 						v-for="v in voices"
 						:key="v.voice_id"
 						type="button"
 						class="w-full text-left px-4 py-3 text-sm transition-colors"
 						:class="selectedVoiceId === v.voice_id
-							? 'bg-zinc-800 text-zinc-100'
-							: 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'"
+							? 'bg-surface-tertiary text-content'
+							: 'text-content-secondary hover:bg-surface-secondary hover:text-content'"
 						@click="selectedVoiceId = v.voice_id">
 						<span class="font-medium">{{ v.name }}</span>
-						<span v-if="v.category" class="ml-2 text-xs text-zinc-600">{{ v.category }}</span>
+						<span v-if="v.category" class="ml-2 text-xs text-content-tertiary">{{ v.category }}</span>
 					</button>
 				</div>
 
 				<div class="flex items-center justify-between mt-4">
 					<button
 						type="button"
-						class="text-xs text-zinc-500 hover:text-zinc-300 transition"
+						class="text-xs text-content-tertiary hover:text-content-secondary transition"
 						@click="step = 'pick'">
 						&larr; Back
 					</button>
@@ -177,8 +177,8 @@ async function startUpload(file: File) {
 						type="button"
 						class="text-sm font-medium px-4 py-1.5 rounded-lg transition"
 						:class="selectedVoiceId
-							? 'bg-zinc-100 text-zinc-900 hover:bg-white'
-							: 'bg-zinc-800 text-zinc-600 cursor-not-allowed'"
+							? 'bg-content text-surface-secondary hover:bg-content'
+							: 'bg-surface-tertiary text-content-tertiary cursor-not-allowed'"
 						:disabled="!selectedVoiceId"
 						@click="confirmAiVoice">
 						Continue
@@ -190,25 +190,25 @@ async function startUpload(file: File) {
 		<!-- ── Uploading ─────────────────────────────────────────────── -->
 		<template v-else-if="step === 'uploading'">
 			<div class="w-full max-w-md">
-				<div class="text-sm text-zinc-300 mb-2 truncate">
+				<div class="text-sm text-content-secondary mb-2 truncate">
 					Uploading {{ uploadFileName }}
 				</div>
-				<div class="h-2 rounded-full bg-zinc-800 overflow-hidden">
+				<div class="h-2 rounded-full bg-surface-tertiary overflow-hidden">
 					<div
-						class="h-full bg-sky-500 transition-all"
+						class="h-full bg-info transition-all"
 						:style="{ width: uploadProgress.percent + '%' }" />
 				</div>
-				<div class="text-xs text-zinc-500 mt-1.5">{{ uploadProgress.percent }}%</div>
+				<div class="text-xs text-content-tertiary mt-1.5">{{ uploadProgress.percent }}%</div>
 			</div>
 		</template>
 
 		<!-- ── Error ──────────────────────────────────────────────────── -->
 		<template v-else-if="step === 'error'">
 			<div class="w-full max-w-md text-center">
-				<p class="text-sm text-red-400 mb-4">Upload failed: {{ uploadError }}</p>
+				<p class="text-sm text-danger mb-4">Upload failed: {{ uploadError }}</p>
 				<button
 					type="button"
-					class="text-sm text-zinc-400 hover:text-white transition"
+					class="text-sm text-content-secondary hover:text-content transition"
 					@click="step = 'pick'">
 					Try again
 				</button>

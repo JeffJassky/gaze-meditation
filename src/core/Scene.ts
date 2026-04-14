@@ -180,6 +180,12 @@ export class Scene {
 				this.region.start,
 				this.region.end,
 			)
+		} else if (context.masterAudioKey && !this.region) {
+			// Session-level audio mode but this scene has no region defined.
+			// Skip voice playback rather than falling through to TTS with
+			// text that was only meant as a transcript.
+			console.warn(`[Scene] Session-level audio but scene ${this.id} has no region — skipping voice`)
+			voicePromise = Promise.resolve()
 		} else if (this.config.voice) {
 			voicePromise = this.playVoiceSequence(this.config.voice, context)
 		} else {

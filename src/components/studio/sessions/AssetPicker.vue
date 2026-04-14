@@ -139,7 +139,7 @@ function stopAudio() {
 			:class="[su.select, 'text-xs text-left']"
 			@click.stop="open = !open">
 			<span v-if="selectedAsset" class="truncate">{{ displayName(selectedAsset) }}</span>
-			<span v-else class="text-zinc-600">{{ placeholder ?? 'Select...' }}</span>
+			<span v-else class="text-content-tertiary">{{ placeholder ?? 'Select...' }}</span>
 		</button>
 
 		<!-- Backdrop -->
@@ -153,13 +153,13 @@ function stopAudio() {
 		<!-- Dropdown -->
 		<div
 			v-if="open"
-			class="absolute left-0 right-0 top-full mt-1 z-50 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl max-h-72 overflow-y-auto">
+			class="absolute left-0 right-0 top-full mt-1 z-50 bg-surface-secondary border border-edge-secondary rounded-lg shadow-xl max-h-72 overflow-y-auto">
 
 			<!-- Actions -->
-			<div class="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-2 flex gap-2 z-10">
+			<div class="sticky top-0 bg-surface-secondary border-b border-edge p-2 flex gap-2 z-10">
 				<button
 					type="button"
-					class="flex-1 text-xs text-center py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition"
+					class="flex-1 text-xs text-center py-1.5 rounded bg-surface-tertiary hover:bg-edge-secondary text-content-secondary transition"
 					:disabled="uploading"
 					@click.stop="browseFile">
 					{{ uploading ? 'Uploading...' : `+ Upload` }}
@@ -167,20 +167,20 @@ function stopAudio() {
 				<button
 					v-if="modelValue"
 					type="button"
-					class="text-xs px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-500 transition"
+					class="text-xs px-3 py-1.5 rounded bg-surface-tertiary hover:bg-edge-secondary text-content-tertiary transition"
 					@click.stop="clear">
 					Clear
 				</button>
 			</div>
 
-			<div v-if="uploadError" class="px-3 py-2 text-xs text-red-400">
+			<div v-if="uploadError" class="px-3 py-2 text-xs text-danger">
 				{{ uploadError }}
 			</div>
 
 			<!-- Empty -->
 			<div
 				v-if="filteredAssets.length === 0 && !uploading"
-				class="px-3 py-6 text-center text-xs text-zinc-600">
+				class="px-3 py-6 text-center text-xs text-content-tertiary">
 				No {{ config?.label?.toLowerCase() ?? 'assets' }} yet.
 			</div>
 
@@ -190,7 +190,7 @@ function stopAudio() {
 				{ label: userAssets.length && systemAssets.length ? 'Yours' : '', items: userAssets },
 			]" :key="sIdx">
 				<template v-if="section.items.length > 0">
-					<div v-if="section.label" class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-zinc-600">
+					<div v-if="section.label" class="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-content-tertiary">
 						{{ section.label }}
 					</div>
 					<button
@@ -198,14 +198,14 @@ function stopAudio() {
 						:key="a.id"
 						type="button"
 						class="w-full text-left px-2 py-1.5 transition-colors flex items-center gap-2"
-						:class="a.key === modelValue ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'"
+						:class="a.key === modelValue ? 'bg-surface-tertiary text-content' : 'text-content-secondary hover:bg-surface-tertiary/60 hover:text-content'"
 						@click.stop="select(a)">
 
 						<!-- Visual preview (image/spiral) -->
 						<img
 							v-if="isVisualKind && a.key"
 							:src="assetUrl(a.key)"
-							class="w-8 h-8 rounded object-cover bg-zinc-800 shrink-0"
+							class="w-8 h-8 rounded object-cover bg-surface-tertiary shrink-0"
 							alt="" />
 
 						<!-- Audio play button -->
@@ -214,8 +214,8 @@ function stopAudio() {
 							type="button"
 							class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] transition"
 							:class="playingKey === a.key
-								? 'bg-sky-500/20 text-sky-300'
-								: 'bg-zinc-800 text-zinc-500 hover:text-zinc-200'"
+								? 'bg-info/20 text-info'
+								: 'bg-surface-tertiary text-content-tertiary hover:text-content'"
 							@click="toggleAudio(a.key, $event)">
 							{{ playingKey === a.key ? '&#9632;' : '&#9654;' }}
 						</button>

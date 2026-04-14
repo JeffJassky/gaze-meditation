@@ -46,9 +46,9 @@ function apply() {
 
 <template>
 	<div class="fixed inset-0 z-30 bg-black/70 flex items-center justify-center p-6">
-		<div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-2xl">
+		<div class="bg-surface-secondary border border-edge rounded-2xl p-6 w-full max-w-2xl">
 			<h2 :class="[su.h2, 'mb-1']">Import from text</h2>
-			<p class="text-sm text-zinc-400 mb-4">
+			<p class="text-sm text-content-secondary mb-4">
 				Paste a script. Each paragraph (separated by blank lines) becomes one scene.
 			</p>
 			<textarea

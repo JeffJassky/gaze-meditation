@@ -48,7 +48,7 @@ watch(mode, load)
 
 <template>
 	<div class="fixed inset-0 z-30 bg-black/70 flex items-center justify-center p-6">
-		<div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-xl max-h-[80vh] flex flex-col">
+		<div class="bg-surface-secondary border border-edge rounded-2xl p-6 w-full max-w-xl max-h-[80vh] flex flex-col">
 			<div class="flex items-center justify-between mb-4">
 				<h2 :class="su.h2">Add sessions</h2>
 				<button :class="su.btnGhost" @click="emit('close')">Close</button>
@@ -63,25 +63,25 @@ watch(mode, load)
 			</div>
 
 			<div class="flex-1 overflow-auto">
-				<div v-if="loading" class="text-sm text-zinc-500 text-center py-4">Loading…</div>
+				<div v-if="loading" class="text-sm text-content-tertiary text-center py-4">Loading…</div>
 				<div
 					v-else-if="results.length === 0"
-					class="text-sm text-zinc-500 text-center py-4">
+					class="text-sm text-content-tertiary text-center py-4">
 					No matches.
 				</div>
 				<div v-else class="grid gap-2">
 					<button
 						v-for="s in results"
 						:key="s.id"
-						class="text-left bg-zinc-950 border border-zinc-800 rounded-lg p-3 hover:border-zinc-700 transition"
+						class="text-left bg-surface border border-edge rounded-lg p-3 hover:border-edge-secondary transition"
 						@click="emit('pick', s)">
 						<div class="flex items-center gap-2">
-							<span class="font-medium text-zinc-100 truncate">{{ s.title }}</span>
+							<span class="font-medium text-content truncate">{{ s.title }}</span>
 							<span :class="s.status === 'published' ? su.badgePublished : su.badgeDraft">
 								{{ s.status }}
 							</span>
 						</div>
-						<div class="text-xs text-zinc-500 mt-1 line-clamp-1">{{ s.description }}</div>
+						<div class="text-xs text-content-tertiary mt-1 line-clamp-1">{{ s.description }}</div>
 					</button>
 				</div>
 			</div>

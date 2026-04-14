@@ -58,24 +58,24 @@ function setTint(patch: { color?: string; opacity?: number }) {
 			v-for="[key, label] in THEME_KEYS"
 			:key="key"
 			class="flex items-center gap-2">
-			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">{{ label }}</span>
+			<span class="text-[10px] uppercase tracking-wider text-content-tertiary w-20 shrink-0">{{ label }}</span>
 			<input
-				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 				:value="(theme?.[key] as string) || ''"
 				placeholder="#hex"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 			<input
 				type="color"
-				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 				:value="(theme?.[key] as string) || '#000000'"
 				@input="(e) => setColor(key, (e.target as HTMLInputElement).value)" />
 		</div>
 
 		<!-- Tint -->
 		<div v-if="!hideTint" class="flex items-center gap-2">
-			<span class="text-[10px] uppercase tracking-wider text-zinc-500 w-20 shrink-0">Tint</span>
+			<span class="text-[10px] uppercase tracking-wider text-content-tertiary w-20 shrink-0">Tint</span>
 			<input
-				class="flex-1 min-w-0 bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 transition font-mono"
+				class="flex-1 min-w-0 bg-surface border border-edge rounded px-2 py-1 text-xs text-content placeholder-content-tertiary focus:outline-none focus:border-edge-secondary transition font-mono"
 				type="number"
 				step="0.05"
 				min="0"
@@ -85,7 +85,7 @@ function setTint(patch: { color?: string; opacity?: number }) {
 				@input="(e) => setTint({ opacity: Number((e.target as HTMLInputElement).value) })" />
 			<input
 				type="color"
-				class="w-6 h-6 rounded-full border border-zinc-700 bg-zinc-950 shrink-0 cursor-pointer appearance-none"
+				class="w-6 h-6 rounded-full border border-edge-secondary bg-surface shrink-0 cursor-pointer appearance-none"
 				:value="tintColor"
 				@input="(e) => setTint({ color: (e.target as HTMLInputElement).value })" />
 		</div>

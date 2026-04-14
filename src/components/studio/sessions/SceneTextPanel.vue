@@ -118,7 +118,7 @@ function onVoiceBackspace(e: KeyboardEvent) {
 			v-model="voiceModel"
 			data-field="voice"
 			placeholder="What the narrator says…"
-			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-1 text-zinc-100 placeholder-zinc-700 font-serif text-[17px] leading-[1.6] min-h-[2em]"
+			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-1 text-content placeholder-content-tertiary font-serif text-[17px] leading-[1.6] min-h-[2em]"
 			:style="{
 				'field-sizing': 'content',
 				...(voiceColor ? { color: voiceColor } : {}),
@@ -134,7 +134,7 @@ function onVoiceBackspace(e: KeyboardEvent) {
 			v-model="textModel"
 			data-field="text"
 			placeholder="On-screen text…"
-			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-0.5 mt-1 text-zinc-500 placeholder-zinc-700 placeholder:italic italic text-[16px] leading-[1.6] min-h-[1.5em]"
+			class="w-full bg-transparent border-0 outline-none resize-none px-0 py-0.5 mt-1 text-content-tertiary placeholder-content-tertiary placeholder:italic italic text-[16px] leading-[1.6] min-h-[1.5em]"
 			:style="{
 				'field-sizing': 'content',
 				...(textColor ? { color: textColor } : {}),
