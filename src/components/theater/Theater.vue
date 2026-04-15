@@ -14,12 +14,14 @@ import { getSceneEffectiveTheme } from '@/utils/themeResolver'
 import { assetUrl } from '@/utils/assetUrl'
 import { voiceService } from '@/services/voiceService'
 import { playbackSpeed } from '@/state/playback'
+import { auth } from '@/state/auth'
 import { useRouter } from 'vue-router'
 import { sessionsApi, type Session } from '@/api/sessions'
 
 // Composables — each owns its service layer and exposes a controlled interface.
 import { useTheaterControls } from '@/composables/useTheaterControls'
 import { useTheaterAudio } from '@/composables/useTheaterAudio'
+import { useTheaterHaptics } from '@/composables/useTheaterHaptics'
 import { useTheaterBiofeedback } from '@/composables/useTheaterBiofeedback'
 import { useTheaterScoring } from '@/composables/useTheaterScoring'
 
@@ -112,6 +114,7 @@ provide('resolvedTheme', currentResolvedTheme)
 
 const controls = useTheaterControls()
 const audio = useTheaterAudio(activeSession, sessionScenes)
+const haptics = useTheaterHaptics(activeSession, sessionScenes)
 const biofeedback = useTheaterBiofeedback(biofeedbackEnabled)
 const scoring = useTheaterScoring()
 
@@ -132,6 +135,7 @@ function cleanupSession(fadeDuration = 0.5) {
 	voiceService.stop()
 
 	audio.stopAll(fadeDuration)
+	haptics.stopAll()
 	biofeedback.stopDevices()
 }
 
@@ -218,7 +222,16 @@ function nextScene(index: number) {
 
 	const isSequential = index === sceneIndex.value + 1
 
-	if (index === 0) scoring.startTracking()
+	if (index === 0) {
+		scoring.startTracking()
+		if (!props.embedded && activeSession.value) {
+			scoring.beginRun(
+				activeSession.value.id,
+				activeSession.value.title,
+				activeSession.value.scenes.length,
+			)
+		}
+	}
 
 	if (index >= sessionScenes.value.length) {
 		currentScene.value?.stop()
@@ -236,6 +249,8 @@ function nextScene(index: number) {
 		audio.applySceneBinaural(currentScene.value)
 		audio.reconcileSoundboard(index, currentScene.value, isSequential)
 		audio.playSceneFx(currentScene.value)
+		haptics.applySceneOverride(currentScene.value)
+		haptics.reconcileHaptics(index, currentScene.value, isSequential)
 	}
 
 	if (timerRef.value) clearTimeout(timerRef.value)
@@ -272,6 +287,7 @@ function nextScene(index: number) {
 function triggerReinforcement(success: boolean, metrics: any, result?: any) {
 	if (timerRef.value) clearTimeout(timerRef.value)
 	currentScene.value?.stop()
+	haptics.fireBehaviorResponse(success)
 
 	if (!currentScene.value) return
 
@@ -287,6 +303,11 @@ function triggerReinforcement(success: boolean, metrics: any, result?: any) {
 	)
 
 	if (!instruction) return // paused
+
+	// Sync progress to server after each scene completes.
+	if (!props.embedded && activeSession.value) {
+		scoring.syncProgress(activeSession.value.scenes.length)
+	}
 
 	if (instruction.state === 'REINFORCING_POS') state.value = SessionState.REINFORCING_POS
 	else if (instruction.state === 'REINFORCING_NEG') state.value = SessionState.REINFORCING_NEG
@@ -313,9 +334,19 @@ function finishSession() {
 		activeSession.value!.scenes.length,
 	)
 
-	state.value = SessionState.FINISHED
 	audio.fadeOutAll(3)
+	haptics.fadeOutAll(3)
 
+	// Refresh user stats (level/xp) after server recalculation
+	auth.refreshUser()
+
+	// Initial training session: show session selector instead of exiting
+	if (activeSession.value!.slug === 'initial-training-short') {
+		state.value = SessionState.SELECTION
+		return
+	}
+
+	state.value = SessionState.FINISHED
 	setTimeout(() => exitSession(), 10000 / playbackSpeed.value)
 }
 
@@ -330,6 +361,7 @@ async function handleSessionSelect(program: Session) {
 	scoring.resetForSession()
 
 	await audio.switchSession(program)
+	haptics.switchSession(program)
 
 	sessionScenes.value = program.scenes.map(
 		s => new Scene(s, { skipBehaviors: !biofeedbackEnabled.value, devices: defaultDeviceContext }),
@@ -354,13 +386,21 @@ async function initSession() {
 	const needs = biofeedback.detectRequiredDevices(activeSession.value)
 	const needsAudio =
 		activeSession.value.audio?.musicTrack !== 'none' || !!activeSession.value.audio?.binaural
+	const needsHaptics = activeSession.value.scenes.some(s => (s.config.haptics?.events?.length ?? 0) > 0)
 
-	console.log('[Theater] Hardware Requirements:', { ...needs, needsAudio })
+	console.log('[Theater] Hardware Requirements:', { ...needs, needsAudio, needsHaptics })
 
 	// 2. Permission gate (non-embedded only).
 	if (!props.embedded) {
+		// If haptics needed, set up the scan callback so it runs inside the user gesture
+		if (needsHaptics) {
+			haptics.setup(activeSession.value)
+			biofeedback.setOnGrantHaptics(async () => {
+				await haptics.connect()
+			})
+		}
 		loadingMessage.value = 'Enable Biofeedback'
-		await biofeedback.requestPermissions(needs)
+		await biofeedback.requestPermissions({ ...needs, needsHaptics })
 		loadingMessage.value = 'Preparing Session'
 	}
 
@@ -375,6 +415,7 @@ async function initSession() {
 		}
 	}
 	loadingProgress.value = 50
+
 
 	// 4. Device init.
 	const devicesOk = await biofeedback.initDevices(needs, props.embedded)
@@ -436,8 +477,8 @@ onMounted(async () => {
 	if (!activeSession.value) { exitSession(); return }
 
 	try {
-		const list = await sessionsApi.list({ mine: true, limit: 50 })
-		FULL_SESSIONS.value = list.items
+		const list = await sessionsApi.list({ status: 'published', limit: 200 })
+		FULL_SESSIONS.value = list.items.filter(s => s.slug !== 'initial-training-short')
 	} catch (e) {
 		console.warn('[Theater] Failed to load session list', e)
 	}
@@ -562,7 +603,7 @@ defineExpose({ jumpToScene, play: handlePlay, pause: handlePause, restart: handl
 				class="absolute inset-0 z-[60] flex flex-col items-center justify-center p-8 overflow-y-auto"
 			>
 				<div class="max-w-6xl w-full">
-					<h2 class="text-3xl font-light text-white mb-12 text-center">
+					<h2 class="text-3xl font-light text-content mb-12 text-center">
 						Select a Session
 					</h2>
 
@@ -577,8 +618,8 @@ defineExpose({ jumpToScene, play: handlePlay, pause: handlePause, restart: handl
 
 					<div class="mt-8 text-center">
 						<button
-							@click="$emit('exit')"
-							class="text-zinc-500 hover:text-white transition-colors text-sm uppercase tracking-widest"
+							@click="exitSession()"
+							class="text-content-tertiary hover:text-content transition-colors text-sm uppercase tracking-widest"
 						>
 							Return to Dashboard
 						</button>
@@ -632,6 +673,8 @@ defineExpose({ jumpToScene, play: handlePlay, pause: handlePause, restart: handl
 				:soundboardSamples="activeSession?.audio?.soundboard || []"
 				:activeSoundboardIds="audio.activeSoundboardIds.value"
 				:soundboardErrors="audio.soundboardErrors.value"
+				:hapticStatus="haptics.connectionStatus.value"
+				:hapticDeviceCount="haptics.connectedDevices.value.length"
 				@play="handlePlay"
 				@pause="handlePause"
 				@restart="handleRestart"

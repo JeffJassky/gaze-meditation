@@ -7,6 +7,13 @@ import InspectorSection from './InspectorSection.vue'
 import ThemeColorEditor from './ThemeColorEditor.vue'
 import AssetPicker from './AssetPicker.vue'
 import SoundboardSamplesPanel from './SoundboardSamplesPanel.vue'
+import SessionLivePreview from './SessionLivePreview.vue'
+
+const props = defineProps<{
+	previewSession?: Session
+	previewSelectedId?: string | null
+	previewSelectedIndex?: number
+}>()
 
 const session = defineModel<Session>({ required: true })
 
@@ -104,7 +111,7 @@ const musicKey = computed({
 <template>
 	<aside
 		class="border-r border-edge bg-surface flex flex-col min-h-0 transition-all shrink-0 overflow-hidden"
-		:class="collapsed ? 'w-10' : 'w-64'">
+		:class="collapsed ? 'w-10' : 'w-[360px]'">
 		<!-- Collapse toggle / collapsed label -->
 		<button
 			type="button"
@@ -126,6 +133,14 @@ const musicKey = computed({
 				<span class="text-[10px] uppercase tracking-wider flex-1 text-left">Settings</span>
 			</template>
 		</button>
+
+		<!-- Live Preview -->
+		<SessionLivePreview
+			v-if="!collapsed && previewSession"
+			class="shrink-0"
+			:session="previewSession"
+			:selected-id="previewSelectedId ?? null"
+			:selected-index="previewSelectedIndex ?? 0" />
 
 		<!-- Expanded content -->
 		<div v-if="!collapsed" class="flex-1 overflow-y-auto">
@@ -230,7 +245,7 @@ const musicKey = computed({
 			</InspectorSection>
 
 			<InspectorSection
-				title="Soundboard"
+				title="FX Soundboard"
 				storage-key="session-soundboard"
 				:default-open="false"
 				:badge="session.audio?.soundboard?.length || undefined">

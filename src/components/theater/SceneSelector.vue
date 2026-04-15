@@ -98,22 +98,22 @@ const filteredScenes = computed(() => {
 	<div class="relative inline-block text-xs font-mono">
 		<button
 			@click="isExpandedInternal = !isExpandedInternal"
-			class="bg-zinc-900 border border-zinc-700 text-zinc-300 px-3 py-1 rounded shadow hover:bg-zinc-800 transition-colors"
-			:class="{ 'border-cyan-500 text-cyan-400': isExpandedInternal }"
+			class="bg-surface border border-edge text-content-secondary px-3 py-1 rounded shadow-theme-sm hover:bg-surface-secondary transition-colors"
+			:class="{ 'border-accent text-accent': isExpandedInternal }"
 		>
 			Jump To {{ isExpandedInternal ? '[-]' : '[+]' }}
 		</button>
 
 		<div
 			v-if="isExpandedInternal"
-			class="absolute left-0 bg-zinc-900/90 border border-zinc-700 p-2 rounded shadow-xl w-64 backdrop-blur-sm max-h-[60vh] flex flex-col z-50"
+			class="absolute left-0 bg-surface/90 border border-edge p-2 rounded shadow-theme-lg w-64 backdrop-blur-sm max-h-[60vh] flex flex-col z-50"
 			:class="placementValue === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'"
 		>
 			<input
 				v-model="searchQuery"
 				type="text"
 				placeholder="Filter..."
-				class="w-full bg-zinc-800 border border-zinc-600 text-zinc-200 px-2 py-1 rounded mb-2 focus:outline-none focus:border-cyan-500"
+				class="w-full bg-surface-secondary border border-edge-secondary text-content px-2 py-1 rounded mb-2 focus:outline-none focus:border-accent"
 				autofocus
 			/>
 			<div
@@ -129,29 +129,29 @@ const filteredScenes = computed(() => {
 							isExpandedInternal = false
 						}
 					"
-					class="cursor-pointer p-2 hover:bg-zinc-700 rounded mb-1 transition-colors text-left"
+					class="cursor-pointer p-2 hover:bg-surface-tertiary rounded mb-1 transition-colors text-left"
 					:class="{
-						'bg-cyan-900/50 border border-cyan-700 active-scene': item.originalIndex === currentIndex
+						'bg-accent-muted border border-accent/40 active-scene': item.originalIndex === currentIndex
 					}"
 				>
 					<div class="font-bold flex justify-between items-center mb-1">
 						<span
-							class="text-cyan-500 text-[10px] font-mono uppercase tracking-wider"
+							class="text-accent-text text-[10px] font-mono uppercase tracking-wider"
 						>
 							{{ getBehaviorsLabel(item.scene) }}
 						</span>
-						<span class="text-zinc-400">#{{ item.originalIndex + 1 }}</span>
+						<span class="text-content-secondary">#{{ item.originalIndex + 1 }}</span>
 					</div>
 					<div
 						v-if="getSceneText(item.scene)"
-						class="text-white truncate text-left"
+						class="text-content truncate text-left"
 						:title="getSceneText(item.scene)"
 					>
 						{{ getSceneText(item.scene) }}
 					</div>
 					<div
 						v-else
-						class="text-zinc-500 italic text-left"
+						class="text-content-tertiary italic text-left"
 					>
 						No preview available
 					</div>
@@ -169,10 +169,10 @@ const filteredScenes = computed(() => {
 	background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-	background: #3f3f46;
+	background: rgb(var(--edge-secondary-rgb));
 	border-radius: 2px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-	background: #52525b;
+	background: rgb(var(--accent-rgb) / 0.5);
 }
 </style>

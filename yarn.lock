@@ -545,6 +545,24 @@ browserslist@^4.28.1, "browserslist@>= 4.21.0":
     node-releases "^2.0.27"
     update-browserslist-db "^1.2.0"
 
+buttplug-wasm@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.npmjs.org/buttplug-wasm/-/buttplug-wasm-2.0.1.tgz"
+  integrity sha512-yJCMbs1F9ikfDMg8FgDNueDjaJm5GEiejS4Iya/GaXqXLXLC5c5qAO2nqTDLlI+63+aDvieSv/vWnbaa2XhYuw==
+  dependencies:
+    buttplug "^3.2.1"
+    eventemitter3 "^5.0.1"
+
+buttplug@^3.2.1, buttplug@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.npmjs.org/buttplug/-/buttplug-3.2.2.tgz"
+  integrity sha512-TGkQzG6dxEjuFX29eRoWkh82vsQhGQ+E98tZtN8fWn1NOG7v/9H0FFkNXrpmeRt9FFS0GdHTvubfZ8dcIPGSAA==
+  dependencies:
+    class-transformer "^0.5.1"
+    eventemitter3 "^5.0.1"
+    reflect-metadata "^0.2.1"
+    ws "^8.16.0"
+
 camelcase-css@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/camelcase-css/-/camelcase-css-2.0.1.tgz"
@@ -569,6 +587,11 @@ chokidar@^3.6.0:
     readdirp "~3.6.0"
   optionalDependencies:
     fsevents "~2.3.2"
+
+class-transformer@^0.5.1:
+  version "0.5.1"
+  resolved "https://registry.npmjs.org/class-transformer/-/class-transformer-0.5.1.tgz"
+  integrity sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==
 
 commander@^4.0.0:
   version "4.1.1"
@@ -665,6 +688,11 @@ estree-walker@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz"
   integrity sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==
+
+eventemitter3@^5.0.1:
+  version "5.0.4"
+  resolved "https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.4.tgz"
+  integrity sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==
 
 fast-glob@^3.3.2:
   version "3.3.3"
@@ -1161,6 +1189,11 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
+reflect-metadata@^0.2.1:
+  version "0.2.2"
+  resolved "https://registry.npmjs.org/reflect-metadata/-/reflect-metadata-0.2.2.tgz"
+  integrity sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==
+
 resolve@^1.1.7, resolve@^1.22.8:
   version "1.22.11"
   resolved "https://registry.npmjs.org/resolve/-/resolve-1.22.11.tgz"
@@ -1445,3 +1478,8 @@ wrappy@1:
   version "1.0.2"
   resolved "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz"
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
+
+ws@^8.16.0:
+  version "8.20.0"
+  resolved "https://registry.npmjs.org/ws/-/ws-8.20.0.tgz"
+  integrity sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==

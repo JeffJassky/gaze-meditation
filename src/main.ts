@@ -11,6 +11,13 @@ useTheme()
 import router from './router'
 
 const app = createApp(App)
-app.use(FloatingVue)
+app.use(FloatingVue, {
+	themes: {
+		'feature-bar': {
+			$extend: 'dropdown',
+			$resetCss: true,
+		},
+	},
+})
 app.use(router)
 app.mount('#app')

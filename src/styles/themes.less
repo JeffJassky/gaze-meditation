@@ -165,16 +165,16 @@ html.dark {
   --color-border: rgb(var(--edge-rgb));
   --color-border-secondary: rgb(var(--edge-secondary-rgb));
 
-  // ── Accent (cyan) ──────────────────────────────────────────
-  --accent-rgb: 34 211 238;             // cyan-400
-  --accent-muted-rgb: 8 51 68;          // cyan-950
-  --accent-subtle-rgb: 34 211 238;      // (used with low alpha)
-  --accent-text-rgb: 103 232 249;       // cyan-300
+  // ── Accent (red) ───────────────────────────────────────────
+  --accent-rgb: 239 68 68;              // red-500
+  --accent-muted-rgb: 69 10 10;         // red-950
+  --accent-subtle-rgb: 239 68 68;       // (used with low alpha)
+  --accent-text-rgb: 252 165 165;       // red-300
 
   // ── Active / selection ─────────────────────────────────────
-  --color-active: rgb(24, 135, 215);
-  --color-background-active: #1d2631;
-  --color-border-active: #2a3c5d;
+  --color-active: rgb(220, 38, 38);     // red-600
+  --color-background-active: #2a1215;
+  --color-border-active: #5c1d1d;
   --color-background-selected-text: rgb(81 77 117 / 0.47);
 
   // ── Shadows ────────────────────────────────────────────────
@@ -182,7 +182,7 @@ html.dark {
   --shadow-small: 0 0.25em 0.5em rgb(0 0 0 / 0.4);
 
   // ── Status: success (emerald) ──────────────────────────────
-  --success-rgb: 110 231 183;           // emerald-300
+  --success-rgb: 74 222 128;            // green-400
   --color-success: rgb(var(--success-rgb));
 
   // ── Status: danger (red) ───────────────────────────────────
@@ -240,4 +240,335 @@ html.dark {
     --color-background-secondary: rgb(var(--surface-secondary-rgb));
     --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+// LITTLE THEME
+// Soft pink palette with baby blue accents.
+// Fonts: Fredoka One (display) / Nunito (body).
+// ════════════════════════════════════════════════════════════════
+html.little {
+  --font-display: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+
+  // Brand
+  --brand-color: #f472b6;           // pink-400
+  --brand-color-dark: #9d174d;      // pink-800
+  --brand-rgb: 244 114 182;
+  --brand-dark-rgb: 157 23 77;
+
+  // ── Text ───────────────────────────────────────────────────
+  --text-primary-rgb: 80 20 60;            // deep rose-brown
+  --text-secondary-rgb: 148 100 130;       // muted mauve
+  --text-tertiary-rgb: 190 155 175;        // soft dusty pink
+  --color-text-primary: rgb(var(--text-primary-rgb));
+  --color-text-secondary: rgb(var(--text-secondary-rgb));
+  --color-text-tertiary: rgb(var(--text-tertiary-rgb));
+  --color-text-warning: #e11d48;           // rose-600
+  --color-text-link: #93c5fd;              // baby blue-300
+
+  // ── Backgrounds ────────────────────────────────────────────
+  --surface-rgb: 255 244 248;             // very pale pink
+  --surface-secondary-rgb: 253 232 240;   // light pink
+  --surface-tertiary-rgb: 251 219 232;    // warm pink
+  --color-background-primary: rgb(var(--surface-rgb));
+  --color-background-secondary: rgb(var(--surface-secondary-rgb));
+  --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  --color-background-modal: rgb(255 244 248 / 0.92);
+  --color-background-warning: rgb(255 0 80 / 0.15);
+
+  // ── Borders ────────────────────────────────────────────────
+  --edge-rgb: 248 200 220;               // soft pink border
+  --edge-secondary-rgb: 240 180 205;     // deeper pink border
+  --color-border: rgb(var(--edge-rgb));
+  --color-border-secondary: rgb(var(--edge-secondary-rgb));
+
+  // ── Accent (baby blue) ────────────────────────────────────
+  --accent-rgb: 147 197 253;              // blue-300
+  --accent-muted-rgb: 219 234 254;        // blue-100
+  --accent-subtle-rgb: 147 197 253;
+  --accent-text-rgb: 59 130 246;          // blue-500
+
+  // ── Active / selection ─────────────────────────────────────
+  --color-active: #ec4899;                // pink-500
+  --color-background-active: #fce7f3;     // pink-100
+
+  // ── Buttons ────────────────────────────────────────────────
+  --color-button-background: #f472b6;     // pink-400
+  --color-button-text: #fff;
+
+  // ── Shadows ────────────────────────────────────────────────
+  --shadow-large: 0 0.25em 1.75em rgb(244 114 182 / 0.18);
+  --shadow-small: 0 0.25em 0.5em rgb(244 114 182 / 0.12);
+
+  // ── Status: success ────────────────────────────────────────
+  --success-rgb: 52 211 153;              // emerald-400
+  --color-success: rgb(var(--success-rgb));
+
+  // ── Status: danger ─────────────────────────────────────────
+  --danger-rgb: 225 29 72;                // rose-600
+  --color-danger: rgb(var(--danger-rgb));
+
+  // ── Status: warning ────────────────────────────────────────
+  --warning-rgb: 251 146 60;              // orange-400
+  --color-warning: rgb(var(--warning-rgb));
+
+  // ── Status: info (baby blue) ───────────────────────────────
+  --info-rgb: 96 165 250;                 // blue-400
+  --color-info: rgb(var(--info-rgb));
+
+  // ── System colors ──────────────────────────────────────────
+  --color-system-default: var(--color-text-primary);
+  --color-system-default-background: var(--color-background-tertiary);
+  --color-system-red: var(--color-default-red);
+  --color-system-red-background: var(--color-default-red);
+  --color-system-pink: var(--color-default-pink);
+  --color-system-pink-background: var(--color-default-pink);
+  --color-system-purple: var(--color-default-purple);
+  --color-system-purple-background: var(--color-default-purple);
+  --color-system-indigo: var(--color-default-indigo);
+  --color-system-indigo-background: var(--color-default-indigo);
+  --color-system-blue: var(--color-default-blue);
+  --color-system-blue-background: var(--color-default-blue);
+  --color-system-cyan: var(--color-default-cyan);
+  --color-system-cyan-background: var(--color-default-cyan);
+  --color-system-teal: var(--color-default-teal);
+  --color-system-teal-background: var(--color-default-teal);
+  --color-system-green: var(--color-default-green);
+  --color-system-green-background: var(--color-default-green);
+  --color-system-lime: var(--color-default-lime);
+  --color-system-lime-background: var(--color-default-lime);
+  --color-system-yellow: var(--color-default-yellow);
+  --color-system-yellow-background: var(--color-default-yellow);
+  --color-system-amber: var(--color-default-amber);
+  --color-system-amber-background: var(--color-default-amber);
+  --color-system-orange: var(--color-default-orange);
+  --color-system-orange-background: var(--color-default-orange);
+  --color-system-brown: var(--color-default-brown);
+  --color-system-brown-background: var(--color-default-brown);
+  --color-system-grey: var(--color-default-grey);
+  --color-system-grey-background: var(--color-default-grey);
+  --color-system-blue-grey: var(--color-default-blue-grey);
+  --color-system-blue-grey-background: var(--color-default-blue-grey);
+}
+
+// ════════════════════════════════════════════════════════════════
+// BAMBI THEME
+// Dusty / pastel Barbie pink – light theme with warm pinks,
+// dark maroon text, and periwinkle-blue accents.
+// Fonts: Fredoka One (display) / Nunito (body).
+// ════════════════════════════════════════════════════════════════
+html.bambi {
+  --font-display: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+
+  // Brand
+  --brand-color: #D46A8A;           // dusty rose
+  --brand-color-dark: #A84868;      // deep dusty rose
+  --brand-rgb: 212 106 138;
+  --brand-dark-rgb: 168 72 104;
+
+  // ── Text ───────────────────────────────────────────────────
+  --text-primary-rgb: 74 21 37;            // dark maroon
+  --text-secondary-rgb: 138 48 80;         // medium maroon
+  --text-tertiary-rgb: 175 90 120;         // muted rose
+  --color-text-primary: rgb(var(--text-primary-rgb));
+  --color-text-secondary: rgb(var(--text-secondary-rgb));
+  --color-text-tertiary: rgb(var(--text-tertiary-rgb));
+  --color-text-warning: #9B2C2C;           // dark red
+  --color-text-link: #5A6BBE;              // periwinkle
+
+  // ── Backgrounds ────────────────────────────────────────────
+  --surface-rgb: 232 148 158;             // medium pink
+  --surface-secondary-rgb: 240 173 184;   // light pink
+  --surface-tertiary-rgb: 244 192 202;    // pale pink
+  --color-background-primary: rgb(var(--surface-rgb));
+  --color-background-secondary: rgb(var(--surface-secondary-rgb));
+  --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  --color-background-modal: rgb(232 148 158 / 0.92);
+  --color-background-warning: rgb(200 50 50 / 0.15);
+
+  // ── Borders ────────────────────────────────────────────────
+  --edge-rgb: 212 106 138;                // dusty rose border
+  --edge-secondary-rgb: 190 80 115;       // deeper rose border
+  --color-border: rgb(var(--edge-rgb));
+  --color-border-secondary: rgb(var(--edge-secondary-rgb));
+
+  // ── Accent (periwinkle blue) ───────────────────────────────
+  --accent-rgb: 112 128 204;              // periwinkle
+  --accent-muted-rgb: 80 95 165;          // deep periwinkle
+  --accent-subtle-rgb: 112 128 204;
+  --accent-text-rgb: 70 85 160;           // readable periwinkle
+
+  // ── Active / selection ─────────────────────────────────────
+  --color-active: #5A6BBE;                // periwinkle
+  --color-background-active: #F4C0CA;     // pale pink
+
+  // ── Buttons ────────────────────────────────────────────────
+  --color-button-background: #D46A8A;     // dusty rose
+  --color-button-text: #fff;
+
+  // ── Shadows ────────────────────────────────────────────────
+  --shadow-large: 0 0.25em 1.75em rgb(168 72 104 / 0.25);
+  --shadow-small: 0 0.25em 0.5em rgb(168 72 104 / 0.2);
+
+  // ── Status: success ────────────────────────────────────────
+  --success-rgb: 22 163 74;               // green-600
+  --color-success: rgb(var(--success-rgb));
+
+  // ── Status: danger ─────────────────────────────────────────
+  --danger-rgb: 185 28 28;                // red-700
+  --color-danger: rgb(var(--danger-rgb));
+
+  // ── Status: warning ────────────────────────────────────────
+  --warning-rgb: 217 119 6;               // amber-600
+  --color-warning: rgb(var(--warning-rgb));
+
+  // ── Status: info ───────────────────────────────────────────
+  --info-rgb: 112 128 204;                // periwinkle
+  --color-info: rgb(var(--info-rgb));
+
+  // ── System colors ──────────────────────────────────────────
+  --color-system-default: var(--color-text-primary);
+  --color-system-default-background: var(--color-background-tertiary);
+  --color-system-red: var(--color-default-red);
+  --color-system-red-background: var(--color-default-red);
+  --color-system-pink: var(--color-default-pink);
+  --color-system-pink-background: var(--color-default-pink);
+  --color-system-purple: var(--color-default-purple);
+  --color-system-purple-background: var(--color-default-purple);
+  --color-system-indigo: var(--color-default-indigo);
+  --color-system-indigo-background: var(--color-default-indigo);
+  --color-system-blue: var(--color-default-blue);
+  --color-system-blue-background: var(--color-default-blue);
+  --color-system-cyan: var(--color-default-cyan);
+  --color-system-cyan-background: var(--color-default-cyan);
+  --color-system-teal: var(--color-default-teal);
+  --color-system-teal-background: var(--color-default-teal);
+  --color-system-green: var(--color-default-green);
+  --color-system-green-background: var(--color-default-green);
+  --color-system-lime: var(--color-default-lime);
+  --color-system-lime-background: var(--color-default-lime);
+  --color-system-yellow: var(--color-default-yellow);
+  --color-system-yellow-background: var(--color-default-yellow);
+  --color-system-amber: var(--color-default-amber);
+  --color-system-amber-background: var(--color-default-amber);
+  --color-system-orange: var(--color-default-orange);
+  --color-system-orange-background: var(--color-default-orange);
+  --color-system-brown: var(--color-default-brown);
+  --color-system-brown-background: var(--color-default-brown);
+  --color-system-grey: var(--color-default-grey);
+  --color-system-grey-background: var(--color-default-grey);
+  --color-system-blue-grey: var(--color-default-blue-grey);
+  --color-system-blue-grey-background: var(--color-default-blue-grey);
+}
+
+// ════════════════════════════════════════════════════════════════
+// BARBI THEME
+// Hot pink / magenta neon palette. Glam, bold, saturated.
+// Fonts: Fredoka One (display) / Nunito (body).
+// ════════════════════════════════════════════════════════════════
+html.barbi {
+  --font-display: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+
+  // Brand
+  --brand-color: #ff00bf;           // electric magenta
+  --brand-color-dark: #99006e;      // deep magenta
+  --brand-rgb: 255 0 191;
+  --brand-dark-rgb: 153 0 110;
+
+  // ── Text ───────────────────────────────────────────────────
+  --text-primary-rgb: 255 255 255;         // white on magenta
+  --text-secondary-rgb: 255 200 235;       // pale pink
+  --text-tertiary-rgb: 230 150 200;        // muted pink
+  --color-text-primary: rgb(var(--text-primary-rgb));
+  --color-text-secondary: rgb(var(--text-secondary-rgb));
+  --color-text-tertiary: rgb(var(--text-tertiary-rgb));
+  --color-text-warning: #fda4af;           // rose-300
+  --color-text-link: #f0abfc;              // fuchsia-300
+
+  // ── Backgrounds ────────────────────────────────────────────
+  --surface-rgb: 140 0 100;               // deep magenta
+  --surface-secondary-rgb: 170 0 120;     // hot magenta
+  --surface-tertiary-rgb: 200 0 145;      // bright magenta
+  --color-background-primary: rgb(var(--surface-rgb));
+  --color-background-secondary: rgb(var(--surface-secondary-rgb));
+  --color-background-tertiary: rgb(var(--surface-tertiary-rgb));
+  --color-background-modal: rgb(140 0 100 / 0.92);
+  --color-background-warning: rgb(255 80 120 / 0.25);
+
+  // ── Borders ────────────────────────────────────────────────
+  --edge-rgb: 210 0 150;                  // magenta border
+  --edge-secondary-rgb: 240 50 180;       // bright magenta border
+  --color-border: rgb(var(--edge-rgb));
+  --color-border-secondary: rgb(var(--edge-secondary-rgb));
+
+  // ── Accent (fuchsia / hot pink) ────────────────────────────
+  --accent-rgb: 255 0 191;                // electric magenta
+  --accent-muted-rgb: 180 0 130;          // deep magenta
+  --accent-subtle-rgb: 255 0 191;
+  --accent-text-rgb: 255 150 230;         // bright pink
+
+  // ── Active / selection ─────────────────────────────────────
+  --color-active: #ff00bf;                // electric magenta
+  --color-background-active: #b8006e;     // vivid magenta
+
+  // ── Buttons ────────────────────────────────────────────────
+  --color-button-background: #ff00bf;     // electric magenta
+  --color-button-text: #fff;
+
+  // ── Shadows ────────────────────────────────────────────────
+  --shadow-large: 0 0.25em 1.75em rgb(255 0 191 / 0.4);
+  --shadow-small: 0 0.25em 0.5em rgb(255 0 191 / 0.3);
+
+  // ── Status: success ────────────────────────────────────────
+  --success-rgb: 52 211 153;              // emerald-400
+  --color-success: rgb(var(--success-rgb));
+
+  // ── Status: danger ─────────────────────────────────────────
+  --danger-rgb: 225 29 72;                // rose-600
+  --color-danger: rgb(var(--danger-rgb));
+
+  // ── Status: warning ────────────────────────────────────────
+  --warning-rgb: 251 146 60;              // orange-400
+  --color-warning: rgb(var(--warning-rgb));
+
+  // ── Status: info ───────────────────────────────────────────
+  --info-rgb: 232 121 249;                // fuchsia-400
+  --color-info: rgb(var(--info-rgb));
+
+  // ── System colors ──────────────────────────────────────────
+  --color-system-default: var(--color-text-primary);
+  --color-system-default-background: var(--color-background-tertiary);
+  --color-system-red: var(--color-default-red);
+  --color-system-red-background: var(--color-default-red);
+  --color-system-pink: var(--color-default-pink);
+  --color-system-pink-background: var(--color-default-pink);
+  --color-system-purple: var(--color-default-purple);
+  --color-system-purple-background: var(--color-default-purple);
+  --color-system-indigo: var(--color-default-indigo);
+  --color-system-indigo-background: var(--color-default-indigo);
+  --color-system-blue: var(--color-default-blue);
+  --color-system-blue-background: var(--color-default-blue);
+  --color-system-cyan: var(--color-default-cyan);
+  --color-system-cyan-background: var(--color-default-cyan);
+  --color-system-teal: var(--color-default-teal);
+  --color-system-teal-background: var(--color-default-teal);
+  --color-system-green: var(--color-default-green);
+  --color-system-green-background: var(--color-default-green);
+  --color-system-lime: var(--color-default-lime);
+  --color-system-lime-background: var(--color-default-lime);
+  --color-system-yellow: var(--color-default-yellow);
+  --color-system-yellow-background: var(--color-default-yellow);
+  --color-system-amber: var(--color-default-amber);
+  --color-system-amber-background: var(--color-default-amber);
+  --color-system-orange: var(--color-default-orange);
+  --color-system-orange-background: var(--color-default-orange);
+  --color-system-brown: var(--color-default-brown);
+  --color-system-brown-background: var(--color-default-brown);
+  --color-system-grey: var(--color-default-grey);
+  --color-system-grey-background: var(--color-default-grey);
+  --color-system-blue-grey: var(--color-default-blue-grey);
+  --color-system-blue-grey-background: var(--color-default-blue-grey);
 }

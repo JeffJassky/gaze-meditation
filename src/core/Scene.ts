@@ -118,8 +118,8 @@ export class Scene {
 
 	private createBehavior(suggestion: BehaviorSuggestion): Behavior | null {
 		const options = {
-			duration: suggestion.duration,
-			failBehavior: suggestion.failBehavior,
+			...(suggestion.duration != null && { duration: suggestion.duration }),
+			...(suggestion.failBehavior != null && { failBehavior: suggestion.failBehavior }),
 			...suggestion.options,
 		}
 

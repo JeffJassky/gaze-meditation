@@ -4,6 +4,7 @@ import SceneTextPanel from './SceneTextPanel.vue'
 import { VOICES_KEY } from './voicesKey'
 import { BEHAVIOR_BY_TYPE } from './behaviorCatalog'
 import { SOUNDBOARD_SAMPLES_KEY } from './soundboardSamplesKey'
+import SceneFeatureBar from './SceneFeatureBar.vue'
 import type { SceneBlock } from '@/api/sessions'
 
 /**
@@ -67,6 +68,7 @@ interface SceneTheme {
 	backgroundColor?: string
 	uiTextColor?: string
 	promptTextColor?: string
+	tint?: { color: string; opacity: number }
 }
 const themeOverride = computed<SceneTheme | null>(() => {
 	const t = scene.value.config?.theme
@@ -102,6 +104,17 @@ const soundboardEvents = computed(() => {
 	})
 })
 
+// --- Haptic events ---------------------------------------------------------
+import { HAPTIC_PRESETS } from '@shared/constants/haptics'
+const hapticEvents = computed(() => {
+	const evts = scene.value.config?.haptics?.events
+	if (!evts || evts.length === 0) return []
+	return evts.map((e) => {
+		const preset = HAPTIC_PRESETS.find((p) => p.key === e.id)
+		return { event: e.event, name: preset?.label ?? e.id }
+	})
+})
+
 function msToDisplaySeconds(ms: number | undefined): number | null {
 	if (ms === undefined || !Number.isFinite(ms) || ms <= 0) return null
 	return Math.round((ms / 1000) * 10) / 10
@@ -115,6 +128,105 @@ const fadeInSeconds = computed<number | null>(() =>
 const fadeOutSeconds = computed<number | null>(() =>
 	msToDisplaySeconds(scene.value.config?.fadeOutDuration),
 )
+
+// --- Theme setters (active scene) -------------------------------------------
+import { normalizeHex } from '@/utils/colorInput'
+
+function setBackgroundColor(v: string) {
+	const theme = { ...(configModel.value.theme ?? {}) }
+	const normalized = normalizeHex(v)
+	if (!normalized) delete theme.backgroundColor
+	else theme.backgroundColor = normalized
+	configModel.value.theme = Object.keys(theme).length > 0 ? theme : undefined
+}
+
+function setTintColor(v: string) {
+	const theme = { ...(configModel.value.theme ?? {}) }
+	const normalized = normalizeHex(v)
+	if (!normalized) {
+		delete theme.tint
+	} else {
+		theme.tint = { color: normalized, opacity: theme.tint?.opacity ?? 0.3 }
+	}
+	configModel.value.theme = Object.keys(theme).length > 0 ? theme : undefined
+}
+
+function setTintOpacity(v: string) {
+	const n = Number(v)
+	if (Number.isNaN(n)) return
+	const theme = { ...(configModel.value.theme ?? {}) }
+	theme.tint = { color: theme.tint?.color ?? '#000000', opacity: n }
+	configModel.value.theme = theme
+}
+
+function setPromptTextColor(v: string) {
+	const theme = { ...(configModel.value.theme ?? {}) }
+	const normalized = normalizeHex(v)
+	if (!normalized) delete theme.promptTextColor
+	else theme.promptTextColor = normalized
+	configModel.value.theme = Object.keys(theme).length > 0 ? theme : undefined
+}
+
+// --- Timing setters (active scene) ------------------------------------------
+function setFadeIn(v: string) {
+	const n = Number(v)
+	configModel.value.fadeInDuration = n > 0 ? n * 1000 : undefined
+}
+function setFadeOut(v: string) {
+	const n = Number(v)
+	configModel.value.fadeOutDuration = n > 0 ? n * 1000 : undefined
+}
+function setCooldown(v: string) {
+	const n = Number(v)
+	configModel.value.cooldown = n > 0 ? n * 1000 : undefined
+}
+
+// --- Inline voice/text editing (active scene) ------------------------------
+const voiceRef = ref<HTMLTextAreaElement | null>(null)
+const textRef = ref<HTMLTextAreaElement | null>(null)
+
+function toText(v: unknown): string {
+	if (Array.isArray(v)) return v.join('\n')
+	if (typeof v === 'string') return v
+	return ''
+}
+function fromText(v: string): string | string[] {
+	const lines = v.split('\n').map((l) => l.trimEnd())
+	const meaningful = lines.filter((l) => l.length > 0)
+	return meaningful.length > 1 ? lines : v
+}
+
+const voiceText = computed(() => toText(configModel.value.voice))
+const onScreenText = computed(() => toText(configModel.value.text))
+
+function onVoiceInput(e: Event) {
+	configModel.value.voice = fromText((e.target as HTMLTextAreaElement).value)
+}
+function onTextInput(e: Event) {
+	configModel.value.text = fromText((e.target as HTMLTextAreaElement).value)
+}
+function onVoiceEnter(e: KeyboardEvent) {
+	if (e.shiftKey) return
+	e.preventDefault()
+	textRef.value?.focus()
+}
+function onTextEnter(e: KeyboardEvent) {
+	if (e.shiftKey) return
+	e.preventDefault()
+	emit('advance')
+}
+function onVoiceBackspace(e: KeyboardEvent) {
+	if (voiceText.value.length === 0 && onScreenText.value.length === 0) {
+		e.preventDefault()
+		emit('deleteBackward')
+	}
+}
+function onTextBackspace(e: KeyboardEvent) {
+	if (onScreenText.value.length === 0) {
+		e.preventDefault()
+		voiceRef.value?.focus()
+	}
+}
 
 // --- Handle flyout ---------------------------------------------------------
 const menuOpen = ref(false)
@@ -147,21 +259,7 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 				? { backgroundColor: themeOverride.backgroundColor }
 				: undefined
 		"
-		@click="$emit('select')">
-		<!-- Fade-in pill straddles the top border of the scene. Only
-		     visible when the scene is selected. -->
-		<span
-			v-if="active && fadeInSeconds !== null"
-			class="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary border border-edge-secondary text-[10px] font-mono tracking-wider text-content-secondary pointer-events-none">
-			{{ fadeInSeconds }}s fade in
-		</span>
-		<!-- Fade-out pill straddles the bottom border of the scene. Only
-		     visible when the scene is selected. -->
-		<span
-			v-if="active && fadeOutSeconds !== null"
-			class="absolute -bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center px-2 py-0.5 rounded-full bg-surface-tertiary border border-edge-secondary text-[10px] font-mono tracking-wider text-content-secondary pointer-events-none">
-			{{ fadeOutSeconds }}s fade out
-		</span>
+		@click.stop="$emit('select')">
 
 		<!-- Drag handle + flyout. Visible on hover, always visible when
 		     this scene is the selected one. -->
@@ -207,114 +305,265 @@ onBeforeUnmount(() => window.removeEventListener('click', onWindowClick))
 			</div>
 		</div>
 
-		<!-- Script body: voice picker to the left of the voice textarea. -->
-		<div class="flex items-start gap-3">
-			<div
-				v-if="voicesState?.enabled.value && voicesState?.voiceOrigin.value === 'ai'"
-				class="relative shrink-0 pt-[6px]">
-				<div
-					class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors max-w-[150px] text-content-secondary hover:bg-surface-tertiary/60 hover:text-content"
-					:title="`Voice: ${currentVoiceName}`">
-					<!-- Speaking head icon -->
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="13"
-						height="13"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.8"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true">
-						<circle cx="9" cy="9" r="5" />
-						<path d="M9 14v3" />
-						<path d="M6 17h6" />
-						<path d="M15 8c1.5 0 2.5 1 2.5 2" />
-						<path d="M16 5c3 0 5 2 5 5" />
-					</svg>
-					<span class="truncate">{{ currentVoiceName }}</span>
-				</div>
-				<select
-					v-model="voiceOverrideId"
-					tabindex="-1"
-					class="absolute inset-0 opacity-0 cursor-pointer w-full"
-					@click.stop>
-					<option value="">— Session default —</option>
-					<option
-						v-for="v in voicesState.voices.value"
-						:key="v.voice_id"
-						:value="v.voice_id">
-						{{ v.name }}{{ v.category ? ` (${v.category})` : '' }}
-					</option>
-				</select>
-			</div>
-			<div class="flex-1 min-w-0">
-				<SceneTextPanel
-					v-model="configModel"
-					:voice-color="themeOverride?.uiTextColor"
-					:text-color="themeOverride?.promptTextColor"
-					@advance="$emit('advance')"
-					@delete-backward="$emit('deleteBackward')" />
-			</div>
-
+		<!-- Fade In row (hidden for now) -->
+		<div v-if="false && (active || fadeInSeconds !== null)" class="flex items-center gap-2 px-2 py-1">
+			<svg class="shrink-0 w-3 text-content-tertiary" width="12" height="12" viewBox="0 0 24 24" fill="none"
+				stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M2 20 L22 4" /><path d="M2 20 L22 20" />
+			</svg>
+			<span class="text-[11px] text-content-tertiary opacity-50 shrink-0 w-[86px]">Fade in</span>
+			<input
+				v-if="active"
+				type="number"
+				min="0" step="0.5" placeholder="auto"
+				class="w-[66px] bg-surface-tertiary/40 rounded px-1.5 py-0.5 border-0 outline-none text-[11px] text-content-secondary tabular-nums placeholder-content-tertiary/50 focus:bg-surface-tertiary/60 transition"
+				:value="fadeInSeconds ?? ''"
+				@input="setFadeIn(($event.target as HTMLInputElement).value)" />
+			<span v-else class="text-[11px] text-content-secondary tabular-nums">{{ fadeInSeconds }}s</span>
 		</div>
 
-		<!-- Right-side metadata: behaviors + binaural, hanging OUTSIDE
-		     the scene container in the right margin so the container
-		     itself stays pure script. -->
-		<div
-			v-if="behaviorSummary || binauralHz !== null || soundboardEvents.length > 0"
-			class="absolute top-4 left-full ml-4 flex flex-col items-start gap-1.5 text-[11px] text-content-tertiary w-[130px] pointer-events-none">
-			<div
-				v-if="behaviorLabels.length > 0"
-				class="inline-flex items-center flex-wrap px-2 py-0.5 rounded-full bg-info/10 border border-info/30 text-info leading-tight gap-x-1"
-				:title="behaviorSummary">
-				<template v-for="(label, idx) in behaviorLabels" :key="idx">
-					<span v-if="idx > 0" class="text-white font-bold">+</span>
-					<span class="whitespace-nowrap">{{ label }}</span>
-				</template>
+		<!-- Background Color row -->
+		<div v-if="active || themeOverride?.backgroundColor" class="flex items-center gap-2 px-2 py-1">
+			<label
+				class="shrink-0 relative w-3 h-3"
+				:class="active ? 'cursor-pointer' : ''"
+				v-tooltip="active && themeOverride?.backgroundColor ? 'Double-click to clear' : undefined"
+				@dblclick.prevent="active && themeOverride?.backgroundColor ? setBackgroundColor('') : undefined">
+				<span
+					class="block w-full h-full rounded-sm border border-edge"
+					:style="{ backgroundColor: themeOverride?.backgroundColor || 'transparent' }" />
+				<input
+					v-if="active"
+					type="color"
+					class="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none border-0 p-0"
+					:value="themeOverride?.backgroundColor || '#000000'"
+					@input="setBackgroundColor(($event.target as HTMLInputElement).value)" />
+			</label>
+			<span class="text-[11px] text-content-tertiary opacity-50 shrink-0 w-[86px]">Background</span>
+			<input
+				v-if="active"
+				class="w-[66px] bg-surface-tertiary/40 rounded px-1.5 py-0.5 border-0 outline-none text-[11px] text-content-secondary font-mono placeholder-content-tertiary/50 focus:bg-surface-tertiary/60 transition"
+				:value="themeOverride?.backgroundColor ?? ''"
+				placeholder="#hex"
+				@input="setBackgroundColor(($event.target as HTMLInputElement).value)" />
+			<span v-else class="text-[11px] text-content-secondary font-mono">{{ themeOverride?.backgroundColor }}</span>
+		</div>
+
+		<!-- Tint Color + Opacity row -->
+		<div v-if="active || themeOverride?.tint?.color" class="flex items-center gap-2 px-2 py-1">
+			<label
+				class="shrink-0 relative w-3 h-3"
+				:class="active ? 'cursor-pointer' : ''"
+				v-tooltip="active && themeOverride?.tint?.color ? 'Double-click to clear' : undefined"
+				@dblclick.prevent="active && themeOverride?.tint?.color ? setTintColor('') : undefined">
+				<span
+					class="block w-full h-full rounded-sm border border-edge"
+					:style="{ backgroundColor: themeOverride?.tint?.color || 'transparent' }" />
+				<input
+					v-if="active"
+					type="color"
+					class="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none border-0 p-0"
+					:value="themeOverride?.tint?.color || '#000000'"
+					@input="setTintColor(($event.target as HTMLInputElement).value)" />
+			</label>
+			<span class="text-[11px] text-content-tertiary opacity-50 shrink-0 w-[86px]">Tint</span>
+			<template v-if="active">
+				<input
+					v-if="themeOverride?.tint?.color"
+					type="range"
+					class="w-16 h-1 rounded-full appearance-none cursor-pointer"
+					style="background: #3f3f46"
+					min="0" max="1" step="0.05"
+					:value="themeOverride?.tint?.opacity ?? 0.3"
+					@input="setTintOpacity(($event.target as HTMLInputElement).value)" />
+				<input
+					class="w-[66px] bg-surface-tertiary/40 rounded px-1.5 py-0.5 border-0 outline-none text-[11px] text-content-secondary font-mono placeholder-content-tertiary/50 focus:bg-surface-tertiary/60 transition"
+					:value="themeOverride?.tint?.color ?? ''"
+					placeholder="#hex"
+					@input="setTintColor(($event.target as HTMLInputElement).value)" />
+			</template>
+			<span v-else class="text-[11px] text-content-secondary font-mono">{{ themeOverride?.tint?.color }}</span>
+		</div>
+
+		<!-- Feature action rows (Audio, Haptics, Binaural, Behaviors) -->
+		<SceneFeatureBar v-if="active" v-model="configModel" />
+		<!-- Non-selected: show feature summaries in same row layout -->
+		<template v-else>
+			<div v-if="soundboardEvents.length > 0" class="flex items-start gap-2 px-2 py-1">
+				<svg class="shrink-0 w-3 text-success mt-[2px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
+					stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+					<path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+					<path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+				</svg>
+				<span class="shrink-0 w-[86px] text-[11px] text-success opacity-50 mt-px">FX Soundboard</span>
+				<div class="flex-1 min-w-0 flex flex-col">
+					<span v-for="(ev, i) in soundboardEvents" :key="'sb-' + i"
+						class="text-[11px] truncate"
+						:class="ev.event === 'start' ? 'text-success' : 'text-danger'">{{ ev.event === 'start' ? '▶' : '■' }} {{ ev.name }}</span>
+				</div>
 			</div>
-			<div
-				v-if="binauralHz !== null"
-				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand/10 border border-brand/30 text-brand tabular-nums leading-tight"
-				:title="`Binaural ${binauralHz} Hz`">
-				<svg
-					width="10"
-					height="10"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.8"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true">
+			<div v-if="hapticEvents.length > 0" class="flex items-start gap-2 px-2 py-1">
+				<svg class="shrink-0 w-3 text-warning mt-[2px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
+					stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M2 8v8" /><path d="M6 4v16" /><rect x="10" y="2" width="4" height="20" rx="1" /><path d="M18 4v16" /><path d="M22 8v8" />
+				</svg>
+				<span class="shrink-0 w-[86px] text-[11px] text-warning opacity-50 mt-px">Haptics</span>
+				<div class="flex-1 min-w-0 flex flex-col">
+					<span v-for="(ev, i) in hapticEvents" :key="'hp-' + i"
+						class="text-[11px] truncate"
+						:class="ev.event === 'start' ? 'text-success' : 'text-danger'">{{ ev.event === 'start' ? '▶' : '■' }} {{ ev.name }}</span>
+				</div>
+			</div>
+			<div v-if="binauralHz !== null" class="flex items-center gap-2 px-2 py-1 text-brand">
+				<svg class="shrink-0 w-3" width="12" height="12" viewBox="0 0 24 24" fill="none"
+					stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M3 14v-3a9 9 0 0 1 18 0v3" />
 					<path d="M21 14a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h3z" />
 					<path d="M3 14a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H3z" />
 				</svg>
-				<span>{{ binauralHz }} Hz</span>
+				<span class="shrink-0 w-[86px] text-[11px] opacity-50">Binaural</span>
+				<span class="text-[11px]">{{ binauralHz }} Hz</span>
 			</div>
-			<div
-				v-for="(ev, idx) in soundboardEvents"
-				:key="'sb-' + idx"
-				class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full leading-tight whitespace-nowrap"
-				:class="ev.event === 'start'
-					? 'bg-success/10 border border-success/30 text-success'
-					: 'bg-danger/10 border border-danger/30 text-danger'">
-				<span class="text-[9px]">{{ ev.event === 'start' ? '&#9654;' : '&#9632;' }}</span>
-				<span class="truncate max-w-[90px]">{{ ev.name }}</span>
+			<div v-if="behaviorLabels.length > 0" class="flex items-center gap-2 px-2 py-1 text-info">
+				<svg class="shrink-0 w-3" width="12" height="12" viewBox="0 0 24 24" fill="none"
+					stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="8" r="5" />
+					<path d="M20 21a8 8 0 0 0-16 0" />
+				</svg>
+				<span class="shrink-0 w-[86px] text-[11px] opacity-50">Behaviors</span>
+				<span class="flex-1 min-w-0 text-[11px] truncate">{{ behaviorSummary }}</span>
 			</div>
+		</template>
+
+		<!-- Voice row -->
+		<div class="flex items-start gap-2 px-2 py-1">
+			<svg class="shrink-0 w-3 text-content-tertiary mt-[7px]" width="12" height="12" viewBox="0 0 24 24" fill="none"
+				stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+				<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+				<line x1="12" x2="12" y1="19" y2="22" />
+			</svg>
+			<div class="shrink-0 w-[86px] pt-[5px]">
+				<div
+					v-if="voicesState?.enabled.value && voicesState?.voiceOrigin.value === 'ai'"
+					class="relative">
+					<div
+						class="text-[11px] text-content-tertiary hover:text-content transition-colors cursor-pointer truncate"
+						:title="`Voice: ${currentVoiceName}`">
+						{{ currentVoiceName }}
+					</div>
+					<select
+						v-model="voiceOverrideId"
+						tabindex="-1"
+						class="absolute inset-0 opacity-0 cursor-pointer w-full"
+						@click.stop>
+						<option value="">— Session default —</option>
+						<option
+							v-for="v in voicesState.voices.value"
+							:key="v.voice_id"
+							:value="v.voice_id">
+							{{ v.name }}{{ v.category ? ` (${v.category})` : '' }}
+						</option>
+					</select>
+				</div>
+				<span v-else class="text-[11px] text-content-tertiary opacity-50">Voice</span>
+			</div>
+			<div class="flex-1 min-w-0">
+				<textarea
+					ref="voiceRef"
+					:value="voiceText"
+					data-field="voice"
+					placeholder="What the narrator says…"
+					class="w-full bg-transparent border-0 outline-none resize-none px-0 py-0.5 placeholder-content-tertiary font-serif text-[17px] leading-[1.6] min-h-[2em]"
+					:style="{
+						'field-sizing': 'content',
+						color: themeOverride?.uiTextColor || '#cec2af',
+					}"
+					@input="onVoiceInput"
+					@keydown.enter="onVoiceEnter"
+					@keydown.backspace="onVoiceBackspace"
+					@keydown.delete="onVoiceBackspace" />
+			</div>
+		</div>
+
+		<!-- On-screen text row -->
+		<div v-if="active || onScreenText" class="flex items-start gap-2 px-2 py-1">
+			<label
+				class="shrink-0 relative w-3 h-3 mt-[5px]"
+				:class="active ? 'cursor-pointer' : ''"
+				v-tooltip="active && themeOverride?.promptTextColor ? 'Double-click to clear color' : undefined"
+				@dblclick.prevent="active && themeOverride?.promptTextColor ? setPromptTextColor('') : undefined">
+				<span
+					class="block w-full h-full rounded-sm border border-edge"
+					:style="{ backgroundColor: themeOverride?.promptTextColor || 'transparent' }" />
+				<input
+					v-if="active"
+					type="color"
+					class="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none border-0 p-0"
+					:value="themeOverride?.promptTextColor || '#999999'"
+					@input="setPromptTextColor(($event.target as HTMLInputElement).value)" />
+			</label>
+			<span class="shrink-0 w-[86px] text-[11px] text-content-tertiary opacity-50 pt-[3px]">Text</span>
+			<div class="flex-1 min-w-0">
+				<textarea
+					ref="textRef"
+					:value="onScreenText"
+					data-field="text"
+					placeholder="On-screen text…"
+					class="w-full bg-transparent border-0 outline-none resize-none px-0 py-0.5 text-content placeholder-content-tertiary text-[16px] leading-[1.6] min-h-[1.5em] font-semibold"
+					:style="{
+						'field-sizing': 'content',
+						...(themeOverride?.promptTextColor ? { color: themeOverride.promptTextColor } : {}),
+					}"
+					@input="onTextInput"
+					@keydown.enter="onTextEnter"
+					@keydown.backspace="onTextBackspace"
+					@keydown.delete="onTextBackspace" />
+			</div>
+		</div>
+
+		<!-- Fade Out row (hidden for now) -->
+		<div v-if="false && (active || fadeOutSeconds !== null)" class="flex items-center gap-2 px-2 py-1">
+			<svg class="shrink-0 w-3 text-content-tertiary" width="12" height="12" viewBox="0 0 24 24" fill="none"
+				stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M2 4 L22 20" /><path d="M2 20 L22 20" />
+			</svg>
+			<span class="text-[11px] text-content-tertiary opacity-50 shrink-0 w-[86px]">Fade out</span>
+			<input
+				v-if="active"
+				type="number"
+				min="0" step="0.5" placeholder="auto"
+				class="w-[66px] bg-surface-tertiary/40 rounded px-1.5 py-0.5 border-0 outline-none text-[11px] text-content-secondary tabular-nums placeholder-content-tertiary/50 focus:bg-surface-tertiary/60 transition"
+				:value="fadeOutSeconds ?? ''"
+				@input="setFadeOut(($event.target as HTMLInputElement).value)" />
+			<span v-else class="text-[11px] text-content-secondary tabular-nums">{{ fadeOutSeconds }}s</span>
+		</div>
+
+		<!-- Break / Cooldown row -->
+		<div v-if="active || cooldownSeconds !== null" class="flex items-center gap-2 px-2 py-1">
+			<svg class="shrink-0 w-3 text-content-tertiary" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+				<rect x="5" y="3" width="5" height="18" rx="1" /><rect x="14" y="3" width="5" height="18" rx="1" />
+			</svg>
+			<span class="text-[11px] text-content-tertiary opacity-50 shrink-0 w-[86px]">Break</span>
+			<input
+				v-if="active"
+				type="number"
+				min="0" step="0.5" placeholder="auto"
+				class="w-[66px] bg-surface-tertiary/40 rounded px-1.5 py-0.5 border-0 outline-none text-[11px] text-content-secondary tabular-nums placeholder-content-tertiary/50 focus:bg-surface-tertiary/60 transition"
+				:value="cooldownSeconds ?? ''"
+				@input="setCooldown(($event.target as HTMLInputElement).value)" />
+			<span v-else class="text-[11px] text-content-secondary tabular-nums">{{ cooldownSeconds }}s</span>
 		</div>
 	</section>
 
-	<!-- Cooldown pill sits outside the scene container, in the gap to
-	     the next stack item. Clicking anywhere on it selects the scene,
-	     same as clicking anywhere else on the scene body. -->
+	<hr class="border-edge my-1" />
+
+	<!-- Cooldown indicator for non-selected scenes (shows between scenes) -->
 	<div
-		v-if="cooldownSeconds !== null"
+		v-if="!active && cooldownSeconds !== null"
 		class="flex justify-center -mt-3 -mb-3 cursor-text"
-		@click="$emit('select')">
+		@click.stop="$emit('select')">
 		<span
 			class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-secondary text-[10px] font-mono tracking-wider text-content-tertiary">
 			{{ cooldownSeconds }}s break

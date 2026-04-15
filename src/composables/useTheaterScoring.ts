@@ -19,17 +19,60 @@ export function useTheaterScoring() {
 	const sessionReport = ref<SessionReport | undefined>(undefined)
 	const startTimeRef = ref(Date.now())
 
+	/** Server-side run ID, set after POST on session start. */
+	let activeRunId: string | null = null
+
 	/** Call when starting a new session or replaying. */
 	function resetForSession() {
 		score.value = 0
 		metricsRef.value = []
 		sessionReport.value = undefined
 		startTimeRef.value = Date.now()
+		activeRunId = null
 	}
 
 	/** Call when scene 0 begins. */
 	function startTracking() {
 		sessionTracker.startSession()
+	}
+
+	/**
+	 * Create a partial run on the server at session start so stats
+	 * recalculate immediately (even before session completes).
+	 */
+	async function beginRun(sessionId: string, sessionTitle: string, totalScenes: number) {
+		try {
+			const run = await historyApi.create({
+				programId: sessionId,
+				programTitle: sessionTitle,
+				startTime: new Date(startTimeRef.value).toISOString(),
+				totalScenes,
+			})
+			activeRunId = run.id
+		} catch (err) {
+			console.warn('[TheaterScoring] failed to create run on start', err)
+		}
+	}
+
+	/**
+	 * PATCH the active run with current progress (call after scene completion).
+	 */
+	function syncProgress(totalScenesInProgram: number) {
+		if (!activeRunId) return
+		const scenesCompleted = metricsRef.value.length
+		historyApi
+			.update(activeRunId, {
+				scenesCompleted,
+				totalScore: score.value,
+				completeness: totalScenesInProgram
+					? Math.min(100, Math.round((scenesCompleted / totalScenesInProgram) * 100))
+					: 0,
+				durationMs: Date.now() - startTimeRef.value,
+				metrics: metricsRef.value,
+			})
+			.catch(err => {
+				console.warn('[TheaterScoring] failed to sync progress', err)
+			})
 	}
 
 	/**
@@ -161,30 +204,36 @@ export function useTheaterScoring() {
 
 		// Remote persistence (fire-and-forget).
 		const scenesCompleted = log.metrics.length
-		historyApi
-			.create({
-				programId: log.programId,
-				programTitle: sessionTitle,
-				startTime: log.startTime,
-				endTime: log.endTime,
-				totalScore: log.totalScore,
-				scenesCompleted,
-				totalScenes: totalScenesInProgram,
-				completeness: totalScenesInProgram
-					? Math.min(100, Math.round((scenesCompleted / totalScenesInProgram) * 100))
-					: 0,
-				durationMs: log.endTime
-					? new Date(log.endTime).getTime() - new Date(log.startTime).getTime()
-					: 0,
-				metrics: log.metrics,
-				physiologicalData: log.physiologicalData,
-				biometrics: log.biometrics ?? null,
-				report,
-			})
-			.catch(err => {
-				console.warn('[TheaterScoring] failed to persist session run', err)
-				notify.error('Session could not be saved to the server. Your data is cached locally.')
-			})
+		const payload = {
+			programId: log.programId,
+			programTitle: sessionTitle,
+			startTime: log.startTime,
+			endTime: log.endTime,
+			totalScore: log.totalScore,
+			scenesCompleted,
+			totalScenes: totalScenesInProgram,
+			completeness: totalScenesInProgram
+				? Math.min(100, Math.round((scenesCompleted / totalScenesInProgram) * 100))
+				: 0,
+			durationMs: log.endTime
+				? new Date(log.endTime).getTime() - new Date(log.startTime).getTime()
+				: 0,
+			metrics: log.metrics,
+			physiologicalData: log.physiologicalData,
+			biometrics: log.biometrics ?? null,
+			report,
+		}
+
+		// If we have an active run from beginRun(), PATCH it to completion.
+		// Otherwise fall back to creating a new run.
+		const persist = activeRunId
+			? historyApi.update(activeRunId, payload)
+			: historyApi.create(payload)
+
+		persist.catch(err => {
+			console.warn('[TheaterScoring] failed to persist session run', err)
+			notify.error('Session could not be saved to the server. Your data is cached locally.')
+		})
 
 		return report
 	}
@@ -198,6 +247,8 @@ export function useTheaterScoring() {
 		// Methods
 		resetForSession,
 		startTracking,
+		beginRun,
+		syncProgress,
 		handleReinforcement,
 		finishSession,
 	}

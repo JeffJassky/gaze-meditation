@@ -67,7 +67,6 @@ function runAsSessionLog(r: SessionRun): SessionLog {
 						<th class="px-6 py-4">Date</th>
 						<th class="px-6 py-4 text-right">Duration</th>
 						<th class="px-6 py-4 text-right">Completeness</th>
-						<th class="px-6 py-4 text-right">Score</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-edge">
@@ -85,9 +84,6 @@ function runAsSessionLog(r: SessionRun): SessionLog {
 							</td>
 							<td class="px-6 py-4 text-right text-content-secondary">
 								{{ row.completeness }}%
-							</td>
-							<td class="px-6 py-4 text-right font-mono text-accent">
-								{{ row.totalScore }}
 							</td>
 						</tr>
 						<tr v-if="expandedSessionId === row.id" class="bg-surface-secondary/50">

@@ -115,18 +115,20 @@ async function loadHistory() {
 
 const historyRows = computed<HistoryRow[]>(() => {
 	if (auth.state.user && remoteRuns.value.length > 0) {
-		return remoteRuns.value.map((r) => ({
-			id: r.id,
-			programId: r.programId,
-			title: r.programTitle || getSessionTitle(r.programId),
-			startTime: r.startTime,
-			endTime: r.endTime,
-			totalScore: r.totalScore,
-			completeness: r.completeness,
-			durationMs: r.durationMs,
-			raw: r,
-			isRemote: true,
-		}))
+		return remoteRuns.value
+			.map((r) => ({
+				id: r.id,
+				programId: r.programId,
+				title: r.programTitle || getSessionTitle(r.programId),
+				startTime: r.startTime,
+				endTime: r.endTime,
+				totalScore: r.totalScore,
+				completeness: r.completeness,
+				durationMs: r.durationMs,
+				raw: r,
+				isRemote: true,
+			}))
+			.sort((a, b) => (a.startTime < b.startTime ? 1 : -1))
 	}
 	// Local fallback
 	return sessions.value
@@ -148,6 +150,7 @@ const historyRows = computed<HistoryRow[]>(() => {
 				isRemote: false,
 			}
 		})
+		.sort((a, b) => (a.startTime < b.startTime ? 1 : -1))
 })
 
 // Watch for prop changes to update activeTab when navigating
@@ -267,8 +270,14 @@ watch(() => activeTab.value, (tab) => {
 			<Home
 				v-if="activeTab === 'home'"
 				:tutorial-slug="tutorialSession?.slug"
+				:tutorial-session="tutorialSession"
+				:sessions="fullSessions"
+				:sessions-loading="sessionsLoading"
+				:sessions-error="sessionsError"
+				:user-selected="!!selectedUser"
 				@startTutorial="handleStartTutorial"
 				@browseSessions="activeTab = 'start'"
+				@startSession="handleStartSession"
 			/>
 
 			<SessionsTab

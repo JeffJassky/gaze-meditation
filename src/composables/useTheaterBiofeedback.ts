@@ -17,6 +17,7 @@ export function useTheaterBiofeedback(
 		camera: false,
 		microphone: false,
 		accelerometer: false,
+		haptics: false,
 	})
 
 	const permissionLabel = computed(() => {
@@ -24,6 +25,7 @@ export function useTheaterBiofeedback(
 		if (pendingPermissions.value.camera) list.push('Camera')
 		if (pendingPermissions.value.microphone) list.push('Microphone')
 		if (pendingPermissions.value.accelerometer) list.push('GAZE Motion Device')
+		if (pendingPermissions.value.haptics) list.push('Haptic Device')
 
 		if (list.length === 0) return 'Devices'
 		if (list.length === 1) return list[0]
@@ -39,6 +41,7 @@ export function useTheaterBiofeedback(
 		let needsCamera = false
 		let needsMicrophone = false
 		let needsAccelerometer = false
+		const needsHaptics = session.scenes.some(s => (s.config.haptics?.events?.length ?? 0) > 0)
 
 		if (biofeedbackEnabled.value) {
 			for (const s of session.scenes) {
@@ -53,7 +56,7 @@ export function useTheaterBiofeedback(
 			}
 		}
 
-		return { needsCamera, needsMicrophone, needsAccelerometer }
+		return { needsCamera, needsMicrophone, needsAccelerometer, needsHaptics }
 	}
 
 	/**
@@ -65,8 +68,9 @@ export function useTheaterBiofeedback(
 		needsCamera: boolean
 		needsMicrophone: boolean
 		needsAccelerometer: boolean
+		needsHaptics?: boolean
 	}) {
-		if (!needs.needsCamera && !needs.needsMicrophone && !needs.needsAccelerometer) return
+		if (!needs.needsCamera && !needs.needsMicrophone && !needs.needsAccelerometer && !needs.needsHaptics) return
 
 		try {
 			const camQuery = needs.needsCamera
@@ -84,12 +88,14 @@ export function useTheaterBiofeedback(
 			const missingCam = camStatus?.state === 'prompt'
 			const missingMic = micStatus?.state === 'prompt'
 			const missingAccel = needs.needsAccelerometer && !accelGranted
+			const missingHaptics = !!needs.needsHaptics
 
-			if (missingCam || missingMic || missingAccel) {
+			if (missingCam || missingMic || missingAccel || missingHaptics) {
 				pendingPermissions.value = {
 					camera: !!missingCam,
 					microphone: !!missingMic,
 					accelerometer: missingAccel,
+					haptics: missingHaptics,
 				}
 				showPermissionRequest.value = true
 
@@ -107,6 +113,13 @@ export function useTheaterBiofeedback(
 		}
 	}
 
+	/** Callback invoked during the Grant Access user gesture for haptic scanning. */
+	let _onGrantHaptics: (() => Promise<void>) | null = null
+
+	function setOnGrantHaptics(fn: () => Promise<void>) {
+		_onGrantHaptics = fn
+	}
+
 	/** Handle the "Grant Access" button click. */
 	async function handleGrantAccess() {
 		if (pendingPermissions.value.accelerometer) {
@@ -114,6 +127,14 @@ export function useTheaterBiofeedback(
 				await accelerometer.requestAccess()
 			} catch (e) {
 				console.warn('Accelerometer access failed', e)
+			}
+		}
+		// Haptic scan must happen inside this user gesture for Web Bluetooth
+		if (pendingPermissions.value.haptics && _onGrantHaptics) {
+			try {
+				await _onGrantHaptics()
+			} catch (e) {
+				console.warn('Haptic device connection failed', e)
 			}
 		}
 		showPermissionRequest.value = false
@@ -165,6 +186,7 @@ export function useTheaterBiofeedback(
 		detectRequiredDevices,
 		requestPermissions,
 		handleGrantAccess,
+		setOnGrantHaptics,
 		initDevices,
 		stopDevices,
 	}

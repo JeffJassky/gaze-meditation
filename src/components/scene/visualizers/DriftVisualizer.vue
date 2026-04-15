@@ -91,18 +91,6 @@ const cursorStyle = computed(() => {
   height: 300px;
 }
 
-.progress-ring {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.progress-ring-fill {
-  transition: stroke 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .cursor {
   position: absolute;
   top: 50%;

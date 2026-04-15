@@ -10,7 +10,8 @@ export interface RelaxJawBehaviorOptions extends BehaviorOptions {
 
 export class RelaxJawBehavior extends Behavior<RelaxJawBehaviorOptions> {
 	public static override readonly requiredDevices = ['camera']
-	
+	public static override readonly kind = 'hold' as const
+
 	constructor(options: RelaxJawBehaviorOptions) {
 		super({
 			duration: BEHAVIOR_DURATION_DEFAULT,

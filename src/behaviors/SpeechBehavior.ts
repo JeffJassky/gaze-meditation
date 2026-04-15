@@ -1,7 +1,6 @@
 import { markRaw } from 'vue'
 import { Behavior, type BehaviorOptions } from './Behavior'
 import SpeechVisualizer from '../components/scene/visualizers/SpeechVisualizer.vue'
-import { SPEECH_DURATION_DEFAULT } from '@shared/constants/behavior'
 import { registerBehavior } from './registry'
 
 export interface SpeechBehaviorOptions extends BehaviorOptions {
@@ -15,7 +14,6 @@ export class SpeechBehavior extends Behavior<SpeechBehaviorOptions> {
 
 	constructor(options: SpeechBehaviorOptions) {
 		super({
-			duration: SPEECH_DURATION_DEFAULT,
 			failOnTimeout: true,
 			...options
 		})

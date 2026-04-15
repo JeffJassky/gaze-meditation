@@ -19,7 +19,7 @@ const resolvedTheme = inject<Ref<ThemeConfig>>('resolvedTheme')
 const theme = computed(() => resolvedTheme?.value || props.scene.config.theme || DEFAULT_THEME)
 
 const trackColor = computed(() => {
-	return hexToRgba(theme.value.positiveColor || '#ffffff', 0.8)
+	return hexToRgba(theme.value.uiTextColor || '#ffffff', 0.1)
 })
 
 // Use the progress and text state from the scene instance
@@ -51,9 +51,9 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 			<ProgressBar
 				v-if="showProgress"
 				:progress="progress"
-				:size="150"
+				:size="300"
 				:stroke-width="8"
-				:fillColor="theme.accentColor || theme.uiTextColor"
+				:fillColor="theme.uiTextColor || theme.accentColor"
 				:trackColor="trackColor"
 			/>
 		</div>
@@ -85,7 +85,8 @@ const isTextVisible = computed(() => props.scene.isTextVisible.value)
 
 		<!-- 4. Text Layer (z-50) - Top -->
 		<div
-			class="scene-layer text-layer z-50 pointer-events-none flex items-center justify-center p-8"
+			class="scene-layer text-layer z-50 pointer-events-none flex justify-center p-8"
+			:class="scene.behaviors.length > 0 ? 'items-start pt-[25%]' : 'items-center'"
 		>
 			<div
 				class="prompt-text relative text-center flex items-center justify-center w-full max-w-4xl"

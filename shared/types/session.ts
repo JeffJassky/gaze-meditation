@@ -1,5 +1,6 @@
 import type { ThemeConfig } from './theme.js'
 import type { BehaviorSuggestion, SoundboardEvent, SoundboardSample } from './behavior.js'
+import type { SceneHapticsConfig, SessionHaptics } from './haptics.js'
 import { SESSION_STATUS, SESSION_VISIBILITY, SESSION_AUDIENCE, VOICE_ORIGIN, VOICE_STRUCTURE } from '../constants/session.js'
 
 // --- Enums / unions (derived from shared constants) ------------------------
@@ -55,6 +56,7 @@ export interface SceneConfig {
 	duration?: number
 	audio?: SceneAudioConfig
 	behavior?: SceneBehaviorConfig
+	haptics?: SceneHapticsConfig
 	onCompleteCallback?: (success: boolean, result?: unknown) => string | undefined
 	// Timing (all in ms)
 	fadeInDuration?: number
@@ -125,6 +127,7 @@ export interface Session {
 	theme: ThemeConfig
 	coverAssetId: string | null
 	audio: SessionAudio
+	haptics?: SessionHaptics
 	elevenlabsVoiceId: string | null
 	/** Who produced the voice audio — human recording or AI-generated. */
 	voiceOrigin?: VoiceOrigin

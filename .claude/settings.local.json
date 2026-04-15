@@ -22,7 +22,8 @@
       "WebFetch(domain:www.remotion.dev)",
       "Bash(find:*)",
       "WebFetch(domain:developer.lovense.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(git -C /Users/jeffjassky/Projects/ncrs log --oneline --all src/components/scene/visualizers/DriftVisualizer.vue)"
     ]
   }
 }

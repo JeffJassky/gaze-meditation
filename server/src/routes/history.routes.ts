@@ -112,10 +112,12 @@ historyRouter.post('/', async (req, res, next) => {
 
     const run = await SessionRun.create(doc);
 
-    // Recalculate user stats when a completed run is created.
-    if (run.endTime) {
-      const user = await User.findById(run.owner);
-      if (user) user.recalculateStats().catch(() => {});
+    // Recalculate user stats (on every create — start or completion).
+    const user = await User.findById(run.owner);
+    if (user) {
+      user.recalculateStats().catch((err: unknown) => {
+        console.error('[history] recalculateStats failed on POST:', err);
+      });
     }
 
     res.status(201).json(publicSessionRun(run));
@@ -145,10 +147,12 @@ historyRouter.patch('/:id', async (req, res, next) => {
     }
     await run.save();
 
-    // Recalculate stats when endTime is set (session completed).
-    if (body.endTime) {
-      const user = await User.findById(run.owner);
-      if (user) user.recalculateStats().catch(() => {});
+    // Recalculate stats on every update (scene progress, completion, etc.).
+    const user = await User.findById(run.owner);
+    if (user) {
+      user.recalculateStats().catch((err: unknown) => {
+        console.error('[history] recalculateStats failed on PATCH:', err);
+      });
     }
 
     res.json(publicSessionRun(run));

@@ -3,6 +3,7 @@ import { computed, inject } from 'vue'
 import InspectorSection from './InspectorSection.vue'
 import SceneBinauralPanel from './SceneBinauralPanel.vue'
 import SoundboardEventsPanel from './SoundboardEventsPanel.vue'
+import HapticEventsPanel from './HapticEventsPanel.vue'
 import SceneBehaviorPanel from './SceneBehaviorPanel.vue'
 import SceneThemePanel from './SceneThemePanel.vue'
 import SceneTimingPanel from './SceneTimingPanel.vue'
@@ -34,6 +35,10 @@ const sessionBinauralEnabled = computed(() => voicesState?.binauralEnabled.value
 const hasSoundboard = computed(() =>
 	(scene.value.config?.audio?.soundboard?.length ?? 0) > 0,
 )
+
+const hasHaptics = computed(() =>
+	(scene.value.config?.haptics?.events?.length ?? 0) > 0,
+)
 </script>
 
 <template>
@@ -56,11 +61,19 @@ const hasSoundboard = computed(() =>
 			</InspectorSection>
 
 			<InspectorSection
-				title="Soundboard"
+				title="FX Soundboard"
 				storage-key="soundboard"
 				:default-open="hasSoundboard"
 				:badge="hasSoundboard ? scene.config?.audio?.soundboard?.length : undefined">
 				<SoundboardEventsPanel v-model="configModel" />
+			</InspectorSection>
+
+			<InspectorSection
+				title="Haptics"
+				storage-key="haptics"
+				:default-open="hasHaptics"
+				:badge="hasHaptics ? scene.config?.haptics?.events?.length : undefined">
+				<HapticEventsPanel v-model="configModel" />
 			</InspectorSection>
 
 			<InspectorSection

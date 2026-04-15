@@ -101,8 +101,8 @@ onUnmounted(() => {
 	>
 		<!-- Speaker Icon Trigger -->
 		<button
-			class="p-2 rounded text-zinc-400 hover:text-white transition-colors"
-			:class="{ 'text-white': isHovering || isMixerOpen }"
+			class="p-2 rounded text-content-secondary hover:text-content transition-colors"
+			:class="{ 'text-content': isHovering || isMixerOpen }"
 		>
 			<svg
 				v-if="masterVolume === 0"
@@ -171,12 +171,12 @@ onUnmounted(() => {
 			>
 				<!-- Volume Control Container -->
 				<div
-					class="bg-zinc-900/90 border border-zinc-700 p-2 rounded-full shadow-xl backdrop-blur-sm flex flex-col items-center gap-2"
+					class="bg-surface/90 border border-edge p-2 rounded-full shadow-theme-lg backdrop-blur-sm flex flex-col items-center gap-2"
 				>
 					<!-- Gear Icon (Toggle Mixer) -->
 					<button
 						@click="isMixerOpen = !isMixerOpen"
-						class="p-1 rounded-full hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+						class="p-1 rounded-full hover:bg-surface-tertiary text-content-secondary hover:text-content transition-colors"
 						title="Open Mixer"
 					>
 						<svg
@@ -210,7 +210,7 @@ onUnmounted(() => {
 							step="0.1"
 							:value="masterVolume"
 							@input="updateMaster"
-							class="vertical-slider w-2 h-full accent-cyan-500 rounded-full appearance-none bg-zinc-700 cursor-pointer"
+							class="vertical-slider w-2 h-full accent-accent rounded-full appearance-none bg-surface-tertiary cursor-pointer"
 						/>
 					</div>
 				</div>
@@ -218,7 +218,7 @@ onUnmounted(() => {
 				<!-- Full Mixer Panel -->
 				<div
 					v-if="isMixerOpen"
-					class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-zinc-900/95 border border-zinc-700 p-4 rounded-xl shadow-2xl w-64 backdrop-blur-md text-xs font-mono"
+					class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-surface/95 border border-edge p-4 rounded-xl shadow-theme-lg w-64 backdrop-blur-md text-xs font-mono"
 				>
 					<!-- Buses -->
 					<div class="space-y-3 mb-4">
@@ -227,7 +227,7 @@ onUnmounted(() => {
 							:key="bus"
 						>
 							<div
-								class="flex justify-between mb-1 text-zinc-400 text-[10px] uppercase tracking-wider"
+								class="flex justify-between mb-1 text-content-secondary text-[10px] uppercase tracking-wider"
 							>
 								<span>{{ bus }}</span>
 								<span>{{ vol.toFixed(2) }}</span>
@@ -239,27 +239,27 @@ onUnmounted(() => {
 								step="0.1"
 								:value="vol"
 								@input="e => updateBus(bus as AudioBusName, e)"
-								class="w-full h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-zinc-500 hover:accent-zinc-400"
+								class="w-full h-1 bg-surface-tertiary rounded-lg appearance-none cursor-pointer accent-accent"
 							/>
 						</div>
 					</div>
 
 					<!-- Binaural State -->
-					<div class="border-t border-zinc-700 pt-3 mt-2">
+					<div class="border-t border-edge pt-3 mt-2">
 						<div class="flex justify-between items-center mb-2">
-							<span class="font-bold text-white text-[10px] tracking-wider"
+							<span class="font-bold text-content text-[10px] tracking-wider"
 								>BINAURAL</span
 							>
 							<span
 								class="text-[10px]"
-								:class="binauralState.active ? 'text-green-400' : 'text-zinc-600'"
+								:class="binauralState.active ? 'text-success' : 'text-content-tertiary'"
 							>
 								{{ binauralState.active ? 'ACTIVE' : 'OFF' }}
 							</span>
 						</div>
 						<div
 							v-if="binauralState.active"
-							class="space-y-1 text-zinc-400 text-[10px]"
+							class="space-y-1 text-content-secondary text-[10px]"
 						>
 							<div class="flex justify-between">
 								<span>Carrier</span>
@@ -267,7 +267,7 @@ onUnmounted(() => {
 							</div>
 							<div class="flex justify-between">
 								<span>Beat</span>
-								<span class="text-cyan-400">{{ binauralState.beat }}Hz</span>
+								<span class="text-accent">{{ binauralState.beat }}Hz</span>
 							</div>
 							<div class="flex justify-between">
 								<span>Vol</span>
@@ -279,9 +279,9 @@ onUnmounted(() => {
 					<!-- Soundboard -->
 					<div
 						v-if="soundboardSamples && soundboardSamples.length > 0"
-						class="border-t border-zinc-700 pt-3 mt-2"
+						class="border-t border-edge pt-3 mt-2"
 					>
-						<div class="font-bold text-white text-[10px] tracking-wider mb-2">SOUNDBOARD</div>
+						<div class="font-bold text-content text-[10px] tracking-wider mb-2">SOUNDBOARD</div>
 						<div class="grid grid-cols-3 gap-2">
 							<button
 								v-for="sample in soundboardSamples"
@@ -290,10 +290,10 @@ onUnmounted(() => {
 								class="aspect-square relative flex flex-col items-center justify-center p-1 rounded transition-all duration-200 border border-transparent leading-tight overflow-hidden"
 								:class="[
 									isError(sample.id)
-										? 'bg-red-900/40 text-red-500 border-red-500/50 cursor-not-allowed'
+										? 'bg-danger/10 text-danger border-danger/50 cursor-not-allowed'
 										: isActive(sample.id)
-											? 'bg-cyan-500/20 text-cyan-400 border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.3)]'
-											: 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+											? 'bg-accent/20 text-accent border-accent shadow-theme-sm'
+											: 'bg-surface-secondary text-content-tertiary hover:bg-surface-tertiary hover:text-content-secondary'
 								]"
 								:disabled="isError(sample.id)"
 							>

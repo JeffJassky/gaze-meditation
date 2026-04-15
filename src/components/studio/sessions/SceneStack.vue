@@ -32,6 +32,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
 	select: [id: string]
+	deselect: []
 	duplicate: [index: number]
 	remove: [index: number]
 	advance: [index: number]
@@ -63,7 +64,7 @@ function pickBest() {
 			best = id
 		}
 	}
-	if (best && best !== props.selectedId) emit('select', best)
+	if (best && best !== props.selectedId && props.selectedId !== null) emit('select', best)
 }
 
 onMounted(() => {
@@ -190,7 +191,7 @@ useSortable(
 </script>
 
 <template>
-	<main ref="scrollRoot" class="overflow-y-auto bg-surface min-h-0">
+	<main ref="scrollRoot" class="overflow-y-auto bg-surface min-h-0" @click="emit('deselect')">
 		<div class="max-w-2xl mx-auto px-10 py-10">
 			<!-- Blog-style session header sits above the scene list and
 			     outside the sortable container so it can't be dragged. -->

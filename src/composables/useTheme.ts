@@ -1,23 +1,28 @@
 import { ref, watch, readonly } from 'vue'
 
-export type ThemePreference = 'system' | 'light' | 'dark'
+export type ThemePreference = 'system' | 'light' | 'dark' | 'little' | 'bambi' | 'barbi'
 
 const STORAGE_KEY = 'ncrs-theme'
 
 const preference = ref<ThemePreference>(
-  (localStorage.getItem(STORAGE_KEY) as ThemePreference) || 'system',
+  (localStorage.getItem(STORAGE_KEY) as ThemePreference) || 'little',
 )
 
-function resolveEffective(pref: ThemePreference): 'light' | 'dark' {
+type EffectiveTheme = 'light' | 'dark' | 'little' | 'bambi' | 'barbi'
+const THEME_CLASSES: EffectiveTheme[] = ['dark', 'little', 'bambi', 'barbi']
+
+function resolveEffective(pref: ThemePreference): EffectiveTheme {
+  if (pref === 'little' || pref === 'bambi' || pref === 'barbi') return pref
   if (pref !== 'system') return pref
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-const effective = ref<'light' | 'dark'>(resolveEffective(preference.value))
+const effective = ref<EffectiveTheme>(resolveEffective(preference.value))
 
-function apply(theme: 'light' | 'dark') {
+function apply(theme: EffectiveTheme) {
   effective.value = theme
-  document.documentElement.classList.toggle('dark', theme === 'dark')
+  document.documentElement.classList.remove(...THEME_CLASSES)
+  if (theme !== 'light') document.documentElement.classList.add(theme)
 }
 
 // React to preference changes

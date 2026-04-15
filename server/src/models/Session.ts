@@ -98,6 +98,10 @@ const sessionSchema = new Schema(
     // Kept Mixed so the editor can add new fields without migrations.
     audio: { type: Schema.Types.Mixed, default: {} },
 
+    // Session-level haptics config (patterns, master intensity, behavior responses).
+    // Kept Mixed for the same reason as audio.
+    haptics: { type: Schema.Types.Mixed, default: undefined },
+
     // Default ElevenLabs voice id for this session's spoken text.
     // Individual scenes may override via scene.config.elevenlabsVoiceId.
     elevenlabsVoiceId: { type: String, default: null },

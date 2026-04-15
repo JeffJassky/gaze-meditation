@@ -1,5 +1,4 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
-import { BEHAVIOR_DURATION_DEFAULT } from '@shared/constants/behavior'
 import { registerBehavior } from './registry'
 
 export interface DirectionalGazeBehaviorOptions extends BehaviorOptions {
@@ -11,7 +10,6 @@ export class DirectionalGazeBehavior extends Behavior<DirectionalGazeBehaviorOpt
 
 	constructor(options: DirectionalGazeBehaviorOptions) {
 		super({
-			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: true,
 			...options
 		})

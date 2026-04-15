@@ -304,7 +304,7 @@ const stageStyle = computed(() => {
 </script>
 
 <template>
-	<div class="bg-black border-b border-edge">
+	<div class="bg-surface border-b border-edge">
 		<!-- Permission gate takes over the preview area while active, at
 		     editor-native size rather than squashed into the scaled stage. -->
 		<PreviewPermissionGate
@@ -314,7 +314,7 @@ const stageStyle = computed(() => {
 			@cancel="onPermissionCancel" />
 		<div v-else class="flex justify-center px-4 pt-4">
 			<div
-				class="relative overflow-hidden rounded-md bg-black ring-1 ring-edge"
+				class="relative overflow-hidden rounded-md bg-surface ring-1 ring-edge"
 				:style="stageStyle.box">
 				<div class="absolute top-0 left-0" :style="stageStyle.inner">
 					<Theater

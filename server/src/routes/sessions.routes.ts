@@ -50,6 +50,7 @@ const PATCHABLE_FIELDS = [
   'voiceOrigin',
   'voiceStructure',
   'masterAudio',
+  'haptics',
   'assets',
   'scenes',
   'settings',
@@ -213,7 +214,7 @@ sessionsRouter.patch('/:id', requireAuth, async (req, res, next) => {
 
     // `scenes`, `assets`, `audio`, `theme`, `settings` are Mixed/array — marking
     // them modified ensures Mongoose serializes replacements and nested changes.
-    for (const f of ['scenes', 'assets', 'audio', 'theme', 'settings', 'masterAudio'] as const) {
+    for (const f of ['scenes', 'assets', 'audio', 'haptics', 'theme', 'settings', 'masterAudio'] as const) {
       if (body[f] !== undefined) session.markModified(f);
     }
 

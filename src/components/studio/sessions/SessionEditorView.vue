@@ -3,7 +3,6 @@ import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import StudioEditorToolbar from './StudioEditorToolbar.vue'
 import SceneStack, { type FocusRequest } from './SceneStack.vue'
-import SceneInspector from './SceneInspector.vue'
 import SessionLivePreview from './SessionLivePreview.vue'
 import { useSceneSelection } from './composables/useSceneSelection'
 import { useSceneHistory } from './composables/useSceneHistory'
@@ -26,6 +25,7 @@ import { auth } from '@/state/auth'
 import { VOICES_KEY } from './voicesKey'
 import { AUDIO_ASSETS_KEY } from './audioAssetsKey'
 import { SOUNDBOARD_SAMPLES_KEY } from './soundboardSamplesKey'
+import { SCENE_CONTEXT_KEY } from './sceneContextKey'
 
 /**
  * Top-level session editor — three-pane shell.
@@ -45,7 +45,6 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref<string | null>(null)
 const timelineOpen = ref(false)
-const inspectorOpen = ref(true)
 const justSaved = ref(false)
 const focusRequest = ref<FocusRequest | null>(null)
 const timelineRef = ref<InstanceType<typeof WaveformTimeline> | null>(null)
@@ -151,6 +150,10 @@ provide(VOICES_KEY, {
 })
 provide(AUDIO_ASSETS_KEY, allAssets)
 provide(SOUNDBOARD_SAMPLES_KEY, computed(() => session.value?.audio?.soundboard ?? []))
+provide(SCENE_CONTEXT_KEY, {
+	scenes: computed(() => session.value?.scenes ?? []),
+	selectedIndex: computed(() => selection.selectedIndex.value),
+})
 
 async function load() {
 	loading.value = true
@@ -416,7 +419,11 @@ watch(
 				v-else-if="session"
 				class="flex-1 flex flex-col min-h-0">
 				<div class="flex-1 flex min-h-0">
-					<SessionSettingsPanel v-model="session" />
+					<SessionSettingsPanel
+						v-model="session"
+						:preview-session="session"
+						:preview-selected-id="selection.selectedId.value"
+						:preview-selected-index="selection.selectedIndex.value" />
 
 					<SceneStack
 						class="flex-1 min-w-0"
@@ -425,49 +432,13 @@ watch(
 						:selected-id="selection.selectedId.value"
 						:focus-request="focusRequest"
 						@select="selection.select"
+						@deselect="selection.deselect"
 						@duplicate="duplicateAt"
 						@remove="removeSceneAt"
 						@advance="(i) => addSceneAfter(i, { focus: true })"
 						@delete-backward="deleteBackwardFrom"
 						@focus-consumed="focusRequest = null" />
 
-					<!-- Right panel: inspector (collapsible) -->
-					<aside
-						class="flex flex-col min-h-0 border-l border-edge bg-surface shrink-0 transition-all overflow-hidden"
-						:class="inspectorOpen ? 'w-[360px]' : 'w-10'">
-						<button
-							type="button"
-							class="shrink-0 text-xs text-content-tertiary hover:text-content transition border-b border-edge"
-							:class="inspectorOpen ? 'h-10 flex items-center gap-2 px-3' : 'flex items-center justify-center w-full flex-1'"
-							:title="inspectorOpen ? 'Collapse inspector' : 'Expand inspector'"
-							@click="inspectorOpen = !inspectorOpen">
-							<span
-								v-if="!inspectorOpen"
-								class="text-[10px] uppercase tracking-wider whitespace-nowrap"
-								style="writing-mode: vertical-lr;">Scene Inspector</span>
-							<template v-else>
-								<span class="text-[10px] uppercase tracking-wider flex-1 text-left">Scene Inspector</span>
-								<svg
-									width="14" height="14" viewBox="0 0 24 24" fill="none"
-									stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-									class="shrink-0">
-									<polyline points="9 18 15 12 9 6" />
-								</svg>
-							</template>
-						</button>
-						<template v-if="inspectorOpen">
-							<SessionLivePreview
-								class="shrink-0"
-								:session="session"
-								:selected-id="selection.selectedId.value"
-								:selected-index="selection.selectedIndex.value" />
-							<SceneInspector
-								v-if="selection.selectedScene.value"
-								v-model="session.scenes[selection.selectedIndex.value]!"
-								class="flex-1 min-h-0" />
-							<div v-else class="flex-1" />
-						</template>
-					</aside>
 				</div>
 
 				<!-- Timeline (collapsible) -->

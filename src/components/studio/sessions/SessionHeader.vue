@@ -226,7 +226,7 @@ const visibilityLabel = computed(() =>
 			@input="onDescInput" />
 
 		<!-- Metadata row: audience · visibility · adult · tags -->
-		<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-mono uppercase tracking-wider text-content-tertiary">
+		<div class="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] uppercase tracking-wider text-content-tertiary">
 			<!-- Voice (display + reset) -->
 			<span class="text-content-tertiary">
 				{{ voiceLabel }}
@@ -287,7 +287,7 @@ const visibilityLabel = computed(() =>
 				<span class="text-content-tertiary">#</span>
 				<input
 					v-model="tagsText"
-					class="flex-1 bg-transparent border-0 outline-none text-[11px] font-mono uppercase tracking-wider text-content-tertiary hover:text-content-secondary focus:text-content-secondary placeholder-content-tertiary transition-colors"
+					class="flex-1 bg-transparent border-0 outline-none text-[11px] uppercase tracking-wider text-content-tertiary hover:text-content-secondary focus:text-content-secondary placeholder-content-tertiary transition-colors"
 					placeholder="tags, comma, separated" />
 			</div>
 		</div>

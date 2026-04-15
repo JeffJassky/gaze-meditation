@@ -60,6 +60,14 @@ function setUser(user: AuthUser | null) {
 	state.user = user
 }
 
+async function refreshUser() {
+	try {
+		state.user = await authApi.me()
+	} catch {
+		// leave current user intact on transient failures
+	}
+}
+
 export const auth = {
 	state: readonly(state),
 	hydrate,
@@ -67,4 +75,5 @@ export const auth = {
 	register,
 	logout,
 	setUser,
+	refreshUser,
 }

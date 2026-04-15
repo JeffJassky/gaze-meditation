@@ -19,29 +19,28 @@ const emit = defineEmits<{
 </script>
 
 <template>
-	<div class="absolute inset-0 z-50 bg-black text-white">
+	<div class="absolute inset-0 z-50 bg-surface text-content">
 		<div
 			class="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-1000 ease-in-out"
 			:class="showContent ? 'opacity-100' : 'opacity-0'">
 
-			<div
-				class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-24 text-2xl text-center w-full"
-				:style="{ color: theme.positiveColor || '#10b981' }">
+			<h2
+				class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-24 text-2xl text-center w-full text-brand">
 				{{ message }}
-			</div>
+			</h2>
 
 			<ProgressBar
 				v-if="!showPermissionRequest && !showBeginButton"
 				:progress="progress"
-				:fill-color="theme.positiveColor || '#10b981'" />
+				fill-color="rgb(var(--brand-rgb))" />
 
 			<!-- Permission gate -->
 			<div
 				v-if="showPermissionRequest"
 				class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-				<p class="text-zinc-400 mb-6 max-w-md mx-auto leading-relaxed">
+				<p class="text-content-secondary mb-6 max-w-md mx-auto leading-relaxed">
 					This session uses biofeedback. To proceed, we need temporary access to your
-					<span class="text-white font-bold">{{ permissionLabel }}</span>.
+					<span class="text-content font-bold">{{ permissionLabel }}</span>.
 					<br />
 					<span class="text-xs opacity-50 block mt-2">
 						Data is processed locally on your device and is never recorded.
@@ -49,12 +48,7 @@ const emit = defineEmits<{
 				</p>
 				<button
 					@click.stop="emit('grantAccess')"
-					class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105"
-					:style="{
-						backgroundColor: theme.positiveColor || '#10b981',
-						color: '#000',
-						boxShadow: `0 0 20px ${theme.positiveColor || '#10b981'}40`,
-					}">
+					class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105 bg-brand text-white shadow-theme-lg">
 					Grant Access
 				</button>
 			</div>
@@ -65,12 +59,7 @@ const emit = defineEmits<{
 				class="mt-8 text-center px-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 				<button
 					@click.stop="emit('begin')"
-					class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105"
-					:style="{
-						backgroundColor: theme.positiveColor || '#10b981',
-						color: '#000',
-						boxShadow: `0 0 20px ${theme.positiveColor || '#10b981'}40`,
-					}">
+					class="px-8 py-3 rounded-full font-bold text-sm tracking-widest uppercase transition-all transform hover:scale-105 bg-brand text-white shadow-theme-lg">
 					Begin Session
 				</button>
 			</div>

@@ -35,6 +35,16 @@ export type {
 } from './session.js'
 
 export type {
+	HapticFeature,
+	HapticPattern,
+	HapticCurvePoint,
+	HapticEvent,
+	SceneHapticsConfig,
+	BehaviorHapticResponse,
+	SessionHaptics,
+} from './haptics.js'
+
+export type {
 	PlaylistVisibility,
 	PlaylistDoc,
 	PlaylistListResult,

@@ -18,7 +18,10 @@ const { preference, setTheme } = useTheme()
 const themeOptions: { value: ThemePreference; label: string; icon: string }[] = [
 	{ value: 'system', label: 'System', icon: '\u{1F4BB}' },
 	{ value: 'light', label: 'Light', icon: '\u2600\uFE0F' },
-	{ value: 'dark', label: 'Dark', icon: '\u{1F319}' },
+	{ value: 'dark', label: 'Fetish', icon: '\u{1F5A4}' },
+	{ value: 'little', label: 'Little', icon: '\u{1F338}' },
+	{ value: 'bambi', label: 'Bambi', icon: '\u{1F496}' },
+	{ value: 'barbi', label: 'Barbi', icon: '\u{1F338}' },
 ]
 
 // ---------- Profile (bio + avatar) ----------
@@ -52,13 +55,47 @@ async function saveBio() {
 	}
 }
 
+/** Resize an image file to fit within maxDim×maxDim, output as WebP. */
+function resizeImage(file: File, maxDim = 256): Promise<File> {
+	return new Promise((resolve, reject) => {
+		const img = new Image()
+		img.onload = () => {
+			URL.revokeObjectURL(img.src)
+			let { width, height } = img
+			if (width <= maxDim && height <= maxDim) {
+				resolve(file)
+				return
+			}
+			const scale = maxDim / Math.max(width, height)
+			width = Math.round(width * scale)
+			height = Math.round(height * scale)
+			const canvas = document.createElement('canvas')
+			canvas.width = width
+			canvas.height = height
+			const ctx = canvas.getContext('2d')!
+			ctx.drawImage(img, 0, 0, width, height)
+			canvas.toBlob(
+				(blob) => {
+					if (!blob) return reject(new Error('resize_failed'))
+					resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' }))
+				},
+				'image/webp',
+				0.85,
+			)
+		}
+		img.onerror = () => reject(new Error('invalid_image'))
+		img.src = URL.createObjectURL(file)
+	})
+}
+
 async function onAvatarFileChange(e: Event) {
 	const file = (e.target as HTMLInputElement).files?.[0]
 	if (!file) return
 	avatarMsg.value = null
 	avatarUploading.value = true
 	try {
-		const { key, contentType, size } = await uploadFile(file, 'profile-image')
+		const resized = await resizeImage(file)
+		const { key, contentType, size } = await uploadFile(resized, 'profile-image')
 		await assetsApi.register({ kind: 'profile-image', key, contentType, size, label: 'avatar' })
 		const user = await authApi.updateProfile({ avatarAssetKey: key })
 		auth.setUser(user)
@@ -341,7 +378,7 @@ onMounted(async () => {
 				<!-- Level summary -->
 				<div v-if="auth.state.user" class="mt-5 pt-4 border-t border-edge flex items-center gap-4">
 					<LevelBadge :level="auth.state.user.level" :progress="auth.state.user.levelProgress" size="md" />
-					<span class="text-sm text-content-secondary">{{ auth.state.user.xp.toLocaleString() }} XP</span>
+					<span class="text-sm text-content-secondary">{{ auth.state.user.xp.toLocaleString() }} Good Girl Points</span>
 				</div>
 			</section>
 

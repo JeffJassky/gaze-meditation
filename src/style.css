@@ -16,6 +16,29 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.little, html.bambi, html.barbi {
+  font-family: 'Fredoka One', cursive;
+}
+
+html.little h1, html.little h2, html.little h3, html.little h4,
+html.bambi h1, html.bambi h2, html.bambi h3, html.bambi h4,
+html.barbi h1, html.barbi h2, html.barbi h3, html.barbi h4 {
+  font-family: 'Fredoka One', cursive;
+}
+
+/* Floating-vue tooltip theming */
+.v-popper--theme-tooltip .v-popper__inner {
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+.v-popper--theme-tooltip .v-popper__arrow-outer {
+  border-color: var(--color-background-tertiary);
+}
+.v-popper--theme-tooltip .v-popper__arrow-inner {
+  border-color: var(--color-background-tertiary);
+}
+
 body {
   margin: 0;
   display: flex;

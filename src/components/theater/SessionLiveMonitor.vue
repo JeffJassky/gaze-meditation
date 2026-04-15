@@ -80,14 +80,14 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 </script>
 
 <template>
-	<div class="bg-black/90 backdrop-blur-xl border border-zinc-800 rounded-xl p-4 w-[350px] space-y-4 shadow-2xl">
-		<div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+	<div class="bg-surface/90 backdrop-blur-xl border border-edge rounded-xl p-4 w-[350px] space-y-4 shadow-theme-lg">
+		<div class="flex justify-between items-center border-b border-edge pb-2">
 			<div class="flex flex-col">
-				<span class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Session Monitor</span>
-				<span class="text-cyan-400 font-mono text-xl">{{ formatTime(metrics.elapsedTime) }}</span>
+				<span class="text-[10px] uppercase tracking-widest text-content-tertiary font-bold">Session Monitor</span>
+				<span class="text-accent font-mono text-xl">{{ formatTime(metrics.elapsedTime) }}</span>
 			</div>
 			<div class="flex gap-2">
-				<div class="w-2 h-2 rounded-full animate-pulse" :class="metrics.elapsedTime > 0 ? 'bg-green-500' : 'bg-zinc-700'"></div>
+				<div class="w-2 h-2 rounded-full animate-pulse" :class="metrics.elapsedTime > 0 ? 'bg-success' : 'bg-surface-tertiary'"></div>
 			</div>
 		</div>
 
@@ -95,10 +95,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Stillness -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Stillness</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Stillness</span>
 					<span class="text-sm font-mono text-cyan-300">{{ (metrics.stillness * 100).toFixed(0) }}%</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<path :d="createPath('stillness', 1)" fill="none" stroke="#06b6d4" stroke-width="1.5" />
 				</svg>
 			</div>
@@ -107,26 +107,26 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
 					<div class="flex items-center gap-2">
-						<span class="text-xs text-zinc-400 uppercase tracking-wider">Respiration</span>
+						<span class="text-xs text-content-secondary uppercase tracking-wider">Respiration</span>
 						<span 
 							class="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter transition-colors duration-300"
-							:class="breathDirection === 'INHALE' ? 'bg-purple-500/20 text-purple-300' : 'bg-zinc-800 text-zinc-500'"
+							:class="breathDirection === 'INHALE' ? 'bg-purple-500/20 text-purple-300' : 'bg-surface-tertiary text-content-tertiary'"
 						>
 							{{ breathDirection === 'INHALE' ? 'Inhaling' : 'Exhaling' }}
 						</span>
 					</div>
 					<div class="text-right">
-						<span class="text-sm font-mono text-purple-300 block">{{ metrics.breathRate }} <span class="text-[10px] text-zinc-600">BPM</span></span>
+						<span class="text-sm font-mono text-purple-300 block">{{ metrics.breathRate }} <span class="text-[10px] text-content-tertiary">BPM</span></span>
 					</div>
 				</div>
 				<!-- Debug Info -->
-				<div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-zinc-500 mb-1">
+				<div class="grid grid-cols-2 gap-2 text-[10px] font-mono text-content-tertiary mb-1">
 					<div>State: <span :class="breathState === 'LOCKED' ? 'text-green-400' : 'text-yellow-500'">{{ breathState }}</span></div>
-					<div>Conf: <span class="text-zinc-300">{{ breathConf }}%</span></div>
-					<div>Signal: <span class="text-zinc-300">{{ breathSignal }}</span></div>
-					<div>Axis: <span class="text-zinc-300">{{ activeAxis }}</span></div>
+					<div>Conf: <span class="text-content">{{ breathConf }}%</span></div>
+					<div>Signal: <span class="text-content">{{ breathSignal }}</span></div>
+					<div>Axis: <span class="text-content">{{ activeAxis }}</span></div>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<path :d="createPath('breathRate', 20)" fill="none" stroke="#a855f7" stroke-width="1.5" />
 				</svg>
 			</div>
@@ -134,10 +134,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Eye Openness (Raw) -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Eye Openness</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Eye Openness</span>
 					<span class="text-sm font-mono text-orange-300">{{ eyeOpenness }}</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<path :d="createPath('eyeOpenness', 1)" fill="none" stroke="#fdba74" stroke-width="1.5" />
 				</svg>
 			</div>
@@ -145,10 +145,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Mouth Openness -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Jaw Relaxation</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Jaw Relaxation</span>
 					<span class="text-sm font-mono text-blue-300">{{ metrics.mouthOpenness.toFixed(3) }}</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<!-- Scale max 0.5 covers most mouth open states -->
 					<path :d="createPath('mouthOpenness', 0.5)" fill="none" stroke="#93c5fd" stroke-width="1.5" />
 				</svg>
@@ -157,10 +157,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Head Roll (Neck Relaxation) -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Neck Tilt (Roll)</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Neck Tilt (Roll)</span>
 					<span class="text-sm font-mono text-indigo-300">{{ (metrics.headRoll * 57.29).toFixed(1) }}°</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<path :d="createPath('headRoll', 0.5)" fill="none" stroke="#a5b4fc" stroke-width="1.5" />
 				</svg>
 			</div>
@@ -168,10 +168,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Head Pitch (Nod) -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Head Pitch (Nod)</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Head Pitch (Nod)</span>
 					<span class="text-sm font-mono text-indigo-400">{{ (metrics.headPitch * 57.29).toFixed(1) }}°</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<!-- Range [0.15, 0.6] rad (~8-34 deg) covers the user's typical 12-30 deg range -->
 					<path :d="createPath('headPitch', 0.6, 0.15)" fill="none" stroke="#818cf8" stroke-width="1.5" />
 				</svg>
@@ -180,10 +180,10 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Brow Tension -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Brow Tension</span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Brow Tension</span>
 					<span class="text-sm font-mono text-rose-300">{{ metrics.browRaise.toFixed(3) }}</span>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<!-- Range is typically 0.15 (furrow) to 0.35 (raised). Normalize to 0.4 max -->
 					<path :d="createPath('browRaise', 0.4)" fill="none" stroke="#fda4af" stroke-width="1.5" />
 				</svg>
@@ -192,13 +192,13 @@ const eyeOpenness = computed(() => eyesRegion.openNormalized.toFixed(2))
 			<!-- Blinks -->
 			<div class="space-y-1">
 				<div class="flex justify-between items-baseline">
-					<span class="text-xs text-zinc-400 uppercase tracking-wider">Blink Rate</span>
-					<span class="text-sm font-mono text-emerald-300">{{ metrics.blinkRate.toFixed(1) }} <span class="text-[10px] text-zinc-600">BPM</span></span>
+					<span class="text-xs text-content-secondary uppercase tracking-wider">Blink Rate</span>
+					<span class="text-sm font-mono text-emerald-300">{{ metrics.blinkRate.toFixed(1) }} <span class="text-[10px] text-content-tertiary">BPM</span></span>
 				</div>
-				<div class="flex gap-4 text-[10px] font-mono text-zinc-500 mb-1">
-					<div>Blinking: <span :class="blinkDetected ? 'text-green-400' : 'text-zinc-600'">{{ blinkDetected ? 'YES' : 'NO' }}</span></div>
+				<div class="flex gap-4 text-[10px] font-mono text-content-tertiary mb-1">
+					<div>Blinking: <span :class="blinkDetected ? 'text-green-400' : 'text-content-tertiary'">{{ blinkDetected ? 'YES' : 'NO' }}</span></div>
 				</div>
-				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-zinc-900/50 rounded border border-zinc-800/50">
+				<svg :viewBox="`0 0 ${width} ${height}`" class="w-full h-12 bg-surface-secondary/50 rounded border border-edge/50">
 					<path :d="createPath('blinkRate', 30)" fill="none" stroke="#10b981" stroke-width="1.5" />
 				</svg>
 			</div>

@@ -116,10 +116,10 @@ onMounted(async () => {
 						</div>
 					</div>
 
-					<!-- XP bar (full width) -->
+					<!-- Good Girl Points bar (full width) -->
 					<div class="bg-surface-secondary/80 border border-edge rounded-2xl p-4 mb-8">
 						<div class="flex items-center justify-between mb-2">
-							<span class="text-sm font-medium">{{ profile.user.xp.toLocaleString() }} XP</span>
+							<span class="text-sm font-medium">{{ profile.user.xp.toLocaleString() }} Good Girl Points</span>
 							<span class="text-xs text-content-secondary">
 								Level {{ profile.user.level }} &rarr; {{ profile.user.level + 1 }}
 							</span>

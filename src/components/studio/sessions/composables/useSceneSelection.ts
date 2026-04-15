@@ -10,12 +10,17 @@ import type { SceneBlock } from '@/api/sessions'
  */
 export function useSceneSelection(scenes: Ref<SceneBlock[]>) {
 	const selectedId = ref<string | null>(null)
+	/** True when the user explicitly deselected — prevents auto-reselect. */
+	const userDeselected = ref(false)
 
 	watchEffect(() => {
 		if (!scenes.value.length) {
 			selectedId.value = null
 			return
 		}
+		// If user explicitly deselected, don't auto-select
+		if (userDeselected.value && selectedId.value === null) return
+		// Auto-select first scene only when current selection is stale (deleted)
 		if (!scenes.value.find((s) => s.id === selectedId.value)) {
 			selectedId.value = scenes.value[0]?.id ?? null
 		}
@@ -29,6 +34,7 @@ export function useSceneSelection(scenes: Ref<SceneBlock[]>) {
 	)
 
 	function select(id: string) {
+		userDeselected.value = false
 		selectedId.value = id
 	}
 	function selectIndex(i: number) {
@@ -43,5 +49,10 @@ export function useSceneSelection(scenes: Ref<SceneBlock[]>) {
 		selectIndex(selectedIndex.value - 1)
 	}
 
-	return { selectedId, selectedIndex, selectedScene, select, selectIndex, next, prev }
+	function deselect() {
+		userDeselected.value = true
+		selectedId.value = null
+	}
+
+	return { selectedId, selectedIndex, selectedScene, select, selectIndex, next, prev, deselect }
 }

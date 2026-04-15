@@ -1,5 +1,5 @@
 import { Behavior, type BehaviorOptions } from './Behavior'
-import { TONGUE_DURATION_DEFAULT, MOUTH_THRESHOLD_DEFAULT } from '@shared/constants/behavior'
+import { BEHAVIOR_DURATION_DEFAULT, MOUTH_THRESHOLD_DEFAULT } from '@shared/constants/behavior'
 import { registerBehavior } from './registry'
 
 export interface TongueOutBehaviorOptions extends BehaviorOptions {
@@ -8,10 +8,11 @@ export interface TongueOutBehaviorOptions extends BehaviorOptions {
 
 export class TongueOutBehavior extends Behavior<TongueOutBehaviorOptions> {
 	public static override readonly requiredDevices = ['camera']
+	public static override readonly kind = 'hold' as const
 
 	constructor(options: TongueOutBehaviorOptions) {
 		super({
-			duration: TONGUE_DURATION_DEFAULT,
+			duration: BEHAVIOR_DURATION_DEFAULT,
 			failOnTimeout: true,
 			threshold: MOUTH_THRESHOLD_DEFAULT,
 			...options

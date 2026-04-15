@@ -21,6 +21,8 @@
     "@types/three": "^0.182.0",
     "@vueuse/core": "^14.2.1",
     "@vueuse/integrations": "^14.2.1",
+    "buttplug": "^3.2.2",
+    "buttplug-wasm": "^2.0.1",
     "floating-vue": "^5.2.2",
     "onnxruntime-web": "^1.23.2",
     "sortablejs": "^1.15.7",
